@@ -1,0 +1,17 @@
+meta {
+  name: createCards
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/api/cards/1/official
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "foo"
+  }
+}

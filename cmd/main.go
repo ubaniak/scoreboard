@@ -12,14 +12,22 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/gorilla/mux"
 	"github.com/pkg/browser"
+	"github.com/rs/cors"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
-	"github.com/ubaniak/scoreboard/app"
-	"github.com/ubaniak/scoreboard/cmd/apps"
+	utils "github.com/ubaniak/scoreboard/cmd/admin"
+	"github.com/ubaniak/scoreboard/internal/app"
+	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
+	"github.com/ubaniak/scoreboard/internal/auth"
+	"github.com/ubaniak/scoreboard/internal/login"
+	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
 //go:embed all:frontend
 var webAssets embed.FS
-var staticFilePath = "frontend/out"
+var staticFilePath = "frontend/dist"
 
 const (
 	AppTitle   = "Scoreboard"
@@ -27,20 +35,57 @@ const (
 )
 
 func main() {
-	// Start HTTP server in a goroutine
-	apiRegister := app.NewRegister()
-	err := apps.AddApps(apiRegister)
-	if err != nil {
-		log.Fatalf("Failed to add apps: %v", err)
-	}
-	srv := startServer(apiRegister)
+	r := mux.NewRouter()
 
-	// Start system tray
+	apiRouter := r.PathPrefix("/api").Subrouter()
+	db, err := gorm.Open(sqlite.Open("scoreboard.db"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	db.Logger = logger.Default.LogMode(logger.Silent)
+
+	authStorage, err := auth.NewAuthStorage(db)
+	if err != nil {
+		panic(err)
+	}
+
+	authUseCase := auth.NewUseCase(authStorage, "my_secret_sign_key")
+
+	roles := rbac.NewRole()
+	roles.AddRole("admin")
+	roles.AddRole("judge")
+	roles.Inherits("admin", "judge")
+
+	rbacSrv := rbac.NewRbacService(roles, authUseCase)
+
+	apiRegister := app.NewRegister()
+	rb := rbac.NewRouteBuilder(apiRouter, rbacSrv)
+
+	healthCheckApp := healthcheck.NewHealthCheck()
+	loginApp := login.NewApp(authUseCase)
+
+	apiRegister.Add(healthCheckApp)
+	apiRegister.Add(loginApp)
+
+	apiRegister.Register(rb)
+
+	srv := startServer(r)
+
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
+	srv.Handler = corsHandler.Handler(srv.Handler)
+
 	systray.Run(func() {
 		systray.SetTitle(AppTitle)
 		systray.SetTooltip(AppTooltip)
 
 		mOpen := systray.AddMenuItem("Open UI", "Open the web interface")
+		mAdmin := systray.AddMenuItem("Admin Password", "Set the admin password")
 		mQuit := systray.AddMenuItem("Quit", "Exit the app")
 
 		for {
@@ -50,13 +95,14 @@ func main() {
 				if err := browser.OpenURL(url); err != nil {
 					log.Printf("Failed to open browser: %v", err)
 				}
+			case <-mAdmin.ClickedCh:
+				utils.RegisterAdmin(authUseCase)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
 			}
 		}
 	}, func() {
-		// Cleanup: Shut down server gracefully
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
@@ -65,27 +111,17 @@ func main() {
 	})
 }
 
-func startServer(apiRegister *app.Register) *http.Server {
-	// Embed and prepare static files
+func startServer(r *mux.Router) *http.Server {
 	staticFS, err := fs.Sub(webAssets, staticFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fileServer := http.FileServer(http.FS(staticFS))
 
-	// Create root router with Gorilla Mux
-	r := mux.NewRouter()
-
-	apiRouter := r.PathPrefix("/api").Subrouter()
-	if apiRegister != nil {
-		apiRegister.Register(apiRouter)
-	}
-
-	// Static files catch-all (after API subrouter for priority)
 	r.PathPrefix("/").Handler(fileServer)
 
 	srv := &http.Server{
-		Addr:    ":8080", // Binds to all interfaces (0.0.0.0:8080)
+		Addr:    ":8080",
 		Handler: r,
 	}
 
@@ -95,7 +131,6 @@ func startServer(apiRegister *app.Register) *http.Server {
 		}
 	}()
 
-	// Detect local IP for network access logging
 	localIP := getLocalIP()
 	log.Printf("Server started on http://0.0.0.0:8080")
 	log.Printf("Local access: http://localhost:8080")
@@ -108,7 +143,6 @@ func startServer(apiRegister *app.Register) *http.Server {
 	return srv
 }
 
-// getLocalIP returns the non-loopback IPv4 address of the machine
 func getLocalIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

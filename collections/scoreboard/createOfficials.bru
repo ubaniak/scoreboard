@@ -1,0 +1,18 @@
+meta {
+  name: createOfficials
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/api/cards
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "foo",
+    "date": "2020-01-01"
+  }
+}

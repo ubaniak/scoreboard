@@ -1,0 +1,56 @@
+/* src/index.css or src/global.css */
+
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
+
+/* 1. Make html and body truly full-screen */
+html,
+body,
+#root {
+  /* React apps usually have a div#root */
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. Default light-gray background for the whole app */
+body {
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* better on mobile (ignores browser UI) */
+  background-color: #f5f5f5; /* light gray – MUI gray[100] */
+  color: #000000; /* regular text = black */
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 3. Gold highlight class */
+.text-gold,
+.gold {
+  color: #fbbf24 !important; /* yellow-500 = rich gold */
+  font-weight: 600 !important;
+}
+
+/* Optional warmer/brighter gold */
+/*
+.text-gold { color: #fcd34d !important; }  /* yellow-400 */
+*/
+
+/* 4. Full-page dark gray (gray-600) when you need it */
+.bg-gray-600 {
+  background-color: #374151 !important; /* gray-600 */
+  color: #000000 !important;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+/* 5. Utility: easy full-screen flex centering (very common) */
+.full-screen-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}

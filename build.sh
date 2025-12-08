@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-cd frontend && npm run build && cd ..
-rm -rf cmd/frontend/out
+cd frontend && rm -rf dist && npm run build && cd ..
+rm -rf cmd/frontend/dist
 mkdir -p cmd/frontend
-cp -r frontend/out cmd/frontend/out
+cp -r frontend/dist cmd/frontend/dist
 go build -o scoreboard ./cmd
