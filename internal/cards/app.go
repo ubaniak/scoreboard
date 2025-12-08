@@ -34,9 +34,9 @@ func NewApp(useCase UseCase) *App {
 // }
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	rb.AddRoute("create.cards", "/cards", "POST", h.CreateCard, "admin")
-	rb.AddRoute("list.cards", "/cards", "GET", h.GetCards, "admin")
-	rb.AddRoute("get.card", "/cards/{id}", "GET", h.GetCards, "admin")
+	rb.AddRoute("create.cards", "/cards", "POST", h.CreateCard, rbac.Admin)
+	rb.AddRoute("list.cards", "/cards", "GET", h.GetCards, rbac.Admin)
+	rb.AddRoute("get.card", "/cards/{id}", "GET", h.GetCards, rbac.Admin)
 }
 
 type CreateCardRequest struct {

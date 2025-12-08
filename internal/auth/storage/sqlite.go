@@ -32,7 +32,7 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 	return &Sqlite{db: db}, nil
 }
 
-func (s *Sqlite) Save(profile entities.Profile) error {
+func (s *Sqlite) Save(profile *entities.Profile) error {
 	p := Profile{
 		ID:         uint(profile.ID),
 		Role:       profile.Role,
@@ -45,17 +45,17 @@ func (s *Sqlite) Save(profile entities.Profile) error {
 	return s.db.Save(&p).Error
 }
 
-func (s *Sqlite) Get(role string) (entities.Profile, error) {
+func (s *Sqlite) Get(role string) (*entities.Profile, error) {
 	var profile Profile
 	err := s.db.Where("role = ?", role).First(&profile).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entities.Profile{}, sberrs.ErrRecordNotFound
+			return &entities.Profile{}, sberrs.ErrRecordNotFound
 		}
-		return entities.Profile{}, err
+		return &entities.Profile{}, err
 	}
 
-	return entities.Profile{
+	return &entities.Profile{
 		ID:         uint(profile.ID),
 		Role:       profile.Role,
 		Limit:      profile.Limit,

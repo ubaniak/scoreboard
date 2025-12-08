@@ -9,8 +9,8 @@ import (
 
 //go:generate mockgen -source=storage.go -destination=./mocks/mock_storage.go -package=mocks
 type Storage interface {
-	Save(entities.Profile) error
-	Get(role string) (entities.Profile, error)
+	Save(*entities.Profile) error
+	Get(role string) (*entities.Profile, error)
 	GetByToken(jwtToken string) (*entities.Profile, error)
 }
 

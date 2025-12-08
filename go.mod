@@ -3,13 +3,13 @@ module github.com/ubaniak/scoreboard
 go 1.25.3
 
 require (
-	github.com/casbin/casbin/v2 v2.134.0
 	github.com/getlantern/systray v1.2.2
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/gorilla/mux v1.8.1
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
 	go.uber.org/mock v0.6.0
+	golang.design/x/clipboard v0.7.1
 	golang.org/x/crypto v0.45.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
@@ -17,18 +17,14 @@ require (
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
-	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.design/x/clipboard v0.7.1 // indirect
 	golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476 // indirect
 	golang.org/x/image v0.28.0 // indirect
 	golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f // indirect

@@ -7,7 +7,6 @@ import (
 
 	"github.com/ubaniak/scoreboard/internal/auth/entities"
 	"github.com/ubaniak/scoreboard/internal/auth/utils"
-	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 const CodeLength = 5
@@ -17,7 +16,7 @@ type UseCase interface {
 	Login(role, registrationCode string) (string, error)
 	InvalidateRole(role string) (string, error)
 	GetProfile(jwtToken string) (*entities.Profile, error)
-	SetAdmin() (string, error)
+	Get(role string) (*entities.Profile, error)
 }
 
 type useCase struct {
@@ -39,7 +38,7 @@ func (uc *useCase) Register(role string, limit int) (string, error) {
 		return "", err
 	}
 
-	profile := entities.Profile{
+	profile := &entities.Profile{
 		Role:       role,
 		Limit:      limit,
 		HashedCode: string(hashed),
@@ -120,19 +119,6 @@ func (uc *useCase) GetProfile(jwtToken string) (*entities.Profile, error) {
 	return profile, nil
 }
 
-func (uc *useCase) SetAdmin() (string, error) {
-
-	_, err := uc.storage.Get("admin")
-	if err != nil {
-		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			code, err := uc.Register("admin", 1)
-			if err != nil {
-				return "", err
-			}
-			return code, nil
-		}
-		return "", nil
-	}
-
-	return uc.InvalidateRole("admin")
+func (uc *useCase) Get(role string) (*entities.Profile, error) {
+	return uc.storage.Get(role)
 }

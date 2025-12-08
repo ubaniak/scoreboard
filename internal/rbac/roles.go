@@ -2,6 +2,20 @@ package rbac
 
 import "slices"
 
+const (
+	Admin  = "admin"
+	Judge  = "judge"
+	Judge1 = "judge1"
+	Judge2 = "judge2"
+	Judge3 = "judge3"
+	Judge4 = "judge4"
+	Judge5 = "judge5"
+)
+
+var JudgeList = []string{
+	Judge1, Judge2, Judge3, Judge4, Judge5,
+}
+
 type Role struct {
 	roles map[string][]string
 }

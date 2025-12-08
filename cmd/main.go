@@ -22,6 +22,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/cards"
+	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -53,9 +54,12 @@ func main() {
 	authUseCase := auth.NewUseCase(authStorage, "my_secret_sign_key")
 
 	roles := rbac.NewRole()
-	roles.AddRole("admin")
-	roles.AddRole("judge")
-	roles.Inherits("admin", "judge")
+	roles.AddRole(rbac.Admin)
+	roles.AddRole(rbac.Judge)
+	for _, judge := range rbac.JudgeList {
+		roles.AddRole(judge)
+	}
+	roles.Inherits(rbac.Admin, rbac.JudgeList...)
 
 	rbacSrv := rbac.NewRbacService(roles, authUseCase)
 
@@ -63,7 +67,13 @@ func main() {
 	rb := rbac.NewRouteBuilder(apiRouter, rbacSrv)
 
 	healthCheckApp := healthcheck.NewHealthCheck()
+	// -- login
 	loginApp := login.NewApp(authUseCase)
+
+	// -- devices
+	deviceUseCase := devices.NewUseCase(authUseCase)
+	deviceApp := devices.NewApp(deviceUseCase)
+	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)
 	if err != nil {
 		panic(err)
@@ -74,6 +84,7 @@ func main() {
 	apiRegister.Add(healthCheckApp)
 	apiRegister.Add(loginApp)
 	apiRegister.Add(cardApp)
+	apiRegister.Add(deviceApp)
 
 	apiRegister.Register(rb)
 
@@ -104,7 +115,7 @@ func main() {
 					log.Printf("Failed to open browser: %v", err)
 				}
 			case <-mAdmin.ClickedCh:
-				utils.RegisterAdmin(authUseCase)
+				utils.RegisterAdmin(deviceUseCase)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return

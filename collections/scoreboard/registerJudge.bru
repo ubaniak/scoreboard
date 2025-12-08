@@ -1,0 +1,22 @@
+meta {
+  name: registerJudge
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://localhost:8080/api/devices/register/5
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjU0NTcwMjgsInJvbGUiOiJhZG1pbiJ9.DhiNIICLcf45oydcT_8R8Tcu0_P9eMuHab86O9aOANM
+}
+
+body:json {
+  {
+    "role": "admin",
+    "code": "49824"
+  }
+}

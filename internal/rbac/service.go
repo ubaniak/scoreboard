@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
@@ -45,7 +46,8 @@ func (s *RbacService) JWTMiddleware(roles ...string) func(http.Handler) http.Han
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), roleKey, profile.Role)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

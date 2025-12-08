@@ -1,0 +1,22 @@
+meta {
+  name: testJudge
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://localhost:8080/api/devices/judge
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjU0NTkxMDcsInJvbGUiOiJqdWRnZTUifQ.QxNsPFdYDwSk--JF3i_iqcFo-tPe8zr890d0sgdwNVY
+}
+
+body:json {
+  {
+    "role": "admin",
+    "code": "49824"
+  }
+}

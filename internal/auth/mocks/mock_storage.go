@@ -41,10 +41,10 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockStorage) Get(role string) (entities.Profile, error) {
+func (m *MockStorage) Get(role string) (*entities.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", role)
-	ret0, _ := ret[0].(entities.Profile)
+	ret0, _ := ret[0].(*entities.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -71,7 +71,7 @@ func (mr *MockStorageMockRecorder) GetByToken(jwtToken any) *gomock.Call {
 }
 
 // Save mocks base method.
-func (m *MockStorage) Save(arg0 entities.Profile) error {
+func (m *MockStorage) Save(arg0 *entities.Profile) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Save", arg0)
 	ret0, _ := ret[0].(error)

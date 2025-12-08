@@ -1,6 +1,8 @@
 package cards
 
-import "github.com/ubaniak/scoreboard/internal/cards/entities"
+import (
+	"github.com/ubaniak/scoreboard/internal/cards/entities"
+)
 
 type UseCase interface {
 	Create(name, date string) error

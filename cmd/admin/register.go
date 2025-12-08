@@ -3,11 +3,11 @@ package utils
 import (
 	"golang.design/x/clipboard"
 
-	"github.com/ubaniak/scoreboard/internal/auth"
+	"github.com/ubaniak/scoreboard/internal/devices"
 )
 
-func RegisterAdmin(authUseCase auth.UseCase) {
-	val, err := authUseCase.SetAdmin()
+func RegisterAdmin(useCase devices.UseCase) {
+	val, err := useCase.RegisterAdmin()
 
 	if err != nil {
 		panic(err)

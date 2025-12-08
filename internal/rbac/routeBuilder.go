@@ -63,5 +63,6 @@ func (rb *RouteBuilder) AddSubroute(sr string) *RouteBuilder {
 		pathPrefix: p,
 		labels:     rb.labels,
 		route:      r,
+		rbacSrv:    rb.rbacSrv,
 	}
 }
