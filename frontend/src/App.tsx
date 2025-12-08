@@ -1,18 +1,21 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NotificationProvider } from "./providers/notification";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createRootRoute,
   createRoute,
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { HomePage } from "./pages/home";
+import "./App.css";
 import { CardPage } from "./pages/card";
+import { HomePage } from "./pages/home";
 import { JudgePage } from "./pages/judge";
 import { SupervisorPage } from "./pages/supervisor";
-import "./App.css";
+import { NotificationProvider } from "./providers/notification";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { AppLayout } from "./layouts/app";
+import { LoginPage } from "./pages/login";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -36,6 +39,11 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({
     getParentRoute: () => rootRoute,
+    path: "/login",
+    component: LoginPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
     path: "/card/$cardId",
     component: CardPage,
   }),
@@ -52,10 +60,6 @@ const routeTree = rootRoute.addChildren([
 ]);
 
 const router = createRouter({ routeTree });
-// theme.ts
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { AppLayout } from "./layouts/app";
-import { LoginProvider } from "./providers/login";
 
 const theme = createTheme({
   palette: {
@@ -77,17 +81,15 @@ function App() {
   const queryClient = makeQueryClient();
   return (
     <>
-      <LoginProvider>
-        <ThemeProvider theme={theme}>
-          <NotificationProvider>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
-              </QueryClientProvider>
-            </LocalizationProvider>
-          </NotificationProvider>
-        </ThemeProvider>
-      </LoginProvider>
+      <ThemeProvider theme={theme}>
+        <NotificationProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <QueryClientProvider client={queryClient}>
+              <RouterProvider router={router}></RouterProvider>
+            </QueryClientProvider>
+          </LocalizationProvider>
+        </NotificationProvider>
+      </ThemeProvider>
     </>
   );
 }

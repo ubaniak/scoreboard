@@ -12,11 +12,16 @@ const cardKeys = {
   officials: (id: string) => [...cardKeys.all, `officials-${id}`] as const,
 };
 
-export const useGetById = (id: string) => {
+export const useGetById = (id: string, token: string) => {
   return useQuery({
     queryKey: [id],
     queryFn: async () => {
-      const response = await fetch(`${baseUrl}/api/cards/${id}`);
+      const response = await fetch(`${baseUrl}/api/cards/${id}`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -25,15 +30,20 @@ export const useGetById = (id: string) => {
   });
 };
 
-export const useGetCards = () => {
+export const useGetCards = (token: string) => {
   return useQuery({
     queryKey: cardKeys.list(),
-    queryFn: getCards,
+    queryFn: () => getCards(token),
   });
 };
 
-export const getCards = async () => {
-  const response = await fetch(`${baseUrl}/api/cards`);
+export const getCards = async (token: string) => {
+  const response = await fetch(`${baseUrl}/api/cards`, {
+    headers: {
+      "Content-type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error("Network response was not ok");
   }

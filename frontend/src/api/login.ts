@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { Login } from "../entities/login";
+import { ParseSuccessResponse } from "./types";
 
 export const useMutateLogin = () => {
   const queryClient = useQueryClient();
@@ -23,8 +24,9 @@ const loginFn = async (role: string, code: string) => {
       code,
     }),
   });
+  console.log(response);
   if (response.status !== 200) {
     throw new Error("Failed to create card");
   }
-  console.log(response.json);
+  return ParseSuccessResponse<string>(response);
 };

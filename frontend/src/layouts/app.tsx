@@ -1,5 +1,6 @@
 import { Box, Container } from "@mui/material";
 import { Outlet } from "@tanstack/react-router";
+import { LoginProvider } from "../providers/login";
 
 export const AppLayout = () => {
   return (
@@ -27,7 +28,9 @@ export const AppLayout = () => {
         }}
       >
         <Container>
-          <Outlet />
+          <LoginProvider>
+            <Outlet />
+          </LoginProvider>
         </Container>
       </Box>
     </Box>

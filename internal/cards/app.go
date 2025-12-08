@@ -9,6 +9,7 @@ import (
 
 	"github.com/ubaniak/scoreboard/internal/cards/entities"
 	"github.com/ubaniak/scoreboard/internal/presenters"
+	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
 type App struct {
@@ -19,17 +20,23 @@ func NewApp(useCase UseCase) *App {
 	return &App{useCase: useCase}
 }
 
-func (h *App) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/cards", h.CreateCard).Methods("POST")
-	router.HandleFunc("/cards", h.GetCards).Methods("GET")
-	router.HandleFunc("/cards/{id}", h.GetById).Methods("GET")
+// func (h *App) RegisterRoutes(router *mux.Router) {
+// 	router.HandleFunc("/cards", h.CreateCard).Methods("POST")
+// 	router.HandleFunc("/cards", h.GetCards).Methods("GET")
+// 	router.HandleFunc("/cards/{id}", h.GetById).Methods("GET")
 
-	router.HandleFunc("/cards/{id}/settings", h.UpdateSettings).Methods("PUT")
+// 	router.HandleFunc("/cards/{id}/settings", h.UpdateSettings).Methods("PUT")
 
-	router.HandleFunc("/cards/{id}/officials", h.AddOfficial).Methods("POST")
-	router.HandleFunc("/cards/{id}/officials", h.UpdateOfficial).Methods("PUT")
-	router.HandleFunc("/cards/{id}/officials", h.GetOfficials).Methods("GET")
-	router.HandleFunc("/cards/{id}/officials/{officialId}", h.DeleteOfficial).Methods("DELETE")
+// 	router.HandleFunc("/cards/{id}/officials", h.AddOfficial).Methods("POST")
+// 	router.HandleFunc("/cards/{id}/officials", h.UpdateOfficial).Methods("PUT")
+// 	router.HandleFunc("/cards/{id}/officials", h.GetOfficials).Methods("GET")
+// 	router.HandleFunc("/cards/{id}/officials/{officialId}", h.DeleteOfficial).Methods("DELETE")
+// }
+
+func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
+	rb.AddRoute("create.cards", "/cards", "POST", h.CreateCard, "admin")
+	rb.AddRoute("list.cards", "/cards", "GET", h.GetCards, "admin")
+	rb.AddRoute("get.card", "/cards/{id}", "GET", h.GetCards, "admin")
 }
 
 type CreateCardRequest struct {

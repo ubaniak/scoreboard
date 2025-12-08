@@ -6,10 +6,12 @@ import { CardTable } from "../components/cards/cardTable";
 import { CreateCardForm } from "../components/cards/createCard";
 import { Modal } from "../components/modal/modal";
 import { PageLayout } from "../layouts/page";
+import { useProfile } from "../providers/login";
 
 export const HomePage = () => {
+  const profile = useProfile();
   const [open, setOpen] = useState(false);
-  const { data: cards } = useGetCards();
+  const { data: cards } = useGetCards(profile.token);
 
   const createCardButton = () => {
     return (

@@ -21,6 +21,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/auth"
+	"github.com/ubaniak/scoreboard/internal/cards"
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -63,9 +64,16 @@ func main() {
 
 	healthCheckApp := healthcheck.NewHealthCheck()
 	loginApp := login.NewApp(authUseCase)
+	cardStorage, err := cards.NewCardStorage(db)
+	if err != nil {
+		panic(err)
+	}
+	cardUseCase := cards.NewUseCase(cardStorage)
+	cardApp := cards.NewApp(cardUseCase)
 
 	apiRegister.Add(healthCheckApp)
 	apiRegister.Add(loginApp)
+	apiRegister.Add(cardApp)
 
 	apiRegister.Register(rb)
 

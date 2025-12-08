@@ -1,8 +1,12 @@
-import React, { createContext, useContext } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import React, { createContext, useContext, useState } from "react";
 
 type LoginContextType = {
   role: string;
   token: string;
+  setRole: (role: string) => void;
+  setToken: (token: string) => void;
+  clear: () => void;
 };
 
 const LoginContext = createContext<LoginContextType | undefined>(undefined);
@@ -12,17 +16,33 @@ type Props = {
 };
 
 export const LoginProvider: React.FC<Props> = ({ children }) => {
-  const role = localStorage.getItem("role");
-  const token = localStorage.getItem("token");
-
-  if (role === null || token === null) {
-    return <>div</>;
-  }
+  const navigate = useNavigate();
+  const roleFromLocal = localStorage.getItem("role");
+  const tokenFromLocal = localStorage.getItem("token");
+  const [role, setRole] = useState(roleFromLocal);
+  const [token, setToken] = useState(tokenFromLocal);
 
   const values: LoginContextType = {
     role: role || "",
     token: token || "",
+    setRole: (role: string) => {
+      setRole(role);
+      localStorage.setItem("role", role);
+    },
+    setToken: (token: string) => {
+      setToken(token);
+      localStorage.setItem("token", token);
+    },
+    clear: () => {
+      localStorage.removeItem("role");
+      localStorage.removeItem("token");
+    },
   };
+
+  if (!role || !token) {
+    navigate({ to: "/login" });
+  }
+
   return (
     <LoginContext.Provider value={values}>{children}</LoginContext.Provider>
   );

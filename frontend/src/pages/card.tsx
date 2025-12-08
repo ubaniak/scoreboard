@@ -6,11 +6,12 @@ import { PageLayout } from "../layouts/page";
 import { TabPanel } from "../components/tabPanel/tabPanel";
 import { Devices } from "./card/devices";
 import { Settings } from "./card/settings";
+import { useProfile } from "../providers/login";
 
 export const CardPage = () => {
+  const profile = useProfile();
   const { cardId } = useParams({ from: "/card/$cardId" });
-
-  const { data: card, isLoading } = useGetById(cardId);
+  const { data: card, isLoading } = useGetById(cardId, profile.token);
 
   // const { mutateAsync: updateSettings } = useMutateUpdateSettings(cardId);
 
