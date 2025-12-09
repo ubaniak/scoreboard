@@ -1,0 +1,15 @@
+meta {
+  name: deleteBouts
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://localhost:8080/api/cards/1/officials/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

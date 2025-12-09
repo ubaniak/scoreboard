@@ -10,8 +10,3 @@ type Card struct {
 type Settings struct {
 	NumberOfJudges int
 }
-
-type Official struct {
-	ID   uint
-	Name string
-}

@@ -1,0 +1,22 @@
+meta {
+  name: updateBouts
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:8080/api/cards/1/bouts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "id": 1,
+    "redCornder": "foobaas222ådr"
+  }
+}

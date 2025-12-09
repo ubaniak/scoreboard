@@ -1,18 +1,21 @@
 meta {
-  name: createOfficials
+  name: createCards
   type: http
-  seq: 4
+  seq: 3
 }
 
 post {
   url: http://localhost:8080/api/cards
   body: json
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {
   {
-    "name": "foo",
-    "date": "2020-01-01"
+    "name": "foo"
   }
 }

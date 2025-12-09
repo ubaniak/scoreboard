@@ -21,9 +21,11 @@ import (
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/auth"
+	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards"
 	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/login"
+	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
@@ -73,13 +75,32 @@ func main() {
 	// -- devices
 	deviceUseCase := devices.NewUseCase(authUseCase)
 	deviceApp := devices.NewApp(deviceUseCase)
+	// -- officials
+
+	officialStorage, err := officials.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+
+	officialUsecCase := officials.NewUseCase(officialStorage)
+	officialApp := officials.NewApp(officialUsecCase)
+
+	// -- bouts
+
+	boutStorage, err := bouts.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	boutsUseCase := bouts.NewUseCase(boutStorage)
+	boutsApp := bouts.NewApp(boutsUseCase)
+
 	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)
 	if err != nil {
 		panic(err)
 	}
 	cardUseCase := cards.NewUseCase(cardStorage)
-	cardApp := cards.NewApp(cardUseCase)
+	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
 
 	apiRegister.Add(healthCheckApp)
 	apiRegister.Add(loginApp)

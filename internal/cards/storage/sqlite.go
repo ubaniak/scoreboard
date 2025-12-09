@@ -11,7 +11,7 @@ type Sqlite struct {
 }
 
 func NewSqlite(db *gorm.DB) (*Sqlite, error) {
-	if err := db.AutoMigrate(&Card{}, &Settings{}, &Official{}); err != nil {
+	if err := db.AutoMigrate(&Card{}, &Settings{}); err != nil {
 		return nil, err
 	}
 
@@ -80,53 +80,53 @@ func (s *Sqlite) UpdateSettings(id uint, settings *entities.Settings) error {
 	return nil
 }
 
-func (s *Sqlite) AddOfficial(id uint, name string) error {
-	official := &Official{
-		CardID: id,
-		Name:   name,
-	}
+// func (s *Sqlite) AddOfficial(id uint, name string) error {
+// 	official := &Official{
+// 		CardID: id,
+// 		Name:   name,
+// 	}
 
-	if err := s.db.Create(official).Error; err != nil {
-		return err
-	}
+// 	if err := s.db.Create(official).Error; err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (s *Sqlite) GetOfficials(id uint) ([]entities.Official, error) {
-	var officials []Official
-	if err := s.db.Where("card_id = ?", id).Find(&officials).Error; err != nil {
-		return nil, err
-	}
+// func (s *Sqlite) GetOfficials(id uint) ([]entities.Official, error) {
+// 	var officials []Official
+// 	if err := s.db.Where("card_id = ?", id).Find(&officials).Error; err != nil {
+// 		return nil, err
+// 	}
 
-	var result []entities.Official
-	for _, o := range officials {
-		result = append(result, entities.Official{
-			ID:   o.ID,
-			Name: o.Name,
-		})
-	}
-	return result, nil
-}
+// 	var result []entities.Official
+// 	for _, o := range officials {
+// 		result = append(result, entities.Official{
+// 			ID:   o.ID,
+// 			Name: o.Name,
+// 		})
+// 	}
+// 	return result, nil
+// }
 
-func (s *Sqlite) DeleteOfficial(cardId, officialId uint) error {
-	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).Delete(&Official{}).Error; err != nil {
-		return err
-	}
-	return nil
-}
+// func (s *Sqlite) DeleteOfficial(cardId, officialId uint) error {
+// 	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).Delete(&Official{}).Error; err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
-func (s *Sqlite) UpdateOfficial(cardId, officialId uint, name string) error {
-	var official Official
-	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).First(&official).Error; err != nil {
-		return err
-	}
+// func (s *Sqlite) UpdateOfficial(cardId, officialId uint, name string) error {
+// 	var official Official
+// 	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).First(&official).Error; err != nil {
+// 		return err
+// 	}
 
-	official.Name = name
+// 	official.Name = name
 
-	if err := s.db.Save(&official).Error; err != nil {
-		return err
-	}
+// 	if err := s.db.Save(&official).Error; err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

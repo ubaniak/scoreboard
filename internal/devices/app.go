@@ -22,7 +22,8 @@ func NewApp(useCase UseCase) *App {
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("devices")
-	sr.AddRoute("register.judge", "/register/{id}", http.MethodGet, h.Register, rbac.Admin)
+	sr.AddRoute("register.judge", "/register/judge{id}", http.MethodGet, h.Register, rbac.Admin)
+	sr.AddRoute("healthcheck", "/healthcheck", http.MethodGet, h.TestJudge, rbac.Judge)
 	sr.AddRoute("test", "/judge", http.MethodGet, h.TestJudge, rbac.JudgeList...)
 	sr.AddRoute("test", "/admin", http.MethodGet, h.TestAdmin, rbac.Admin)
 	sr.AddRoute("test", "/sb", http.MethodGet, h.TestScoreboard)

@@ -12,10 +12,6 @@ type Storage interface {
 	Get() ([]entities.Card, error)
 	GetByID(id uint) (*entities.Card, error)
 	UpdateSettings(id uint, settings *entities.Settings) error
-	AddOfficial(id uint, name string) error
-	GetOfficials(id uint) ([]entities.Official, error)
-	DeleteOfficial(cardId, officialId uint) error
-	UpdateOfficial(cardId, officialId uint, name string) error
 }
 
 func NewCardStorage(db *gorm.DB) (Storage, error) {

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { Login } from "../entities/login";
-import { ParseSuccessResponse } from "./types";
+import { fetchClient } from "./handlers";
 
 export const useMutateLogin = () => {
   const queryClient = useQueryClient();
@@ -14,7 +14,7 @@ export const useMutateLogin = () => {
 };
 
 const loginFn = async (role: string, code: string) => {
-  const response = await fetch(`${baseUrl}/api/login`, {
+  return fetchClient<string>(`${baseUrl}/api/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -24,9 +24,4 @@ const loginFn = async (role: string, code: string) => {
       code,
     }),
   });
-  console.log(response);
-  if (response.status !== 200) {
-    throw new Error("Failed to create card");
-  }
-  return ParseSuccessResponse<string>(response);
 };

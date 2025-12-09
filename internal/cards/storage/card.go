@@ -6,12 +6,12 @@ import (
 
 type Card struct {
 	gorm.Model
-	Name        string     `gorm:"not null"`
-	Description string     `gorm:"not null"`
-	Date        string     `gorm:"not null"`
-	Officials   []Official `gorm:"foreignKey:CardID"`
-	Bouts       []Bout     `gorm:"foreignKey:CardID"`
-	Settings    *Settings  `gorm:"foreignKey:CardID"`
+	Name        string `gorm:"not null"`
+	Description string `gorm:"not null"`
+	Date        string `gorm:"not null"`
+	// Officials   []Official `gorm:"foreignKey:CardID"`
+	Bouts    []Bout    `gorm:"foreignKey:CardID"`
+	Settings *Settings `gorm:"foreignKey:CardID"`
 }
 
 func (c *Card) AfterCreate(tx *gorm.DB) (err error) {

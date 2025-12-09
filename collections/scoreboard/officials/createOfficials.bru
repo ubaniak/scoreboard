@@ -1,0 +1,21 @@
+meta {
+  name: createOfficials
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/api/cards/1/officials
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "fooeeee"
+  }
+}

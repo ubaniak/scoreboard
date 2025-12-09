@@ -1,0 +1,15 @@
+meta {
+  name: getBouts
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/api/cards/1/bouts
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

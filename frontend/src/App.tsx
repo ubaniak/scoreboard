@@ -1,3 +1,4 @@
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,19 +9,19 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import "./App.css";
+import { AppLayout } from "./layouts/app";
 import { CardPage } from "./pages/card";
 import { HomePage } from "./pages/home";
 import { JudgePage } from "./pages/judge";
+import { LoginPage } from "./pages/login";
 import { SupervisorPage } from "./pages/supervisor";
 import { NotificationProvider } from "./providers/notification";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { AppLayout } from "./layouts/app";
-import { LoginPage } from "./pages/login";
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
+        retry: true,
         staleTime: 60 * 1000,
       },
     },

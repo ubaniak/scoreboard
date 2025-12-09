@@ -1,0 +1,22 @@
+meta {
+  name: updateOfficials
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:8080/api/cards/1/officials
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "id": 1,
+    "name": "foobaas222ådr"
+  }
+}

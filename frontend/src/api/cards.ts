@@ -1,8 +1,8 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Card, type Official } from "../entities/cards";
+import { type Official } from "../entities/cards";
 import { baseUrl } from "./constants";
-import { ParseSuccessResponse } from "./types";
+import { fetchClient } from "./handlers";
 
 const cardKeys = {
   all: ["cards"] as const,
@@ -16,16 +16,12 @@ export const useGetById = (id: string, token: string) => {
   return useQuery({
     queryKey: [id],
     queryFn: async () => {
-      const response = await fetch(`${baseUrl}/api/cards/${id}`, {
+      return fetchClient(`${baseUrl}/api/cards/${id}`, {
         headers: {
           "Content-type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return ParseSuccessResponse<Card>(response);
     },
   });
 };
@@ -38,16 +34,12 @@ export const useGetCards = (token: string) => {
 };
 
 export const getCards = async (token: string) => {
-  const response = await fetch(`${baseUrl}/api/cards`, {
+  return fetchClient(`${baseUrl}/api/cards`, {
     headers: {
       "Content-type": "application/json",
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  return ParseSuccessResponse<Card[]>(response);
 };
 
 export const useMutateCards = () => {
@@ -61,16 +53,13 @@ export const useMutateCards = () => {
 };
 
 const createCard = async (newCard: { name: string; date: string }) => {
-  const response = await fetch(`${baseUrl}/api/cards`, {
+  return fetchClient(`${baseUrl}/api/cards`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(newCard),
   });
-  if (response.status !== 201) {
-    throw new Error("Failed to create card");
-  }
 };
 
 export const useMutateUpdateSettings = (cardId: string) => {
@@ -91,16 +80,13 @@ export type updateSettingsProps = {
 };
 
 const updateSettings = async ({ cardId, settings }: updateSettingsProps) => {
-  const response = await fetch(`${baseUrl}/api/cards/${cardId}/settings`, {
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/settings`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(settings),
   });
-  if (response.status !== 200) {
-    throw new Error("Failed to create card");
-  }
 };
 
 export const useGetOfficials = (cardId: string) => {
@@ -111,11 +97,7 @@ export const useGetOfficials = (cardId: string) => {
 };
 
 export const getOfficials = async (cardId: string) => {
-  const response = await fetch(`${baseUrl}/api/cards/${cardId}/officials`);
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  return ParseSuccessResponse<Official[]>(response);
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials`);
 };
 
 export const useMutateOfficial = (cardId: string) => {
@@ -129,16 +111,13 @@ export const useMutateOfficial = (cardId: string) => {
 };
 
 const createOfficial = async (cardId: string, official: Official) => {
-  const response = await fetch(`${baseUrl}/api/cards/${cardId}/officials`, {
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(official),
   });
-  if (response.status !== 201) {
-    throw new Error("Failed to create card");
-  }
 };
 
 export const useMutateDeleteOfficial = (cardId: string) => {
@@ -152,18 +131,12 @@ export const useMutateDeleteOfficial = (cardId: string) => {
 };
 
 const deleteOfficial = async (cardId: string, officialId: string) => {
-  const response = await fetch(
-    `${baseUrl}/api/cards/${cardId}/officials/${officialId}`,
-    {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  if (response.status !== 200) {
-    throw new Error("Failed to create card");
-  }
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials/${officialId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 };
 
 export const useMutateUpdateOfficial = (cardId: string) => {
@@ -177,14 +150,11 @@ export const useMutateUpdateOfficial = (cardId: string) => {
 };
 
 const updateOfficial = async (cardId: string, official: Official) => {
-  const response = await fetch(`${baseUrl}/api/cards/${cardId}/officials`, {
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(official),
   });
-  if (response.status !== 200) {
-    throw new Error("Failed to create card");
-  }
 };

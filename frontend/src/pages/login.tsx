@@ -30,8 +30,8 @@ export const LoginPage = () => {
             if (values.role === "admin") {
               navigate({ to: "/" });
             }
-            if (values.role === "judge") {
-              navigate({ to: "/judge" });
+            if (values.role.startsWith("judge")) {
+              navigate({ to: "judge" });
             }
             if (values.role === "scoreboard") {
               navigate({ to: "/scoreboard" });
@@ -49,7 +49,14 @@ export const LoginPage = () => {
             <FormikSelect
               name="role"
               label="Role"
-              options={["admin", "judge", "scoreboard"]}
+              options={[
+                "admin",
+                "judge1",
+                "judge2",
+                "judge3",
+                "judge4",
+                "judge5",
+              ]}
             />
             <FormikInput name="code" label="Code"></FormikInput>
             <Button variant="contained" color="primary" type="submit">
