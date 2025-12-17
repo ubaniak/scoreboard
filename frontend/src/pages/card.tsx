@@ -1,24 +1,26 @@
-import { Box, Tab, Tabs } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
-import React from "react";
-import { useGetById } from "../api/cards";
+import { Flex, Typography } from "antd";
+import { useGetCardById } from "../api/cards";
+import { BoutIndex } from "../components/bouts";
+import { DeviceIndex } from "../components/devices";
+import { OfficialIndex } from "../components/officials";
+import { Status } from "../components/status/status";
 import { PageLayout } from "../layouts/page";
-import { TabPanel } from "../components/tabPanel/tabPanel";
-import { Devices } from "./card/devices";
-import { Settings } from "./card/settings";
 import { useProfile } from "../providers/login";
+
+const SubHeading = (props: { date?: string; status?: string }) => {
+  return (
+    <Flex gap="middle" orientation="vertical">
+      <Typography.Title level={5}>Date: {props.date}</Typography.Title>
+      <Status text={props.status || "unknown"} />
+    </Flex>
+  );
+};
 
 export const CardPage = () => {
   const profile = useProfile();
   const { cardId } = useParams({ from: "/card/$cardId" });
-  const { data: card, isLoading } = useGetById(cardId, profile.token);
-
-  // const { mutateAsync: updateSettings } = useMutateUpdateSettings(cardId);
-
-  const [value, setValue] = React.useState(0);
-  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
+  const { data: card, isLoading } = useGetCardById(cardId, profile.token);
 
   if (isLoading) {
     return <>loading</>;
@@ -27,24 +29,18 @@ export const CardPage = () => {
   return (
     <PageLayout
       title={`Card: ${card?.data.name}`}
-      subheading={`Date: ${card?.data.date}`}
+      subheading={
+        <SubHeading date={card?.data.date} status={card?.data.status} />
+      }
     >
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          aria-label="basic tabs example"
-        >
-          <Tab label="Devices" />
-          <Tab label="Settings" />
-        </Tabs>
-      </Box>
-      <TabPanel value={value} index={0}>
-        <Devices card={card?.data} />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <Settings card={card?.data} />
-      </TabPanel>
+      <Flex vertical={true}>
+        <OfficialIndex cardId={card?.data.id || ""} />
+        <BoutIndex cardId={card?.data.id || ""} />
+        <DeviceIndex
+          cardId={card?.data.id || ""}
+          numberOfJudges={card?.data.numberOfJudges || 0}
+        />
+      </Flex>
     </PageLayout>
   );
 };

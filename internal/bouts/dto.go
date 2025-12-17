@@ -66,10 +66,10 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 	}
 }
 
-type GetResponse struct {
+type GetBoutResponse struct {
 	ID                 uint    `json:"id"`
 	BoutNumber         int     `json:"boutNumber"`
-	RedCorner          string  `json:"redCornder"`
+	RedCorner          string  `json:"redCorner"`
 	BlueCorner         string  `json:"blueCorner"`
 	Gender             string  `json:"gender"`
 	WeightClass        int     `json:"weightClass"`
@@ -82,8 +82,8 @@ type GetResponse struct {
 	Status             string  `json:"status"`
 }
 
-func EntityToGetBoutResponse(entity *entities.Bout) *GetResponse {
-	return &GetResponse{
+func EntityToGetBoutResponse(entity *entities.Bout) *GetBoutResponse {
+	return &GetBoutResponse{
 		ID:                 entity.ID,
 		BoutNumber:         entity.BoutNumber,
 		RedCorner:          entity.RedCorner,
@@ -101,44 +101,50 @@ func EntityToGetBoutResponse(entity *entities.Bout) *GetResponse {
 }
 
 type UpdateRequest struct {
-	ID                 uint    `json:"id"`
-	BoutNumber         int     `json:"boutNumber"`
-	RedCorner          string  `json:"redCornder"`
-	BlueCorner         string  `json:"blueCorner"`
-	Gender             string  `json:"gender"`
-	WeightClass        int     `json:"weightClass"`
-	GloveSize          string  `json:"gloveSize"`
-	RoundLength        float64 `json:"roundLength"`
-	AgeCategory        string  `json:"ageCategory"`
-	Experience         string  `json:"experience"`
-	RedCornerImageUrl  string  `json:"redCornerImageUrl"`
-	BlueCornerImageUrl string  `json:"blueCornerImageUrl"`
-	Status             string  `json:"status"`
+	BoutNumber  *int     `json:"boutNumber"`
+	RedCorner   *string  `json:"redCorner"`
+	BlueCorner  *string  `json:"blueCorner"`
+	Gender      *string  `json:"gender"`
+	WeightClass *int     `json:"weightClass"`
+	GloveSize   *string  `json:"gloveSize"`
+	RoundLength *float64 `json:"roundLength"`
+	AgeCategory *string  `json:"ageCategory"`
+	Experience  *string  `json:"experience"`
 }
 
-func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.Bout {
-	ageCategory := entities.AgeCategory(req.AgeCategory)
-	experience := entities.Experience(req.Experience)
-	gender := entities.Gender(req.Gender)
+func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout {
+	var ageCategory *entities.AgeCategory = nil
+	var experience *entities.Experience = nil
+	var gender *entities.Gender = nil
+	var roundLength *entities.RoundLength = nil
+	var gloveSize *entities.GloveSize = nil
 
-	roundLength := RoundLength(ageCategory, experience)
-	gloveSize := GloveSize(req.WeightClass, ageCategory, gender)
+	if req.AgeCategory != nil {
+		ageCategory = (*entities.AgeCategory)(req.AgeCategory)
+	}
+	if req.Experience != nil {
+		experience = (*entities.Experience)(req.Experience)
+	}
+	if req.Gender != nil {
+		gender = (*entities.Gender)(req.Gender)
+	}
+	if req.GloveSize != nil {
+		gloveSize = (*entities.GloveSize)(req.GloveSize)
+	}
+	if req.RoundLength != nil {
+		roundLength = (*entities.RoundLength)(req.RoundLength)
+	}
 
-	return &entities.Bout{
-		ID:                 req.ID,
-		CardID:             cardId,
-		BoutNumber:         req.BoutNumber,
-		RedCorner:          req.RedCorner,
-		BlueCorner:         req.BlueCorner,
-		Gender:             gender,
-		WeightClass:        req.WeightClass,
-		GloveSize:          gloveSize,
-		RoundLength:        roundLength,
-		AgeCategory:        ageCategory,
-		Experience:         experience,
-		RedCornerImageUrl:  req.RedCornerImageUrl,
-		BlueCornerImageUrl: req.BlueCornerImageUrl,
-		Status:             entities.BoutStatus(req.Status),
+	return &entities.UpdateBout{
+		BoutNumber:  req.BoutNumber,
+		RedCorner:   req.RedCorner,
+		BlueCorner:  req.BlueCorner,
+		Gender:      gender,
+		WeightClass: req.WeightClass,
+		GloveSize:   gloveSize,
+		RoundLength: roundLength,
+		AgeCategory: ageCategory,
+		Experience:  experience,
 	}
 
 }

@@ -50,9 +50,9 @@ func (s *Sqlite) Get(role string) (*entities.Profile, error) {
 	err := s.db.Where("role = ?", role).First(&profile).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &entities.Profile{}, sberrs.ErrRecordNotFound
+			return nil, sberrs.ErrRecordNotFound
 		}
-		return &entities.Profile{}, err
+		return nil, err
 	}
 
 	return &entities.Profile{

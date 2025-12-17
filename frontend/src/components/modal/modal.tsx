@@ -1,30 +1,31 @@
-import { Dialog, DialogTitle, DialogContent } from "@mui/material";
+import { Modal as AntModal, Button } from "antd";
+import { useState } from "react";
 
-export interface ModalProps {
-  open: boolean;
-  onClose: () => void;
-  header: string;
+export type ModalProps = {
+  title: string;
   children: React.ReactNode;
-}
+  buttonText: string;
+  actionOverride?: (setOpen: (state: boolean) => void) => React.ReactNode;
+};
 
 export const Modal = (props: ModalProps) => {
+  const [open, setOpen] = useState(false);
   return (
-    <Dialog
-      open={props.open}
-      onClose={props.onClose}
-      sx={{
-        bgcolor: "white",
-        "& .MuiDialog-paper": {
-          width: "700px",
-          height: "600px",
-          borderRadius: "12px",
-          maxWidth: "none",
-          maxHeight: "none",
-        },
-      }}
-    >
-      <DialogTitle>{props.header}</DialogTitle>
-      <DialogContent sx={{}}>{props.children}</DialogContent>
-    </Dialog>
+    <>
+      {props.actionOverride ? (
+        props.actionOverride(setOpen)
+      ) : (
+        <Button onClick={() => setOpen(true)}>{props.buttonText}</Button>
+      )}
+      <AntModal
+        title={props.title}
+        open={open}
+        onOk={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+        footer={null}
+      >
+        {props.children}
+      </AntModal>
+    </>
   );
 };

@@ -1,47 +1,33 @@
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import { Col, Divider, Flex, Row } from "antd";
+import { Typography } from "antd";
+
+const { Title } = Typography;
 
 export type PageLayoutProps = {
-  title: string;
-  subheading?: string;
+  title?: string;
+  subheading?: string | React.ReactNode;
   actions?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 export const PageLayout = (props: PageLayoutProps) => {
   return (
-    <Stack direction="column" spacing={2}>
-      <Stack
-        direction="row"
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Stack direction={"column"}>
-          <Typography variant="h3" component="h3">
-            {props.title}
-          </Typography>
-          {props.subheading && (
-            <Typography component="h6">{props.subheading}</Typography>
-          )}
-        </Stack>
-        {props.actions && props.actions}
-      </Stack>
-      <Divider
-        sx={{
-          height: 5,
-          background:
-            "linear-gradient(90deg, transparent, #fbbf24, transparent)",
-          my: 5,
-        }}
-      />
-      <Box
-        sx={{
-          p: 2,
-        }}
-      >
-        {props.children}
-      </Box>
-    </Stack>
+    <>
+      <Row>
+        <Col span={12}>
+          <Flex vertical={true}>
+            <Title style={{ margin: 0 }}>{props.title}</Title>
+            <Title level={5} style={{ margin: 0 }}>
+              {props.subheading}
+            </Title>
+          </Flex>
+        </Col>
+        <Col span={12}>{props.actions}</Col>
+      </Row>
+      <Divider />
+      <Row>
+        <Col span={24}>{props.children}</Col>
+      </Row>
+    </>
   );
 };

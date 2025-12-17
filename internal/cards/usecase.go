@@ -6,13 +6,10 @@ import (
 
 type UseCase interface {
 	Create(name, date string) error
-	Get() ([]entities.Card, error)
-	GetById(id uint) (*entities.Card, error)
-	UpdateSettings(id uint, settings *entities.Settings) error
-	// AddOfficial(id uint, name string) error
-	// GetOfficials(id uint) ([]entities.Official, error)
-	// DeleteOfficial(cardId, officialId uint) error
-	// UpdateOfficial(cardId, officialId uint, name string) error
+	Update(id uint, toUpdate *entities.UpdateCard) error
+	List() ([]entities.Card, error)
+	Delete(id uint) error
+	Get(id uint) (*entities.Card, error)
 }
 
 type useCase struct {
@@ -24,17 +21,27 @@ func NewUseCase(storage Storage) UseCase {
 }
 
 func (uc *useCase) Create(name, date string) error {
-	return uc.storage.Create(name, date)
+	card := &entities.Card{
+		Name:           name,
+		Date:           date,
+		Status:         entities.CardStatusUpComing,
+		NumberOfJudges: 5,
+	}
+	return uc.storage.Create(card)
 }
 
-func (uc *useCase) Get() ([]entities.Card, error) {
-	return uc.storage.Get()
+func (uc *useCase) Update(id uint, toUpdate *entities.UpdateCard) error {
+	return uc.storage.Update(id, toUpdate)
 }
 
-func (uc *useCase) GetById(id uint) (*entities.Card, error) {
-	return uc.storage.GetByID(id)
+func (uc *useCase) List() ([]entities.Card, error) {
+	return uc.storage.List()
 }
 
-func (uc *useCase) UpdateSettings(id uint, settings *entities.Settings) error {
-	return uc.storage.UpdateSettings(id, settings)
+func (uc *useCase) Get(id uint) (*entities.Card, error) {
+	return uc.storage.Get(id)
+}
+
+func (uc *useCase) Delete(id uint) error {
+	return uc.storage.Delete(id)
 }

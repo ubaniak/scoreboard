@@ -1,0 +1,24 @@
+meta {
+  name: updateCards
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:8080/api/cards/3
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+     "name": "faaaoo",
+     "date": "",
+    "status": "upcoming",
+    "numberOfJudges": 3
+  }
+}

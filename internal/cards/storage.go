@@ -8,10 +8,11 @@ import (
 )
 
 type Storage interface {
-	Create(name, date string) error
-	Get() ([]entities.Card, error)
-	GetByID(id uint) (*entities.Card, error)
-	UpdateSettings(id uint, settings *entities.Settings) error
+	Create(c *entities.Card) error
+	List() ([]entities.Card, error)
+	Delete(id uint) error
+	Update(id uint, toUpdate *entities.UpdateCard) error
+	Get(id uint) (*entities.Card, error)
 }
 
 func NewCardStorage(db *gorm.DB) (Storage, error) {

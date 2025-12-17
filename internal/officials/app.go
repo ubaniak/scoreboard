@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ubaniak/scoreboard/internal/officials/entities"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -22,8 +21,8 @@ func NewApp(useCase UseCase) *App {
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("official.create", "/{cardId}/officials", "POST", a.Create, rbac.Admin)
-	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.Get, rbac.Admin)
-	rb.AddRoute("official.update", "/{cardId}/officials", "PUT", a.Update, rbac.Admin)
+	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.List, rbac.Admin)
+	rb.AddRoute("official.update", "/{cardId}/officials/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("official.delete", "/{cardId}/officials/{id}", "DELETE", a.Delete, rbac.Admin)
 }
 
@@ -54,8 +53,13 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
-func (h *App) Get(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[[]entities.Official](r, w)
+type ListOfficialResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func (h *App) List(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[[]ListOfficialResponse](r, w)
 	vars := mux.Vars(r)
 	idStr := vars["cardId"]
 
@@ -67,8 +71,19 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	cardId := uint(parsed)
 
 	officials, err := h.useCase.Get(cardId)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	response := make([]ListOfficialResponse, len(officials))
+	for i, o := range officials {
+		response[i] = ListOfficialResponse{
+			ID:   o.ID,
+			Name: o.Name,
+		}
+	}
 
-	presenter.WithError(err).WithData(officials).Present()
+	presenter.WithData(response).Present()
 }
 
 type UpdateOfficialRequest struct {
@@ -79,9 +94,9 @@ type UpdateOfficialRequest struct {
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["cardId"]
+	CardidStr := vars["cardId"]
 
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	parsed, err := strconv.ParseUint(CardidStr, 10, 0)
 	if err != nil {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
@@ -95,7 +110,16 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.Update(cardId, req.ID, req.Name)
+	idStr := vars["id"]
+
+	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	id := uint(parsedId)
+
+	err = h.useCase.Update(cardId, id, req.Name)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 

@@ -1,0 +1,15 @@
+meta {
+  name: getStatus
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/api/devices/status
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

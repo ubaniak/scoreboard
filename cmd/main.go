@@ -27,6 +27,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	"github.com/ubaniak/scoreboard/internal/round"
 )
 
 //go:embed all:frontend
@@ -85,6 +86,15 @@ func main() {
 	officialUsecCase := officials.NewUseCase(officialStorage)
 	officialApp := officials.NewApp(officialUsecCase)
 
+	// -- rounds
+
+	roundStorage, err := round.NewStorage(db)
+	if err != nil {
+		panic(err)
+	}
+	roundUseCase := round.NewUseCase(roundStorage)
+	roundApp := round.NewApp(roundUseCase)
+
 	// -- bouts
 
 	boutStorage, err := bouts.NewSqlite(db)
@@ -92,7 +102,7 @@ func main() {
 		panic(err)
 	}
 	boutsUseCase := bouts.NewUseCase(boutStorage)
-	boutsApp := bouts.NewApp(boutsUseCase)
+	boutsApp := bouts.NewApp(boutsUseCase, roundApp)
 
 	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)
@@ -110,15 +120,6 @@ func main() {
 	apiRegister.Register(rb)
 
 	srv := startServer(r)
-
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-	})
-
-	srv.Handler = corsHandler.Handler(srv.Handler)
 
 	systray.Run(func() {
 		systray.SetTitle(AppTitle)
@@ -152,6 +153,13 @@ func main() {
 }
 
 func startServer(r *mux.Router) *http.Server {
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
 	staticFS, err := fs.Sub(webAssets, staticFilePath)
 	if err != nil {
 		log.Fatal(err)
@@ -164,6 +172,7 @@ func startServer(r *mux.Router) *http.Server {
 		Addr:    ":8080",
 		Handler: r,
 	}
+	srv.Handler = corsHandler.Handler(srv.Handler)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

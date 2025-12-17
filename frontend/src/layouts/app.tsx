@@ -1,38 +1,25 @@
-import { Box, Container } from "@mui/material";
 import { Outlet } from "@tanstack/react-router";
 import { LoginProvider } from "../providers/login";
+import { Layout, theme } from "antd";
+import { Content } from "antd/es/layout/layout";
 
 export const AppLayout = () => {
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
   return (
-    <Box
-      sx={{
-        // minHeight: "100vh", // fallback
-        width: "100vw", // or just width: '100%'
-        height: "100%",
-        margin: 0,
-        padding: 0,
-        bgcolor: "#374151", // gray-600 background
-        color: "#000000", // black text
-        display: "flex",
+    <Layout
+      style={{
+        padding: "24px 0",
+        background: colorBgContainer,
+        borderRadius: borderRadiusLG,
       }}
     >
-      <Box
-        sx={{
-          borderRadius: 4,
-          bgcolor: "white",
-          height: "90%", // Also works
-          width: "100%",
-          margin: 4,
-          p: 4,
-          boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
-        }}
-      >
-        <Container>
-          <LoginProvider>
-            <Outlet />
-          </LoginProvider>
-        </Container>
-      </Box>
-    </Box>
+      <Content style={{ padding: "0 50px" }}>
+        <LoginProvider>
+          <Outlet />
+        </LoginProvider>
+      </Content>
+    </Layout>
   );
 };

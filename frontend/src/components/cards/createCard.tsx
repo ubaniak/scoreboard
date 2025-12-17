@@ -1,58 +1,61 @@
-import { Box, Button } from "@mui/material";
-import { Formik } from "formik";
-import { FormikDatePicker } from "../formik/datepicker";
-import { FormikInput } from "../formik/input";
+import { Button, Form, Input, Space, type FormProps } from "antd";
 import { useMutateCards } from "../../api/cards";
+import { useProfile } from "../../providers/login";
 
-export type CreateCardValues = {
-  name: string;
-  date: Date;
+type FieldType = {
+  name?: string;
+  date?: string;
 };
 
 export type CreateCardProps = {
-  onSubmit: (values: CreateCardValues) => void;
-  onCancel: () => void;
+  onClose: () => void;
 };
 
-export const CreateCardForm = (props: CreateCardProps) => {
+export const CreateCard = (props: CreateCardProps) => {
+  const profile = useProfile();
   const { mutateAsync: createCard } = useMutateCards();
+
+  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
+    await createCard({
+      token: profile.token,
+      toCreate: {
+        name: values.name || "",
+        date: values.date || "",
+      },
+    });
+    props.onClose();
+  };
+
   return (
-    <Formik
-      initialValues={{
-        name: "",
-        date: new Date(),
-      }}
-      onSubmit={async (values: CreateCardValues) => {
-        try {
-          await createCard({ name: values.name, date: values.date.toString() });
-        } catch (e) {
-          console.log(e);
-        }
-        props.onSubmit(values);
-      }}
-    >
-      {({ handleSubmit }) => (
-        <form
-          style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          onSubmit={handleSubmit}
-        >
-          <FormikInput label={"Name"} name={"name"} />
-          <FormikDatePicker name={"date"} />
-          <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="outlined"
-              color="error"
-              type="button"
-              onClick={props.onCancel}
-            >
+    <>
+      <Form
+        labelCol={{ span: 4 }}
+        wrapperCol={{ span: 14 }}
+        layout="horizontal"
+        initialValues={{
+          name: "",
+          date: "",
+        }}
+        style={{ maxWidth: 600 }}
+        onFinish={onFinish}
+      >
+        <Form.Item<FieldType> label="Name" name="name">
+          <Input />
+        </Form.Item>
+        <Form.Item<FieldType> label="Date" name="date">
+          <Input />
+        </Form.Item>
+        <Form.Item label={null}>
+          <Space>
+            <Button type="text" onClick={props.onClose}>
               Cancel
             </Button>
-            <Button variant="contained" color="primary" type="submit">
+            <Button type="primary" htmlType="submit">
               Submit
             </Button>
-          </Box>
-        </form>
-      )}
-    </Formik>
+          </Space>
+        </Form.Item>
+      </Form>
+    </>
   );
 };

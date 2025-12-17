@@ -11,18 +11,20 @@ type Sqlite struct {
 }
 
 func NewSqlite(db *gorm.DB) (*Sqlite, error) {
-	if err := db.AutoMigrate(&Card{}, &Settings{}); err != nil {
+	if err := db.AutoMigrate(&Card{}); err != nil {
 		return nil, err
 	}
 
 	return &Sqlite{db: db}, nil
 }
 
-func (s *Sqlite) Create(name, date string) error {
+func (s *Sqlite) Create(c *entities.Card) error {
 
 	card := &Card{
-		Name: name,
-		Date: date,
+		Name:           c.Name,
+		Date:           c.Date,
+		Status:         string(c.Status),
+		NumberOfJudges: c.NumberOfJudges,
 	}
 
 	if err := s.db.Create(card).Error; err != nil {
@@ -32,7 +34,7 @@ func (s *Sqlite) Create(name, date string) error {
 	return nil
 }
 
-func (s *Sqlite) Get() ([]entities.Card, error) {
+func (s *Sqlite) List() ([]entities.Card, error) {
 	var cards []Card
 	if err := s.db.Find(&cards).Error; err != nil {
 		return nil, err
@@ -41,92 +43,62 @@ func (s *Sqlite) Get() ([]entities.Card, error) {
 	var result []entities.Card
 	for _, c := range cards {
 		result = append(result, entities.Card{
-			ID:   c.ID,
-			Name: c.Name,
-			Date: c.Date,
+			ID:             c.ID,
+			Name:           c.Name,
+			Date:           c.Date,
+			Status:         entities.CardStatus(c.Status),
+			NumberOfJudges: c.NumberOfJudges,
 		})
 	}
 	return result, nil
 }
 
-func (s *Sqlite) GetByID(id uint) (*entities.Card, error) {
+func (s *Sqlite) Get(id uint) (*entities.Card, error) {
 	var card Card
-	if err := s.db.Preload("Settings").First(&card, id).Error; err != nil {
+	if err := s.db.First(&card, id).Error; err != nil {
 		return nil, err
 	}
 	var result = &entities.Card{
-		ID:   card.ID,
-		Name: card.Name,
-		Date: card.Date,
-		Settings: &entities.Settings{
-			NumberOfJudges: card.Settings.NumberOfJudges,
-		},
+		ID:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         entities.CardStatus(card.Status),
+		NumberOfJudges: card.NumberOfJudges,
 	}
 	return result, nil
 }
 
-func (s *Sqlite) UpdateSettings(id uint, settings *entities.Settings) error {
-	var cardSettings Settings
-	if err := s.db.Where("card_id = ?", id).First(&cardSettings).Error; err != nil {
+func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateCard) error {
+	var card Card
+	if err := s.db.Where("id = ?", id).First(&card).Error; err != nil {
 		return err
 	}
 
-	cardSettings.NumberOfJudges = settings.NumberOfJudges
-
-	if err := s.db.Save(&cardSettings).Error; err != nil {
-		return err
+	if toUpdate.Date != nil {
+		card.Date = *toUpdate.Date
 	}
 
+	if toUpdate.Name != nil {
+		card.Name = *toUpdate.Name
+	}
+
+	if toUpdate.Status != nil {
+		card.Status = *toUpdate.Status
+	}
+
+	if toUpdate.NumberOfJudges != nil {
+		card.NumberOfJudges = *toUpdate.NumberOfJudges
+	}
+
+	if err := s.db.Save(card).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
-// func (s *Sqlite) AddOfficial(id uint, name string) error {
-// 	official := &Official{
-// 		CardID: id,
-// 		Name:   name,
-// 	}
-
-// 	if err := s.db.Create(official).Error; err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func (s *Sqlite) GetOfficials(id uint) ([]entities.Official, error) {
-// 	var officials []Official
-// 	if err := s.db.Where("card_id = ?", id).Find(&officials).Error; err != nil {
-// 		return nil, err
-// 	}
-
-// 	var result []entities.Official
-// 	for _, o := range officials {
-// 		result = append(result, entities.Official{
-// 			ID:   o.ID,
-// 			Name: o.Name,
-// 		})
-// 	}
-// 	return result, nil
-// }
-
-// func (s *Sqlite) DeleteOfficial(cardId, officialId uint) error {
-// 	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).Delete(&Official{}).Error; err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
-// func (s *Sqlite) UpdateOfficial(cardId, officialId uint, name string) error {
-// 	var official Official
-// 	if err := s.db.Where("card_id = ? AND id = ?", cardId, officialId).First(&official).Error; err != nil {
-// 		return err
-// 	}
-
-// 	official.Name = name
-
-// 	if err := s.db.Save(&official).Error; err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
+func (s *Sqlite) Delete(id uint) error {
+	if err := s.db.Where("id = ?", id).Delete(&Card{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

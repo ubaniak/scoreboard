@@ -30,9 +30,12 @@ func NewApp(useCase UseCase, officialApp *officials.App, boutsApp *bouts.App) *A
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("cards")
-	sr.AddRoute("create.cards", "", "POST", h.CreateCard, rbac.Admin)
-	sr.AddRoute("list.cards", "", "GET", h.GetCards, rbac.Admin)
-	sr.AddRoute("get.card", "/{id}", "GET", h.GetCards, rbac.Admin)
+	sr.AddRoute("list.cards", "/test", "GET", h.Test)
+	sr.AddRoute("list.cards", "", "GET", h.List, rbac.Admin)
+	sr.AddRoute("create.cards", "", "POST", h.Create, rbac.Admin)
+	sr.AddRoute("update.cards", "/{id}", "PUT", h.Update, rbac.Admin)
+	sr.AddRoute("delete.cards", "/{id}", "DELETE", h.Delete, rbac.Admin)
+	sr.AddRoute("get.card", "/{id}", "GET", h.Get, rbac.Admin)
 
 	h.officialApp.RegisterRoutes(sr)
 	h.boutsApp.RegisterRoutes(sr)
@@ -43,7 +46,12 @@ type CreateCardRequest struct {
 	Date string `json:"date"`
 }
 
-func (h *App) CreateCard(w http.ResponseWriter, r *http.Request) {
+func (h *App) Test(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[string](r, w)
+	presenter.WithData("hello").Present()
+}
+
+func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
 	var req CreateCardRequest
@@ -56,27 +64,31 @@ func (h *App) CreateCard(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
-type GetCardsResponse struct {
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
-	Date string `json:"date"`
+type GetCardResponse struct {
+	Id             uint   `json:"id"`
+	Name           string `json:"name"`
+	Date           string `json:"date"`
+	Status         string `json:"status"`
+	NumberOfJudges int    `json:"numberOfJudges"`
 }
 
-func mapCardToResponse(card entities.Card) *GetCardsResponse {
-	cardResponse := &GetCardsResponse{
-		Id:   card.ID,
-		Name: card.Name,
-		Date: card.Date,
+func mapCardToResponse(card entities.Card) *GetCardResponse {
+	cardResponse := &GetCardResponse{
+		Id:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         string(card.Status),
+		NumberOfJudges: card.NumberOfJudges,
 	}
 
 	return cardResponse
 }
 
-func (h *App) GetCards(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[[]*GetCardsResponse](r, w)
-	cards, err := h.useCase.Get()
+func (h *App) List(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[[]*GetCardResponse](r, w)
+	cards, err := h.useCase.List()
 
-	var response []*GetCardsResponse
+	var response []*GetCardResponse
 	for _, c := range cards {
 		response = append(response, mapCardToResponse(c))
 	}
@@ -84,18 +96,7 @@ func (h *App) GetCards(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithData(response).Present()
 }
 
-type SettingsResponse struct {
-	NumberOfJudges int `json:"numberOfJudges"`
-}
-
-type GetCardResponse struct {
-	Id       uint             `json:"id"`
-	Name     string           `json:"name"`
-	Date     string           `json:"date"`
-	Settings SettingsResponse `json:"settings"`
-}
-
-func (h *App) GetById(w http.ResponseWriter, r *http.Request) {
+func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[*GetCardResponse](r, w)
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -107,25 +108,26 @@ func (h *App) GetById(w http.ResponseWriter, r *http.Request) {
 	}
 	id := uint(parsed)
 
-	card, err := h.useCase.GetById(id)
+	card, err := h.useCase.Get(id)
 	if err != nil {
+		//TODO: Handle not found
 		presenter.WithError(err).Present()
 		return
 	}
 
-	response := &GetCardResponse{
-		Id:   card.ID,
-		Name: card.Name,
-		Date: card.Date,
-		Settings: SettingsResponse{
-			NumberOfJudges: card.Settings.NumberOfJudges,
-		},
-	}
+	response := mapCardToResponse(*card)
 
 	presenter.WithError(err).WithData(response).Present()
 }
 
-func (h *App) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+type UpdateCardRequest struct {
+	Name           string `json:"name"`
+	Date           string `json:"date"`
+	Status         string `json:"status"`
+	NumberOfJudges int    `json:"numberOfJudges"`
+}
+
+func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -137,17 +139,36 @@ func (h *App) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	id := uint(parsed)
 
-	var req SettingsResponse
+	var req UpdateCardRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	settings := &entities.Settings{
-		NumberOfJudges: req.NumberOfJudges,
+	toUpdate := &entities.UpdateCard{
+		Name:           &req.Name,
+		Date:           &req.Date,
+		Status:         &req.Status,
+		NumberOfJudges: &req.NumberOfJudges,
 	}
 
-	err = h.useCase.UpdateSettings(id, settings)
+	err = h.useCase.Update(id, toUpdate)
+	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	id := uint(parsed)
+
+	err = h.useCase.Delete(id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }

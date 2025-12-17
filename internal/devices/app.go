@@ -22,11 +22,32 @@ func NewApp(useCase UseCase) *App {
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("devices")
-	sr.AddRoute("register.judge", "/register/judge{id}", http.MethodGet, h.Register, rbac.Admin)
-	sr.AddRoute("healthcheck", "/healthcheck", http.MethodGet, h.TestJudge, rbac.Judge)
-	sr.AddRoute("test", "/judge", http.MethodGet, h.TestJudge, rbac.JudgeList...)
-	sr.AddRoute("test", "/admin", http.MethodGet, h.TestAdmin, rbac.Admin)
-	sr.AddRoute("test", "/sb", http.MethodGet, h.TestScoreboard)
+	sr.AddRoute("baseUrl", "/baseurl", http.MethodGet, h.BaseUrl, rbac.Admin)
+	sr.AddRoute("status", "/judge/status", http.MethodGet, h.Status, rbac.Admin)
+	sr.AddRoute("register.judge", "/register/judge/{id}", http.MethodGet, h.Register, rbac.Admin)
+	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, rbac.Judge)
+}
+func (h *App) BaseUrl(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[string](r, w)
+	ip := h.useCase.LocalIp()
+	presenter.WithData(ip).Present()
+}
+
+type StatusProfileResponse map[string]string
+
+func (h *App) Status(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[StatusProfileResponse](r, w)
+	profiles, err := h.useCase.JudgeStatus()
+	if err != nil {
+		presenter.WithError(err).Present()
+	}
+
+	response := make(StatusProfileResponse, len(profiles))
+	for _, p := range profiles {
+		response[p.Role] = string(p.Status)
+	}
+
+	presenter.WithData(response).Present()
 }
 
 func (h *App) Register(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +66,7 @@ func (h *App) Register(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithData(code).Present()
 }
 
-func (h *App) TestJudge(w http.ResponseWriter, r *http.Request) {
+func (h *App) JudgeHealthCheck(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[string](r, w)
 
 	role, ok := rbac.GetRoleFromCtx(r.Context())

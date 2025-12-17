@@ -1,36 +1,28 @@
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
-import { useState } from "react";
-import { useGetCards } from "../api/cards";
+import { Button, Modal } from "antd";
+import { useListCards } from "../api/cards";
 import { CardTable } from "../components/cards/cardTable";
-import { CreateCardForm } from "../components/cards/createCard";
-import { Modal } from "../components/modal/modal";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
+import { useState } from "react";
+import { CreateCard } from "../components/cards/createCard";
 
 export const HomePage = () => {
   const profile = useProfile();
+  const { data: cards } = useListCards(profile.token);
   const [open, setOpen] = useState(false);
-  const { data: cards } = useGetCards(profile.token);
-
-  const createCardButton = () => {
-    return (
-      <Button startIcon={<AddIcon />} onClick={() => setOpen(true)}>
-        Create Card
-      </Button>
-    );
-  };
 
   return (
-    <PageLayout title="Cards" actions={createCardButton()}>
+    <PageLayout title="Cards" subheading="hello">
+      <Button onClick={() => setOpen(true)}>Add Card</Button>
       <CardTable cards={cards?.data} />
-      <Modal open={open} onClose={() => setOpen(false)} header="Create Card">
-        <CreateCardForm
-          onSubmit={() => {
-            setOpen(false);
-          }}
-          onCancel={() => setOpen(false)}
-        />
+      <Modal
+        title={"Add card"}
+        open={open}
+        onOk={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+        footer={null}
+      >
+        <CreateCard onClose={() => setOpen(false)} />
       </Modal>
     </PageLayout>
   );

@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Bout struct {
 	gorm.Model
 	CardID             uint    `gorm:"not null"`
-	BoutNumber         int     `gorm:"not null;uniqueIndex"`
+	BoutNumber         int     `gorm:"not null"`
 	RedCorner          string  `gorm:"not null"`
 	BlueCorner         string  `gorm:"not null"`
 	WeightClass        int     `gorm:"not null"`
@@ -16,4 +16,5 @@ type Bout struct {
 	RedCornerImageUrl  string
 	BlueCornerImageUrl string
 	Status             string `gorm:"not null"`
+	Gender             string
 }

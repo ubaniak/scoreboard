@@ -1,6 +1,3 @@
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createRootRoute,
@@ -15,7 +12,8 @@ import { HomePage } from "./pages/home";
 import { JudgePage } from "./pages/judge";
 import { LoginPage } from "./pages/login";
 import { SupervisorPage } from "./pages/supervisor";
-import { NotificationProvider } from "./providers/notification";
+import { App as AntApp } from "antd";
+import { BoutPage } from "./pages/bout";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -50,6 +48,11 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({
     getParentRoute: () => rootRoute,
+    path: "/card/$cardId/bout/$boutId",
+    component: BoutPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
     path: "/judge/$Id",
     component: JudgePage,
   }),
@@ -62,35 +65,15 @@ const routeTree = rootRoute.addChildren([
 
 const router = createRouter({ routeTree });
 
-const theme = createTheme({
-  palette: {
-    // mode: "dark", // optional, but gray-600 looks better in dark mode
-    background: {
-      default: "#374151",
-      // paper: "#374151",
-    },
-    text: {
-      primary: "#000000", // regular text = black (overrides dark mode default)
-    },
-    primary: {
-      main: "#fbbf24", // yellow-500 → your gold/highlight color
-    },
-  },
-});
-
 function App() {
   const queryClient = makeQueryClient();
   return (
     <>
-      <ThemeProvider theme={theme}>
-        <NotificationProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <QueryClientProvider client={queryClient}>
-              <RouterProvider router={router}></RouterProvider>
-            </QueryClientProvider>
-          </LocalizationProvider>
-        </NotificationProvider>
-      </ThemeProvider>
+      <AntApp>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router}></RouterProvider>
+        </QueryClientProvider>
+      </AntApp>
     </>
   );
 }

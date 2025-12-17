@@ -1,30 +1,92 @@
-import {
-  DataGrid,
-  type GridColDef,
-  type GridRenderCellParams,
-} from "@mui/x-data-grid";
+import { EditOutlined } from "@ant-design/icons";
+import { useNavigate } from "@tanstack/react-router";
+import { Button, Modal, Table, type TableProps } from "antd";
+import { useState } from "react";
 import { type Card } from "../../entities/cards";
-import { Link } from "@tanstack/react-router";
+import { Status } from "../status/status";
+import { EditCard } from "./editCardForm";
 
 export type CardTableProps = {
   cards?: Card[];
 };
 
+interface DataType {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
+
 export const CardTable = (props: CardTableProps) => {
-  const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 300 },
+  const [open, setOpen] = useState(false);
+  const [editCard, setEditCard] = useState<Card>();
+  const navigate = useNavigate();
+
+  const handleOnEditClick = (card: Card) => {
+    setEditCard(card);
+    setOpen(true);
+  };
+
+  const handleNavigate = (card: Card) => {
+    navigate({ to: `/card/${card.id}` });
+  };
+
+  const columns: TableProps<DataType>["columns"] = [
     {
-      field: "name",
-      headerName: "Name",
-      width: 300,
-      renderCell: (params: GridRenderCellParams<Card, string>) => (
-        <Link to={`card/${params.id}`}>{params.value}</Link>
-      ),
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (text, record) => {
+        return (
+          <Button type="link" onClick={() => handleNavigate(record as Card)}>
+            {text}
+          </Button>
+        );
+      },
     },
-    { field: "date", headerName: "Date", width: 200 },
+    {
+      title: "Date",
+      dataIndex: "date",
+      key: "date",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (text) => {
+        return <Status text={text} />;
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => {
+        return (
+          <Button
+            type="text"
+            shape="circle"
+            icon={<EditOutlined />}
+            onClick={() => handleOnEditClick(record as Card)}
+          />
+        );
+      },
+    },
   ];
 
   return (
-    <DataGrid rows={props.cards} columns={columns} getRowId={(row) => row.id} />
+    <div>
+      <Table dataSource={props.cards} columns={columns} />
+      <Modal
+        title="Edit Card"
+        open={open}
+        onOk={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+        footer={null}
+      >
+        {editCard && (
+          <EditCard card={editCard} onClose={() => setOpen(false)} />
+        )}
+      </Modal>
+    </div>
   );
 };

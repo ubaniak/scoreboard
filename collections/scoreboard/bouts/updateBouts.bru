@@ -5,7 +5,7 @@ meta {
 }
 
 put {
-  url: http://localhost:8080/api/cards/1/bouts
+  url: http://localhost:8080/api/cards/1/bouts/1
   body: json
   auth: bearer
 }
@@ -16,7 +16,6 @@ auth:bearer {
 
 body:json {
   {
-    "id": 1,
-    "redCornder": "foobaas222ådr"
+    "redCorner": "foobaas222ådr"
   }
 }

@@ -69,3 +69,15 @@ type Bout struct {
 	BlueCornerImageUrl string
 	Status             BoutStatus
 }
+
+type UpdateBout struct {
+	BoutNumber  *int
+	RedCorner   *string
+	BlueCorner  *string
+	Gender      *Gender
+	WeightClass *int
+	GloveSize   *GloveSize
+	RoundLength *RoundLength
+	AgeCategory *AgeCategory
+	Experience  *Experience
+}
