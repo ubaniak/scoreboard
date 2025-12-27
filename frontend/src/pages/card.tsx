@@ -4,15 +4,15 @@ import { useGetCardById } from "../api/cards";
 import { BoutIndex } from "../components/bouts";
 import { DeviceIndex } from "../components/devices";
 import { OfficialIndex } from "../components/officials";
-import { Status } from "../components/status/status";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
+import { StatusBadge } from "../components/status/badge";
 
 const SubHeading = (props: { date?: string; status?: string }) => {
   return (
     <Flex gap="middle" orientation="vertical">
       <Typography.Title level={5}>Date: {props.date}</Typography.Title>
-      <Status text={props.status || "unknown"} />
+      <StatusBadge text={props.status || "unknown"} />
     </Flex>
   );
 };

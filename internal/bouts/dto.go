@@ -80,6 +80,7 @@ type GetBoutResponse struct {
 	RedCornerImageUrl  string  `json:"redCornerImageUrl"`
 	BlueCornerImageUrl string  `json:"blueCornerImageUrl"`
 	Status             string  `json:"status"`
+	Decision           string  `json:"decision"`
 }
 
 func EntityToGetBoutResponse(entity *entities.Bout) *GetBoutResponse {
@@ -97,6 +98,7 @@ func EntityToGetBoutResponse(entity *entities.Bout) *GetBoutResponse {
 		RedCornerImageUrl:  entity.RedCornerImageUrl,
 		BlueCornerImageUrl: entity.BlueCornerImageUrl,
 		Status:             string(entity.Status),
+		Decision:           entity.Decision,
 	}
 }
 

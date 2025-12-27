@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button, Modal, Table, type TableProps } from "antd";
 import { useState } from "react";
 import { type Card } from "../../entities/cards";
-import { Status } from "../status/status";
+import { StatusTag } from "../status/tag";
 import { EditCard } from "./editCardForm";
 
 export type CardTableProps = {
@@ -54,7 +54,7 @@ export const CardTable = (props: CardTableProps) => {
       dataIndex: "status",
       key: "status",
       render: (text) => {
-        return <Status text={text} />;
+        return <StatusTag text={text} />;
       },
     },
     {

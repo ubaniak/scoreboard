@@ -17,4 +17,5 @@ type Bout struct {
 	BlueCornerImageUrl string
 	Status             string `gorm:"not null"`
 	Gender             string
+	Decision           string
 }

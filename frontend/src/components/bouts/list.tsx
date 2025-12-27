@@ -4,6 +4,8 @@ import { EditOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { EditBout } from "./edit";
 import { RoundProgressSummary } from "../round/progress";
+import { StatusTag } from "../status/tag";
+import { useNavigate } from "@tanstack/react-router";
 
 export type ListBoutsProps = {
   cardId: string;
@@ -12,6 +14,7 @@ export type ListBoutsProps = {
 export const ListBouts = (props: ListBoutsProps) => {
   const [open, setOpen] = useState(false);
   const [toEdit, setToEdit] = useState<Bout>();
+  const navigate = useNavigate();
   const handleOnEditClick = (record: Bout) => {
     console.log(record);
     setOpen(true);
@@ -23,6 +26,16 @@ export const ListBouts = (props: ListBoutsProps) => {
       title: "Bout Number",
       dataIndex: "boutNumber",
       key: "boutNumber",
+      render: (text, record) => (
+        <>
+          <Button
+            type="link"
+            onClick={() => navigate({ to: `bout/${record.id}` })}
+          >
+            {text}
+          </Button>
+        </>
+      ),
     },
     {
       title: "Red Corner",
@@ -63,6 +76,7 @@ export const ListBouts = (props: ListBoutsProps) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      render: (value) => <StatusTag text={value} />,
     },
     {
       title: "Action",
@@ -85,7 +99,7 @@ export const ListBouts = (props: ListBoutsProps) => {
         dataSource={props.bouts}
         columns={columns}
         expandable={{
-          expandedRowRender: (record) => (
+          expandedRowRender: () => (
             <>
               <RoundProgressSummary />
             </>

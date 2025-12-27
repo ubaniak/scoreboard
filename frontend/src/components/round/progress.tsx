@@ -1,4 +1,4 @@
-import { Button, Steps } from "antd";
+import { Steps } from "antd";
 
 export type RoundProgressSummaryProps = {
   cardId: string;

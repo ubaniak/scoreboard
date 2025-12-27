@@ -3,12 +3,10 @@ package entities
 type BoutStatus string
 
 const (
-	BoutStatusNotStarted       BoutStatus = "not_started"
-	BoutStatusReady            BoutStatus = "ready"
-	BoutStatusInProgress       BoutStatus = "in_progress"
-	BoutStatusWaitingForResult BoutStatus = "waiting_for_result"
-	BoutStatusCompleted        BoutStatus = "completed"
-	BoutStatusCancelled        BoutStatus = "cancelled"
+	BoutStatusNotStarted BoutStatus = "not_started"
+	BoutStatusInProgress BoutStatus = "in_progress"
+	BoutStatusCompleted  BoutStatus = "completed"
+	BoutStatusCancelled  BoutStatus = "cancelled"
 )
 
 type Experience string
@@ -68,6 +66,7 @@ type Bout struct {
 	RedCornerImageUrl  string
 	BlueCornerImageUrl string
 	Status             BoutStatus
+	Decision           string
 }
 
 type UpdateBout struct {
@@ -80,4 +79,5 @@ type UpdateBout struct {
 	RoundLength *RoundLength
 	AgeCategory *AgeCategory
 	Experience  *Experience
+	Decision    *string
 }

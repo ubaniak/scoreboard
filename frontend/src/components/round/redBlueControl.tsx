@@ -1,15 +1,12 @@
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { Button, Card, Divider, Flex } from "antd";
+import { Card } from "antd";
 
 export type RedBlueControlProps = {
   title: string;
-  onRedUpClick: () => void;
-  onRedDownClick: () => void;
-  onBlueUpClick: () => void;
-  onBlueDownClick: () => void;
-  total: React.ReactNode;
+  red: React.ReactNode;
+  blue: React.ReactNode;
+  redTotal: React.ReactNode;
+  blueTotal: React.ReactNode;
 };
-<Card.Grid>content</Card.Grid>;
 
 export const RedBlueControl = (props: RedBlueControlProps) => {
   const gridStyle: React.CSSProperties = {
@@ -17,43 +14,25 @@ export const RedBlueControl = (props: RedBlueControlProps) => {
     textAlign: "center",
   };
 
-  const fullWidthStyle: React.CSSProperties = {
-    width: "100%",
-    textAlign: "center",
-  };
-  const redColor = "red";
-  const blueColor = "#1890ff";
+  // const fullWidthStyle: React.CSSProperties = {
+  //   width: "100%",
+  //   textAlign: "center",
+  // };
   return (
     <Card title={props.title} style={{ width: 300 }}>
       <Card.Grid style={gridStyle} hoverable={false}>
         <div>Red</div>
-        <Flex vertical align="center">
-          <Button
-            icon={<ArrowUpOutlined style={{ color: redColor }} />}
-            onClick={props.onRedUpClick}
-          />
-          <Button
-            icon={<ArrowDownOutlined style={{ color: redColor }} />}
-            onClick={props.onRedDownClick}
-          />
-        </Flex>
+        {props.red}
       </Card.Grid>
       <Card.Grid style={gridStyle} hoverable={false}>
         <div>Blue</div>
-        <Flex vertical align="center">
-          <Button
-            icon={<ArrowUpOutlined style={{ color: blueColor }} />}
-            onClick={props.onBlueUpClick}
-          />
-          <Button
-            icon={<ArrowDownOutlined style={{ color: blueColor }} />}
-            onClick={props.onBlueDownClick}
-          />
-        </Flex>
+        {props.blue}
       </Card.Grid>
-      <Card.Grid style={fullWidthStyle} hoverable={false}>
-        <div>Total</div>
-        {props.total}
+      <Card.Grid style={gridStyle} hoverable={false}>
+        {props.redTotal}
+      </Card.Grid>
+      <Card.Grid style={gridStyle} hoverable={false}>
+        {props.blueTotal}
       </Card.Grid>
     </Card>
   );

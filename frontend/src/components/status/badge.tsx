@@ -2,7 +2,7 @@ import { Badge } from "antd";
 
 type BadgeStatus = "default" | "success" | "processing" | "error";
 
-export const Status = ({ text }: { text: string }) => {
+export const StatusBadge = ({ text }: { text: string }) => {
   let status: BadgeStatus = "default";
   if (text === "inProgress") {
     status = "processing";

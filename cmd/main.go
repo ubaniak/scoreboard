@@ -93,7 +93,6 @@ func main() {
 		panic(err)
 	}
 	roundUseCase := round.NewUseCase(roundStorage)
-	roundApp := round.NewApp(roundUseCase)
 
 	// -- bouts
 
@@ -101,8 +100,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	boutsUseCase := bouts.NewUseCase(boutStorage)
-	boutsApp := bouts.NewApp(boutsUseCase, roundApp)
+	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase)
+	boutsApp := bouts.NewApp(boutsUseCase)
 
 	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)

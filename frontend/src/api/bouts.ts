@@ -1,14 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Bout } from "../entities/cards";
+import type { BoutStatus } from "../entities/bouts";
+import { type Bout, type Round, type RoundDetails } from "../entities/cards";
 import { baseUrl } from "./constants";
 import { fetchClient } from "./handlers";
 
 const boutKeys = {
   all: ["bouts"] as const,
   list: () => [...boutKeys.all, "list"] as const,
+  fouls: ["fouls"],
   get: (id: string) => [...boutKeys.all, `get-${id}`] as const,
   settings: (id: string) => [...boutKeys.all, `settings-${id}`] as const,
   bouts: (id: string) => [...boutKeys.all, `bouts-${id}`] as const,
+  rounds: (id: string) => [...boutKeys.all, `rounds-${id}`] as const,
+  round: (boutId: string, roundNumber: number) =>
+    [...boutKeys.all, `bout-${boutId}-round-${roundNumber}`] as const,
 };
 
 export const useGetBout = (cardId: string, boutId: string, token: string) => {
@@ -128,6 +133,291 @@ const deleteBout = async (cardId: string, token: string, boutId: string) => {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const useMutateBoutStatus = (
+  cardId: string,
+  boutId: string,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (status: BoutStatus) =>
+      updateBoutStatus(cardId, boutId, token, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boutKeys.get(boutId) });
+    },
+  });
+};
+
+const updateBoutStatus = async (
+  cardId: string,
+  boutId: string,
+  token: string,
+  status: BoutStatus
+) => {
+  return fetchClient(`${baseUrl}/api/cards/${cardId}/bouts/${boutId}/status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+};
+
+export const useGetRounds = (cardId: string, boutId: string, token: string) => {
+  return useQuery({
+    queryKey: boutKeys.rounds(boutId),
+    queryFn: () => getRounds(cardId, boutId, token),
+  });
+};
+
+export const getRounds = async (
+  cardId: string,
+  boutId: string,
+  token: string
+) => {
+  return fetchClient<Round[]>(
+    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds`,
+    {
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};
+
+export const useMutateAddFoul = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      corner,
+      type,
+      foul,
+    }: {
+      corner: string;
+      type: string;
+      foul: string;
+    }) => addFoul(cardId, boutId, roundNumber, token, corner, type, foul),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.fouls,
+      });
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.round(boutId, roundNumber),
+      });
+    },
+  });
+};
+
+const addFoul = async (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string,
+  corner: string,
+  type: string,
+  foul: string
+) => {
+  return fetchClient(
+    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/foul`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ corner, type, foul }),
+    }
+  );
+};
+
+export const useGetFouls = (token: string) => {
+  return useQuery({
+    queryKey: boutKeys.fouls,
+    queryFn: () => getFouls(token),
+  });
+};
+
+export const getFouls = async (token: string) => {
+  return fetchClient<string[]>(`${baseUrl}/api/cards/0/fouls`, {
+    headers: {
+      "Content-type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const useGetRound = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  return useQuery({
+    queryKey: boutKeys.round(boutId, roundNumber),
+    queryFn: () => getRound(cardId, boutId, roundNumber, token),
+  });
+};
+
+export const getRound = async (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  return fetchClient<RoundDetails>(
+    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}`,
+    {
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};
+
+export const useMutateEightCount = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      corner,
+      direction,
+    }: {
+      corner: string;
+      direction: string;
+    }) => eightCount(cardId, boutId, roundNumber, token, corner, direction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.fouls,
+      });
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.round(boutId, roundNumber),
+      });
+    },
+  });
+};
+
+const eightCount = async (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string,
+  corner: string,
+  direction: string
+) => {
+  return fetchClient(
+    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/eightcount`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ corner, direction }),
+    }
+  );
+};
+
+export const useMutateStartRound = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.round(boutId, roundNumber),
+      });
+    },
+  });
+};
+
+export const useMutateScoreRound = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/score`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.round(boutId, roundNumber),
+      });
+    },
+  });
+};
+
+export const useMutateEndRound = (
+  cardId: string,
+  boutId: string,
+  roundNumber: number,
+  token: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (props: { decision: string }) => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/end`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(props),
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boutKeys.bouts(boutId) });
+      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({
+        queryKey: boutKeys.round(boutId, roundNumber),
+      });
     },
   });
 };

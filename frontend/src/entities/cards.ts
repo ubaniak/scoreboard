@@ -11,7 +11,7 @@ export type Official = {
   name: string;
 };
 
-type AgeCategory =
+export type AgeCategory =
   | "juniorA"
   | "juniorB"
   | "juniorC"
@@ -31,4 +31,33 @@ export type Bout = {
   gloveSize: "10oz" | "12oz" | "16oz";
   decision: string;
   roundLength: number;
+};
+
+export type RoundStatus =
+  | "not_started"
+  | "ready"
+  | "in_progress"
+  | "waiting_for_results"
+  | "complete";
+
+export type Round = {
+  roundNumber: number;
+  status: RoundStatus;
+};
+
+export type RoundDetails = {
+  boutId: string;
+  roundNumber: number;
+  status: string;
+  decision: string;
+  red: {
+    warnings: string[];
+    cautions: string[];
+    eightCounts: number;
+  };
+  blue: {
+    warnings: string[];
+    cautions: string[];
+    eightCounts: number;
+  };
 };

@@ -7,6 +7,8 @@ import (
 	"github.com/ubaniak/scoreboard/internal/auth"
 )
 
+// TODO: Rename to middleware
+
 type RbacService struct {
 	roles       *Role
 	authUseCase auth.UseCase

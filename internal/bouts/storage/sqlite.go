@@ -33,6 +33,7 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		BlueCornerImageUrl: bout.BlueCornerImageUrl,
 		Status:             string(bout.Status),
 		Gender:             string(bout.Gender),
+		Decision:           bout.Decision,
 	}
 }
 
@@ -52,15 +53,16 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		RedCornerImageUrl:  bout.RedCornerImageUrl,
 		BlueCornerImageUrl: bout.BlueCornerImageUrl,
 		Status:             entities.BoutStatus(bout.Status),
+		Decision:           bout.Decision,
 	}
 }
 
-func (s *Sqlite) Save(cardId uint, bout *entities.Bout) error {
+func (s *Sqlite) Save(cardId uint, bout *entities.Bout) (uint, error) {
 	b := s.ToGormModel(cardId, bout)
 	if err := s.db.Save(b).Error; err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return b.ID, nil
 }
 
 func (s *Sqlite) List(cardId uint) ([]*entities.Bout, error) {
@@ -136,9 +138,26 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 		bout.Experience = string(*toUpdate.Experience)
 	}
 
+	if toUpdate.Decision != nil {
+		bout.Decision = string(*toUpdate.Decision)
+	}
+
 	if err := s.db.Save(bout).Error; err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (s *Sqlite) SetStatus(cardId, id uint, status entities.BoutStatus) error {
+	var bout Bout
+	if err := s.db.Where("card_id = ? AND id = ?", cardId, id).First(&bout).Error; err != nil {
+		return err
+	}
+
+	bout.Status = string(status)
+	if err := s.db.Save(bout).Error; err != nil {
+		return err
+	}
 	return nil
 }

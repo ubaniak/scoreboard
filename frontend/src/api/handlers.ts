@@ -38,18 +38,21 @@ export const fetchClient = async <T>(
   url: string,
   options?: RequestInit
 ): Promise<Data<T>> => {
-  const res = await fetch(url, { ...options });
+  try {
+    const res = await fetch(url, { ...options });
 
-  if (res.status === 403 || res.status === 401) {
-    // localStorage.removeItem("token");
-    // window.location.href = "/login";
-    throw new Error("forbidden");
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+      throw new Error("unauthorized");
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Error");
+    }
+    return HandleSuccessResponse<T>(res);
+  } catch (e) {
+    throw new Error(`${e}` || "error");
   }
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Error");
-  }
-
-  return HandleSuccessResponse<T>(res);
 };

@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import {
   createRootRoute,
   createRoute,
@@ -17,6 +21,11 @@ import { BoutPage } from "./pages/bout";
 
 function makeQueryClient() {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        console.log(`Query Error --->>> ${error.message}`);
+      },
+    }),
     defaultOptions: {
       queries: {
         retry: true,
@@ -53,7 +62,7 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({
     getParentRoute: () => rootRoute,
-    path: "/judge/$Id",
+    path: "/judge",
     component: JudgePage,
   }),
   createRoute({

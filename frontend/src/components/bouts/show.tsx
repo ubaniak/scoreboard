@@ -1,34 +1,50 @@
 import {
   Button,
   Descriptions,
-  Drawer,
+  Empty,
+  Flex,
   Modal,
-  Tabs,
+  Popconfirm,
   type DescriptionsProps,
-  type TabsProps,
 } from "antd";
 import { useState } from "react";
-import { useGetBout } from "../../api/bouts";
+import { useGetBout, useMutateBoutStatus } from "../../api/bouts";
 import type { Bout } from "../../entities/cards";
 import { useProfile } from "../../providers/login";
+import { RoundIndex } from "../round";
 import { EditBout } from "./edit";
-import {
-  CheckCircleOutlined,
-  LockOutlined,
-  PlayCircleOutlined,
-} from "@ant-design/icons";
-import { RoundControls } from "../round/controls";
+import { StatusTag } from "../status/tag";
 
 export type ShowBoutProps = {
   cardId: string;
   boutId: string;
 };
 
+const StartBoutButton = ({ confirm }: { confirm: () => void }) => {
+  return (
+    <Popconfirm
+      title="Start bout"
+      description="This will start the bout, are you ready?"
+      onConfirm={confirm}
+      // onCancel={cancel}
+      okText="Yes"
+      cancelText="No"
+    >
+      <Button>Start</Button>
+    </Popconfirm>
+  );
+};
+
 export const ShowBout = (props: ShowBoutProps) => {
   const profile = useProfile();
   const [open, setOpen] = useState(false);
-  const [openDrawer, setOpenDrawer] = useState(false);
   const { data: bout, isLoading } = useGetBout(
+    props.cardId,
+    props.boutId,
+    profile.token
+  );
+
+  const { mutateAsync: updateBoutStatus } = useMutateBoutStatus(
     props.cardId,
     props.boutId,
     profile.token
@@ -47,7 +63,7 @@ export const ShowBout = (props: ShowBoutProps) => {
     {
       label: "status",
       span: 6,
-      children: <>{bout?.data.status}</>,
+      children: <StatusTag text={bout?.data.status || ""} />,
     },
     {
       label: "Red",
@@ -91,47 +107,8 @@ export const ShowBout = (props: ShowBoutProps) => {
     },
   ];
 
-  const roundItems: TabsProps["items"] = [
-    {
-      key: "1",
-      label: "Round 1",
-      children: (
-        <RoundControls
-          cardId={props.cardId}
-          boutId={props.boutId}
-          roundNumber={1}
-        />
-      ),
-      icon: <LockOutlined />,
-    },
-    {
-      key: "2",
-      label: "Round 2",
-      children: (
-        <RoundControls
-          cardId={props.cardId}
-          boutId={props.boutId}
-          roundNumber={2}
-        />
-      ),
-      icon: <CheckCircleOutlined />,
-    },
-    {
-      key: "3",
-      label: "Round 3",
-      children: (
-        <RoundControls
-          cardId={props.cardId}
-          boutId={props.boutId}
-          roundNumber={3}
-        />
-      ),
-      icon: <PlayCircleOutlined />,
-    },
-  ];
-
   return (
-    <>
+    <Flex vertical gap={20}>
       <Descriptions
         title="Bout information"
         bordered
@@ -139,17 +116,22 @@ export const ShowBout = (props: ShowBoutProps) => {
         column={6}
         extra={<Button onClick={() => setOpen(true)}>Edit</Button>}
       />
-      <Tabs items={roundItems} tabPlacement="start" />
-      <Button onClick={() => setOpenDrawer(true)}>openDrawer</Button>
-      <Drawer
-        placement="bottom"
-        size={900}
-        onClose={() => setOpenDrawer(false)}
-        open={openDrawer}
-        title="Waiting for scores"
-      >
-        <p>content</p>
-      </Drawer>
+      {bout?.data.status === "not_started" ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="Bout has not been started"
+        >
+          <StartBoutButton
+            confirm={async () => {
+              await updateBoutStatus("in_progress");
+            }}
+          />
+        </Empty>
+      ) : (
+        <>
+          <RoundIndex cardId={props.cardId} boutId={props.boutId} />
+        </>
+      )}
       <Modal
         title="Edit Bout"
         open={open}
@@ -163,6 +145,6 @@ export const ShowBout = (props: ShowBoutProps) => {
           onClose={() => setOpen(false)}
         />
       </Modal>
-    </>
+    </Flex>
   );
 };
