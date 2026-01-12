@@ -1,34 +1,31 @@
 import { Button, Form, Input, Space, type FormProps } from "antd";
-import { useMutateCards } from "../../api/cards";
-import { useProfile } from "../../providers/login";
+import type { CreateCardProps } from "../../api/cards";
 
 type FieldType = {
   name?: string;
   date?: string;
 };
 
-export type CreateCardProps = {
+export type AddCardProps = {
+  onSubmit: (props: CreateCardProps) => void;
   onClose: () => void;
 };
 
-export const CreateCard = (props: CreateCardProps) => {
-  const profile = useProfile();
-  const { mutateAsync: createCard } = useMutateCards();
-
+export const AddCard = (props: AddCardProps) => {
+  const [form] = Form.useForm();
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    await createCard({
-      token: profile.token,
-      toCreate: {
-        name: values.name || "",
-        date: values.date || "",
-      },
+    props.onSubmit({
+      name: values.name || "",
+      date: values.date || "",
     });
     props.onClose();
+    form.resetFields();
   };
 
   return (
     <>
       <Form
+        form={form}
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 14 }}
         layout="horizontal"

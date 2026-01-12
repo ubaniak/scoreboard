@@ -7,9 +7,9 @@ import {
   Space,
   type FormProps,
 } from "antd";
-import { useMutateUpdateCards } from "../../api/cards";
+import { type UpdateCardsProps } from "../../api/cards";
+import type { CardRequestType } from "../../api/entities";
 import type { Card } from "../../entities/cards";
-import { useProfile } from "../../providers/login";
 
 type FieldType = {
   name?: string;
@@ -20,17 +20,18 @@ type FieldType = {
 
 export type EditCardProps = {
   card: Card;
+  onSubmit: (props: {
+    id: CardRequestType;
+    toUpdate: UpdateCardsProps;
+  }) => void;
   onClose: () => void;
 };
 
 export const EditCard = (props: EditCardProps) => {
-  const profile = useProfile();
-  const { mutateAsync: updateCard } = useMutateUpdateCards();
-
+  const [form] = Form.useForm();
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    await updateCard({
-      cardId: props.card.id,
-      token: profile.token,
+    props.onSubmit({
+      id: { cardId: props.card.id },
       toUpdate: {
         name: values.name || "",
         date: values.date || "",
@@ -39,6 +40,7 @@ export const EditCard = (props: EditCardProps) => {
       },
     });
     props.onClose();
+    form.resetFields();
   };
 
   return (

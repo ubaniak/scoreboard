@@ -1,26 +1,16 @@
 import { Button, Form, Input, Space, type FormProps } from "antd";
-import { useMutateOfficial } from "../../api/cards";
-import { useProfile } from "../../providers/login";
-
-type FieldType = {
-  name?: string;
-};
+import type { CreateOfficialProps } from "../../api/officials";
 
 export type AddOfficialProps = {
-  carId: string;
   onClose: () => void;
+  onSubmit: (values: CreateOfficialProps) => void;
 };
 
 export const AddOfficial = (props: AddOfficialProps) => {
-  const profile = useProfile();
-  const { mutateAsync: createOfficial } = useMutateOfficial(props.carId || "");
-  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    await createOfficial({
-      token: profile.token,
-      toCreate: {
-        name: values.name || "",
-      },
-    });
+  const onFinish: FormProps<CreateOfficialProps>["onFinish"] = async (
+    values
+  ) => {
+    props.onSubmit(values);
     props.onClose();
   };
   return (
@@ -34,7 +24,7 @@ export const AddOfficial = (props: AddOfficialProps) => {
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
-      <Form.Item<FieldType> label="Name" name="name">
+      <Form.Item<CreateOfficialProps> label="Name" name="name">
         <Input />
       </Form.Item>
       <Form.Item label={null}>

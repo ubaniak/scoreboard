@@ -1,25 +1,23 @@
-import { Button, Modal, Table, type TableProps } from "antd";
-import type { Bout } from "../../entities/cards";
 import { EditOutlined } from "@ant-design/icons";
-import { useState } from "react";
-import { EditBout } from "./edit";
-import { RoundProgressSummary } from "../round/progress";
-import { StatusTag } from "../status/tag";
 import { useNavigate } from "@tanstack/react-router";
+import { Button, Table, type TableProps } from "antd";
+import type { UpdateBoutProps } from "../../api/bouts";
+import type { Bout } from "../../entities/cards";
+import { Modal } from "../modal/modal";
+import { StatusTag } from "../status/tag";
+import { EditBout } from "./edit";
+import type { BoutRequestType } from "../../api/entities";
 
 export type ListBoutsProps = {
-  cardId: string;
-  bouts: Bout[];
+  bouts?: Bout[];
+  loading?: boolean;
+  onEditBout: (values: {
+    toUpdate: UpdateBoutProps;
+    boutInfo: BoutRequestType;
+  }) => void;
 };
 export const ListBouts = (props: ListBoutsProps) => {
-  const [open, setOpen] = useState(false);
-  const [toEdit, setToEdit] = useState<Bout>();
   const navigate = useNavigate();
-  const handleOnEditClick = (record: Bout) => {
-    console.log(record);
-    setOpen(true);
-    setToEdit(record);
-  };
 
   const columns: TableProps<Bout>["columns"] = [
     {
@@ -83,11 +81,23 @@ export const ListBouts = (props: ListBoutsProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <Button
-            type="text"
-            shape="circle"
-            icon={<EditOutlined />}
-            onClick={() => handleOnEditClick(record as Bout)}
+          <Modal
+            button={{ shape: "circle", icon: <EditOutlined /> }}
+            modal={{
+              title: "hi",
+              body: (close) => (
+                <EditBout
+                  bout={record as Bout}
+                  onClose={close}
+                  onSubmit={(toUpdate) =>
+                    props.onEditBout({
+                      toUpdate,
+                      boutInfo: { boutId: record.id },
+                    })
+                  }
+                />
+              ),
+            }}
           />
         );
       },
@@ -96,31 +106,11 @@ export const ListBouts = (props: ListBoutsProps) => {
   return (
     <>
       <Table
-        dataSource={props.bouts}
+        loading={props.loading}
+        dataSource={props.bouts || []}
         columns={columns}
-        expandable={{
-          expandedRowRender: () => (
-            <>
-              <RoundProgressSummary />
-            </>
-          ),
-        }}
+        scroll={{ y: 55 * 5 }}
       />
-      <Modal
-        title="Edit Bout"
-        open={open}
-        onOk={() => setOpen(false)}
-        onCancel={() => setOpen(false)}
-        footer={null}
-      >
-        {toEdit && (
-          <EditBout
-            bout={toEdit}
-            carId={props.cardId}
-            onClose={() => setOpen(false)}
-          />
-        )}
-      </Modal>
     </>
   );
 };

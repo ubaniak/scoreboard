@@ -3,10 +3,15 @@ package main
 import (
 	"context"
 	"embed"
+	"errors"
+	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/getlantern/systray"
@@ -163,9 +168,71 @@ func startServer(r *mux.Router) *http.Server {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fileServer := http.FileServer(http.FS(staticFS))
 
-	r.PathPrefix("/").Handler(fileServer)
+	// Helper to serve index.html
+	serveIndex := func(w http.ResponseWriter, r *http.Request, staticFS fs.FS) {
+		index, err := staticFS.Open("index.html")
+		if err != nil {
+			http.Error(w, "index.html not found", http.StatusNotFound)
+			return
+		}
+		defer index.Close()
+
+		fi, err := index.Stat()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Set content type explicitly for safety
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		http.ServeContent(w, r, "index.html", fi.ModTime(), index.(io.ReadSeeker))
+	}
+
+	// Custom handler for SPA
+	spaHandler := func(w http.ResponseWriter, r *http.Request) {
+		// Clean path without leading slash
+		cleanPath := strings.TrimPrefix(r.URL.Path, "/")
+		if cleanPath == "" {
+			cleanPath = "index.html" // Directly serve index for root
+		}
+
+		// Log for debugging
+		fmt.Printf("Requested URL: %s, Clean path: %s\n", r.URL.Path, cleanPath)
+
+		// Check if path exists
+		f, err := staticFS.Open(cleanPath)
+		if err != nil {
+			if os.IsNotExist(err) || errors.Is(err, fs.ErrInvalid) {
+				fmt.Println("Fallback to index.html (not exist or invalid)")
+				serveIndex(w, r, staticFS)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		fi, err := f.Stat()
+		if err != nil {
+			fmt.Println("Fallback to index.html (stat error)")
+			serveIndex(w, r, staticFS)
+			return
+		}
+
+		if fi.IsDir() {
+			fmt.Println("Fallback to index.html (directory)")
+			serveIndex(w, r, staticFS)
+			return
+		}
+
+		// Serve the file normally if it's a file
+		fmt.Println("Serving file normally")
+		http.FileServer(http.FS(staticFS)).ServeHTTP(w, r)
+	}
+
+	// Use the custom handler for all non-API paths
+	r.PathPrefix("/").Handler(http.HandlerFunc(spaHandler))
 
 	srv := &http.Server{
 		Addr:    ":8080",

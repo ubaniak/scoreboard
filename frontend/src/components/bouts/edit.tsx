@@ -9,51 +9,28 @@ import {
   type FormProps,
 } from "antd";
 import { useEffect } from "react";
-import { useMutateDeleteBout, useMutateUpdateBout } from "../../api/bouts";
+import type { UpdateBoutProps } from "../../api/bouts";
 import type { Bout } from "../../entities/cards";
-import { useProfile } from "../../providers/login";
-import { DeleteOutlined } from "@ant-design/icons";
 
 export type EditBoutProps = {
   bout: Bout;
-  carId: string;
   onClose: () => void;
+  onSubmit: (values: UpdateBoutProps) => void;
 };
 
 export const EditBout = (props: EditBoutProps) => {
-  const profile = useProfile();
-
-  const [form] = Form.useForm<Bout>(); // Get form instance
-  // Update form values when props.bout changes
+  const [form] = Form.useForm<Bout>();
   useEffect(() => {
     form.setFieldsValue({
       ...props.bout,
     });
   }, [props.bout, form]); // Dependency on props.bout triggers the update
-  const { mutateAsync: updateBout } = useMutateUpdateBout(
-    props.carId || "",
-    props.bout.id
-  );
 
-  const { mutateAsync: deleteBout } = useMutateDeleteBout(
-    props.carId,
-    profile.token
-  );
-
-  const handleDelete = async () => {
-    await deleteBout(props.bout.id || "");
+  const onFinish: FormProps<UpdateBoutProps>["onFinish"] = async (values) => {
+    props.onSubmit(values);
     props.onClose();
   };
 
-  const onFinish: FormProps<Bout>["onFinish"] = async (values) => {
-    await updateBout({
-      token: profile.token,
-      toUpdate: {
-        ...values,
-      },
-    });
-    props.onClose();
-  };
   return (
     <Form
       labelCol={{ span: 4 }}
@@ -63,16 +40,16 @@ export const EditBout = (props: EditBoutProps) => {
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
-      <Form.Item<Bout> label="Bout #" name="boutNumber">
+      <Form.Item<UpdateBoutProps> label="Bout #" name="boutNumber">
         <InputNumber />
       </Form.Item>
-      <Form.Item<Bout> label="Red" name="redCorner">
+      <Form.Item<UpdateBoutProps> label="Red" name="redCorner">
         <Input />
       </Form.Item>
-      <Form.Item<Bout> label="Blue" name="blueCorner">
+      <Form.Item<UpdateBoutProps> label="Blue" name="blueCorner">
         <Input />
       </Form.Item>
-      <Form.Item<Bout> label="Age Cat" name="ageCategory">
+      <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory">
         <Select
           options={[
             { value: "juniorA", label: "Junior A" },
@@ -84,7 +61,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Glove Size" name="gloveSize">
+      <Form.Item<UpdateBoutProps> label="Glove Size" name="gloveSize">
         <Segmented
           size={"large"}
           shape="round"
@@ -95,7 +72,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Gender" name="gender">
+      <Form.Item<UpdateBoutProps> label="Gender" name="gender">
         <Segmented
           size={"large"}
           shape="round"
@@ -105,7 +82,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Experience" name="experience">
+      <Form.Item<UpdateBoutProps> label="Experience" name="experience">
         <Segmented
           size={"large"}
           shape="round"
@@ -115,7 +92,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Round length (min)" name="roundLength">
+      <Form.Item<UpdateBoutProps> label="Round length (min)" name="roundLength">
         <Segmented
           size={"large"}
           shape="round"
@@ -137,8 +114,7 @@ export const EditBout = (props: EditBoutProps) => {
           </Button>
         </Space>
       </Form.Item>
-      {JSON.stringify(props.bout)}
-      <Form.Item label={null}>
+      {/* <Form.Item label={null}>
         <Space>
           <Button
             color="danger"
@@ -150,7 +126,7 @@ export const EditBout = (props: EditBoutProps) => {
             Delete
           </Button>
         </Space>
-      </Form.Item>
+      </Form.Item> */}
     </Form>
   );
 };

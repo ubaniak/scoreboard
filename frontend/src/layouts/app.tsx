@@ -1,22 +1,20 @@
 import { Outlet } from "@tanstack/react-router";
+import { Layout } from "antd";
+import { Content, Header } from "antd/es/layout/layout";
 import { LoginProvider } from "../providers/login";
-import { Layout, theme } from "antd";
-import { Content } from "antd/es/layout/layout";
+import Title from "antd/es/typography/Title";
+import { ApiErrorHandler } from "../components/error/apiErrorHandler";
 
 export const AppLayout = () => {
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
   return (
-    <Layout
-      style={{
-        padding: "24px 0",
-        background: colorBgContainer,
-        borderRadius: borderRadiusLG,
-      }}
-    >
-      <Content style={{ padding: "0 50px" }}>
+    <Layout>
+      <Header style={{ display: "flex", alignItems: "center" }}>
+        <Title style={{ margin: 0, color: "white" }}>Score card</Title>
+      </Header>
+
+      <Content style={{ padding: "20px 48px" }}>
         <LoginProvider>
+          <ApiErrorHandler />
           <Outlet />
         </LoginProvider>
       </Content>

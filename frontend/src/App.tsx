@@ -1,4 +1,5 @@
 import {
+  MutationCache,
   QueryCache,
   QueryClient,
   QueryClientProvider,
@@ -9,31 +10,18 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
+import { App as AntApp, ConfigProvider, theme } from "antd";
 import "./App.css";
+import { GlobalErrorHandler } from "./components/error/globalErrorHandler";
 import { AppLayout } from "./layouts/app";
+import { BoutPage } from "./pages/bout";
 import { CardPage } from "./pages/card";
 import { HomePage } from "./pages/home";
-import { JudgePage } from "./pages/judge";
 import { LoginPage } from "./pages/login";
-import { SupervisorPage } from "./pages/supervisor";
-import { App as AntApp } from "antd";
-import { BoutPage } from "./pages/bout";
-
-function makeQueryClient() {
-  return new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error) => {
-        console.log(`Query Error --->>> ${error.message}`);
-      },
-    }),
-    defaultOptions: {
-      queries: {
-        retry: true,
-        staleTime: 60 * 1000,
-      },
-    },
-  });
-}
+import BoutDetailsPage from "./pages/test";
+import { getEmitter, registerEmitter } from "./events/events";
+import { ApiError } from "./api/fetchClient";
+import { JudgePage } from "./pages/judge";
 
 const rootRoute = createRootRoute({
   component: () => <AppLayout />,
@@ -62,27 +50,70 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({
     getParentRoute: () => rootRoute,
-    path: "/judge",
-    component: JudgePage,
+    path: "/card/test",
+    component: BoutDetailsPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,
-    path: "/supervisor/$Id",
-    component: SupervisorPage,
+    path: "/judge",
+    component: JudgePage,
   }),
+  // createRoute({
+  //   getParentRoute: () => rootRoute,
+  //   path: "/supervisor/$Id",
+  //   component: SupervisorPage,
+  // }),
 ]);
 
 const router = createRouter({ routeTree });
 
 function App() {
-  const queryClient = makeQueryClient();
+  registerEmitter<Error>("errors");
+  registerEmitter<ApiError>("apiErrors");
+  const errorsBus = getEmitter("errors");
+  const apiErrorBus = getEmitter("apiErrors");
+
+  const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        if (error instanceof ApiError) {
+          apiErrorBus.emit(error);
+        } else {
+          errorsBus.emit(error);
+        }
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => {
+        if (error instanceof ApiError) {
+          apiErrorBus.emit(error);
+        } else {
+          errorsBus.emit(error);
+        }
+      },
+    }),
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        retry: false,
+      },
+    },
+  });
+
   return (
     <>
-      <AntApp>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router}></RouterProvider>
-        </QueryClientProvider>
-      </AntApp>
+      <ConfigProvider
+        theme={{
+          algorithm: theme.defaultAlgorithm,
+        }}
+      >
+        <AntApp>
+          <QueryClientProvider client={queryClient}>
+            <GlobalErrorHandler />
+            <RouterProvider router={router}></RouterProvider>
+          </QueryClientProvider>
+        </AntApp>
+      </ConfigProvider>
     </>
   );
 }

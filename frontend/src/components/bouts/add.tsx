@@ -8,28 +8,19 @@ import {
   Space,
   type FormProps,
 } from "antd";
-import { useProfile } from "../../providers/login";
-import type { Bout } from "../../entities/cards";
-import { useMutateBout } from "../../api/bouts";
+import type { CreateBoutProps } from "../../api/bouts";
 
 export type AddBoutProps = {
-  carId: string;
   onClose: () => void;
+  onSubmit: (values: CreateBoutProps) => void;
 };
 
 export const AddBout = (props: AddBoutProps) => {
-  const profile = useProfile();
-  const { mutateAsync: createBout } = useMutateBout(props.carId || "");
-  const onFinish: FormProps<Bout>["onFinish"] = async (values) => {
-    console.log(values);
-    await createBout({
-      token: profile.token,
-      toCreate: {
-        ...values,
-      },
-    });
+  const onFinish: FormProps<CreateBoutProps>["onFinish"] = async (values) => {
+    props.onSubmit(values);
     props.onClose();
   };
+
   return (
     <Form
       labelCol={{ span: 4 }}
@@ -46,16 +37,16 @@ export const AddBout = (props: AddBoutProps) => {
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
-      <Form.Item<Bout> label="Bout Number" name="boutNumber">
+      <Form.Item<CreateBoutProps> label="Bout Number" name="boutNumber">
         <InputNumber />
       </Form.Item>
-      <Form.Item<Bout> label="Red" name="redCorner">
+      <Form.Item<CreateBoutProps> label="Red" name="redCorner">
         <Input />
       </Form.Item>
-      <Form.Item<Bout> label="Blue" name="blueCorner">
+      <Form.Item<CreateBoutProps> label="Blue" name="blueCorner">
         <Input />
       </Form.Item>
-      <Form.Item<Bout> label="Age Cat" name="ageCategory">
+      <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory">
         <Select
           options={[
             { value: "juniorA", label: "Junior A" },
@@ -67,7 +58,7 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Gender" name="gender">
+      <Form.Item<CreateBoutProps> label="Gender" name="gender">
         <Segmented
           size={"large"}
           shape="round"
@@ -77,7 +68,7 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<Bout> label="Experience" name="experience">
+      <Form.Item<CreateBoutProps> label="Experience" name="experience">
         <Segmented
           size={"large"}
           shape="round"

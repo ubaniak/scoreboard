@@ -120,13 +120,6 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithData(response).Present()
 }
 
-type UpdateCardRequest struct {
-	Name           string `json:"name"`
-	Date           string `json:"date"`
-	Status         string `json:"status"`
-	NumberOfJudges int    `json:"numberOfJudges"`
-}
-
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
@@ -146,12 +139,7 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toUpdate := &entities.UpdateCard{
-		Name:           &req.Name,
-		Date:           &req.Date,
-		Status:         &req.Status,
-		NumberOfJudges: &req.NumberOfJudges,
-	}
+	toUpdate := UpdateCardRequestToEntity(req)
 
 	err = h.useCase.Update(id, toUpdate)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()

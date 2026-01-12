@@ -1,46 +1,21 @@
-import { DeleteOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Space, type FormProps } from "antd";
-import {
-  useMutateDeleteOfficial,
-  useMutateUpdateOfficial,
-} from "../../api/cards";
 import type { Official } from "../../entities/cards";
-import { useProfile } from "../../providers/login";
-
-type FieldType = {
-  name?: string;
-};
+import type { UpdateOfficialProps } from "../../api/officials";
 
 export type EditOfficialProps = {
-  cardId: string;
   official: Official;
   onClose: () => void;
+  onSubmit: (vals: {
+    toUpdate: UpdateOfficialProps;
+    officialId: string;
+  }) => void;
 };
 
 export const EditOfficial = (props: EditOfficialProps) => {
-  const profile = useProfile();
-  const { mutateAsync: updateOfficial } = useMutateUpdateOfficial(
-    props.cardId || "",
-    props.official.id || ""
-  );
-
-  const { mutateAsync: deleteOfficial } = useMutateDeleteOfficial(
-    props.cardId,
-    profile.token
-  );
-
-  const handleDelete = async () => {
-    await deleteOfficial(props.official.id || "");
-    props.onClose();
-  };
-
-  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    await updateOfficial({
-      token: profile.token,
-      toUpdate: {
-        name: values.name || "",
-      },
-    });
+  const onFinish: FormProps<UpdateOfficialProps>["onFinish"] = async (
+    values
+  ) => {
+    props.onSubmit({ toUpdate: values, officialId: props.official.id });
     props.onClose();
   };
   return (
@@ -54,7 +29,7 @@ export const EditOfficial = (props: EditOfficialProps) => {
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
-      <Form.Item<FieldType> label="Name" name="name">
+      <Form.Item<UpdateOfficialProps> label="Name" name="name">
         <Input />
       </Form.Item>
       <Form.Item label={null}>
@@ -64,19 +39,6 @@ export const EditOfficial = (props: EditOfficialProps) => {
           </Button>
           <Button type="primary" htmlType="submit">
             Submit
-          </Button>
-        </Space>
-      </Form.Item>
-      <Form.Item label={null}>
-        <Space>
-          <Button
-            color="danger"
-            variant="outlined"
-            onClick={handleDelete}
-            icon={<DeleteOutlined />}
-            iconPlacement={"end"}
-          >
-            Delete
           </Button>
         </Space>
       </Form.Item>

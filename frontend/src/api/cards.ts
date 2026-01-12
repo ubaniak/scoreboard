@@ -1,206 +1,124 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Card, type Official } from "../entities/cards";
+import { type Card, type CardStatus } from "../entities/cards";
 import { baseUrl } from "./constants";
-import { fetchClient } from "./handlers";
+import type { CardRequestType, TokenBase } from "./entities";
+import { fetchClient } from "./fetchClient";
 
-const cardKeys = {
+// TODO: Add token to all the keys
+const keys = {
   all: ["cards"] as const,
-  list: () => [...cardKeys.all, "list"] as const,
-  get: (id: string) => [...cardKeys.all, id] as const,
-  settings: (id: string) => [...cardKeys.all, `settings-${id}`] as const,
-  officials: (id: string) => [...cardKeys.all, `officials-${id}`] as const,
+  list: () => [...keys.all, "list"] as const,
+  get: (id: string) => [...keys.all, id] as const,
+  settings: (id: string) => [...keys.all, `settings-${id}`] as const,
+  officials: (id: string) => [...keys.all, `officials-${id}`] as const,
 };
 
-export const useGetCardById = (id: string, token: string) => {
+export const useGetCardById = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: [id],
+    queryKey: [props.cardId],
     queryFn: async () => {
-      return fetchClient<Card>(`${baseUrl}/api/cards/${id}`, {
+      return fetchClient<Card>(`${baseUrl}/api/cards/${props.cardId}`, {
         headers: {
           "Content-type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${props.token}`,
         },
       });
     },
   });
 };
 
-export const useListCards = (token: string) => {
+export const useListCards = (props: TokenBase) => {
   return useQuery({
-    queryKey: cardKeys.list(),
-    queryFn: () => listCards(token),
-  });
-};
-
-export const listCards = async (token: string) => {
-  return fetchClient<Card[]>(`${baseUrl}/api/cards`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
-
-export const useMutateCards = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createCard,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: cardKeys.list() });
+    queryKey: keys.list(),
+    enabled: !!props.token,
+    queryFn: async () => {
+      return await fetchClient<Card[]>(`${baseUrl}/api/cards`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
     },
   });
 };
 
 export type CreateCardProps = {
-  token: string;
-  toCreate: {
-    name: string;
-    date: string;
-  };
+  name: string;
+  date: string;
 };
 
-const createCard = async (props: CreateCardProps) => {
-  return fetchClient(`${baseUrl}/api/cards`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
-    },
-    body: JSON.stringify(props.toCreate),
-  });
-};
-
-export const useMutateUpdateCards = () => {
+export const useMutateCreateCards = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateCards,
+    mutationFn: async (toCreate: CreateCardProps) => {
+      return fetchClient(`${baseUrl}/api/cards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: JSON.stringify(toCreate),
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: cardKeys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list() });
     },
   });
 };
 
-export type updateCardsProps = {
-  cardId: string;
-  token: string;
-  toUpdate: {
-    name: string;
-    date: string;
-    status: string;
-    numberOfJudges: number;
-  };
+export type UpdateCardsProps = {
+  name: string;
+  date: string;
+  numberOfJudges: number;
 };
 
-const updateCards = async (props: updateCardsProps) => {
-  return fetchClient(`${baseUrl}/api/cards/${props.cardId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
-    },
-    body: JSON.stringify(props.toUpdate),
-  });
-};
-
-export const useGetOfficials = (cardId: string, token: string) => {
-  return useQuery({
-    queryKey: cardKeys.officials(cardId),
-    queryFn: () => getOfficials(cardId, token),
-  });
-};
-
-export const getOfficials = async (cardId: string, token: string) => {
-  return fetchClient<Official[]>(`${baseUrl}/api/cards/${cardId}/officials`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
-
-export type CreateOfficialProps = {
-  token: string;
-  toCreate: {
-    name: string;
-  };
-};
-export const useMutateOfficial = (cardId: string) => {
+export const useMutateUpdateCards = (r: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (props: CreateOfficialProps) => createOfficial(cardId, props),
+    mutationFn: ({
+      id,
+      toUpdate,
+    }: {
+      id: CardRequestType;
+      toUpdate: UpdateCardsProps;
+    }) => {
+      return fetchClient(`${baseUrl}/api/cards/${id.cardId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${r.token}`,
+        },
+        body: JSON.stringify(toUpdate),
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: cardKeys.officials(cardId) });
+      queryClient.invalidateQueries({ queryKey: keys.list() });
     },
   });
 };
 
-const createOfficial = async (cardId: string, props: CreateOfficialProps) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
-    },
-    body: JSON.stringify(props.toCreate),
-  });
-};
-
-export const useMutateDeleteOfficial = (cardId: string, token: string) => {
+export const useMutateUpdateCardStatus = (r: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (officialId: string) =>
-      deleteOfficial(cardId, token, officialId),
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: CardRequestType;
+      status: CardStatus;
+    }) => {
+      return fetchClient(`${baseUrl}/api/cards/${id.cardId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${r.token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: cardKeys.officials(cardId) });
+      queryClient.invalidateQueries({ queryKey: keys.list() });
     },
-  });
-};
-
-const deleteOfficial = async (
-  cardId: string,
-  token: string,
-  officialId: string
-) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials/${officialId}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
-
-export type UpdateOfficialProps = {
-  token: string;
-  toUpdate: {
-    name: string;
-  };
-};
-
-export const useMutateUpdateOfficial = (cardId: string, officialId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (props: UpdateOfficialProps) =>
-      updateOfficial(cardId, officialId, props),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: cardKeys.officials(cardId) });
-    },
-  });
-};
-
-const updateOfficial = async (
-  cardId: string,
-  officialId: string,
-  props: UpdateOfficialProps
-) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/officials/${officialId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
-    },
-    body: JSON.stringify(props.toUpdate),
   });
 };

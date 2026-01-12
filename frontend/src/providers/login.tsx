@@ -36,6 +36,7 @@ export const LoginProvider: React.FC<Props> = ({ children }) => {
     clear: () => {
       localStorage.removeItem("role");
       localStorage.removeItem("token");
+      navigate({ to: "/login" });
     },
   };
 
@@ -52,9 +53,7 @@ export const LoginProvider: React.FC<Props> = ({ children }) => {
 export const useProfile = (): LoginContextType => {
   const context = useContext(LoginContext);
   if (!context) {
-    throw new Error(
-      "useNotification must be used within a NotificationProvider"
-    );
+    throw new Error("useProfile must be used within a NotificationProvider");
   }
   return context;
 };

@@ -1,29 +1,31 @@
-import { Button, Modal } from "antd";
-import { useListCards } from "../api/cards";
-import { CardTable } from "../components/cards/cardTable";
+import {
+  useListCards,
+  useMutateCreateCards,
+  useMutateUpdateCards,
+} from "../api/cards";
+import { CardIndex } from "../components/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-import { useState } from "react";
-import { CreateCard } from "../components/cards/createCard";
 
 export const HomePage = () => {
   const profile = useProfile();
-  const { data: cards } = useListCards(profile.token);
-  const [open, setOpen] = useState(false);
+  const cards = useListCards({ token: profile.token });
+
+  const createCard = useMutateCreateCards({ token: profile.token });
+  const updateCard = useMutateUpdateCards({ token: profile.token });
 
   return (
-    <PageLayout title="Cards" subheading="hello">
-      <Button onClick={() => setOpen(true)}>Add Card</Button>
-      <CardTable cards={cards?.data} />
-      <Modal
-        title={"Add card"}
-        open={open}
-        onOk={() => setOpen(false)}
-        onCancel={() => setOpen(false)}
-        footer={null}
-      >
-        <CreateCard onClose={() => setOpen(false)} />
-      </Modal>
+    <PageLayout breadCrumbs={[{ title: "home" }]} title="Home page">
+      <CardIndex
+        isLoading={cards.isLoading || cards.isError}
+        cards={cards.data}
+        onCreateCard={(values) => {
+          createCard.mutate(values);
+        }}
+        onUpdateCard={(values) => {
+          updateCard.mutate(values);
+        }}
+      />
     </PageLayout>
   );
 };

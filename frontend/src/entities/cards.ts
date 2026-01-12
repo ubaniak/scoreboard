@@ -1,13 +1,17 @@
+import type { BoutStatus } from "./bouts";
+
+export type CardStatus = "upcoming" | "in_progress" | "completed" | "cancelled";
+
 export type Card = {
   id: string;
   name: string;
   date: string;
-  status: string;
+  status: CardStatus;
   numberOfJudges: number;
 };
 
 export type Official = {
-  id?: string;
+  id: string;
   name: string;
 };
 
@@ -24,13 +28,14 @@ export type Bout = {
   boutNumber: number;
   redCorner: string;
   blueCorner: string;
-  status: string;
+  status: BoutStatus;
   ageCategory: AgeCategory;
   gender: "male" | "female";
   experience: "novice" | "open";
   gloveSize: "10oz" | "12oz" | "16oz";
   decision: string;
   roundLength: number;
+  weightClass: number;
 };
 
 export type RoundStatus =

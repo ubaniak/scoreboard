@@ -1,46 +1,84 @@
 import { useParams } from "@tanstack/react-router";
-import { Flex, Typography } from "antd";
-import { useGetCardById } from "../api/cards";
-import { BoutIndex } from "../components/bouts";
-import { DeviceIndex } from "../components/devices";
+import { Button } from "antd";
+import {
+  useGetBouts,
+  useMutateCreateBout,
+  useMutateUpdateBout,
+} from "../api/bouts";
+import { useGetCardById, useMutateUpdateCardStatus } from "../api/cards";
+import {
+  useGetOfficials,
+  useMutateCreateOfficial,
+  useMutateUpdateOfficial,
+} from "../api/officials";
+import { BoutsIndex } from "../components/bouts";
+import { CardSummary } from "../components/cards/summery";
 import { OfficialIndex } from "../components/officials";
+import type { Card } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-import { StatusBadge } from "../components/status/badge";
 
-const SubHeading = (props: { date?: string; status?: string }) => {
-  return (
-    <Flex gap="middle" orientation="vertical">
-      <Typography.Title level={5}>Date: {props.date}</Typography.Title>
-      <StatusBadge text={props.status || "unknown"} />
-    </Flex>
-  );
+type CardActionProps = {
+  card?: Card;
+  start: () => void;
+};
+
+const CardActions = (props: CardActionProps) => {
+  if (props.card?.status === "upcoming") {
+    return <Button onClick={props.start}>Start</Button>;
+  }
+  return null;
 };
 
 export const CardPage = () => {
-  const profile = useProfile();
+  const { token } = useProfile();
   const { cardId } = useParams({ from: "/card/$cardId" });
-  const { data: card, isLoading } = useGetCardById(cardId, profile.token);
 
-  if (isLoading) {
-    return <>loading</>;
-  }
+  const bouts = useGetBouts({ token, cardId });
+  const officials = useGetOfficials({ token, cardId });
+  const card = useGetCardById({ token, cardId });
+
+  const addBout = useMutateCreateBout({ token, cardId });
+  const updateBout = useMutateUpdateBout({ token, cardId });
+
+  const addOfficial = useMutateCreateOfficial({ token, cardId });
+  const updateOfficial = useMutateUpdateOfficial({ token, cardId });
+  const updateCardStatus = useMutateUpdateCardStatus({ token });
+
+  const start = () => {
+    updateCardStatus.mutate({
+      id: { cardId },
+      status: "in_progress",
+    });
+  };
 
   return (
     <PageLayout
-      title={`Card: ${card?.data.name}`}
-      subheading={
-        <SubHeading date={card?.data.date} status={card?.data.status} />
-      }
+      title="Card details"
+      subTitle={<CardSummary card={card.data} />}
+      breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
+      action={<CardActions card={card.data} start={start} />}
     >
-      <Flex vertical={true}>
-        <OfficialIndex cardId={card?.data.id || ""} />
-        <BoutIndex cardId={card?.data.id || ""} />
-        <DeviceIndex
-          cardId={card?.data.id || ""}
-          numberOfJudges={card?.data.numberOfJudges || 0}
-        />
-      </Flex>
+      <BoutsIndex
+        loading={bouts.isLoading}
+        bouts={bouts.data}
+        onAddBout={(values) => {
+          addBout.mutate(values);
+        }}
+        onEditBout={(values) => {
+          updateBout.mutate(values);
+        }}
+      />
+      <OfficialIndex
+        loading={officials.isLoading}
+        officials={officials.data}
+        onEditOfficial={(values) => {
+          updateOfficial.mutate(values);
+        }}
+        onCreateOfficial={(values) => {
+          addOfficial.mutate(values);
+        }}
+      />
     </PageLayout>
   );
 };

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { Login } from "../entities/login";
-import { fetchClient } from "./handlers";
+import { fetchClient } from "./fetchClient";
 
 export const useMutateLogin = () => {
   const queryClient = useQueryClient();

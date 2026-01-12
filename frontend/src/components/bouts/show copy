@@ -8,12 +8,12 @@ import {
   type DescriptionsProps,
 } from "antd";
 import { useState } from "react";
-import { useGetBout, useMutateBoutStatus } from "../../api/bouts";
 import type { Bout } from "../../entities/cards";
 import { useProfile } from "../../providers/login";
 import { RoundIndex } from "../round";
-import { EditBout } from "./edit";
 import { StatusTag } from "../status/tag";
+import { EditBout } from "./edit";
+import { useMutateBoutStatus } from "../../api/bouts";
 
 export type ShowBoutProps = {
   cardId: string;

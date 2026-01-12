@@ -1,58 +1,51 @@
-import { Button, Collapse, Modal } from "antd";
-import { useGetOfficials } from "../../api/cards";
-import { useProfile } from "../../providers/login";
-import { ListOfficials } from "./list";
-import { useState } from "react";
+import type {
+  CreateOfficialProps,
+  UpdateOfficialProps,
+} from "../../api/officials";
+import type { Official } from "../../entities/cards";
+import { TableLayout } from "../../layouts/table";
+import { Modal } from "../modal/modal";
 import { AddOfficial } from "./add";
+import { ListOfficials } from "./list";
 
 export type OfficialIndexProps = {
-  cardId: string;
+  officials?: Official[];
+  loading?: boolean;
+  onEditOfficial: (vals: {
+    toUpdate: UpdateOfficialProps;
+    officialId: string;
+  }) => void;
+  onCreateOfficial: (values: CreateOfficialProps) => void;
 };
 
 export const OfficialIndex = (props: OfficialIndexProps) => {
-  const profile = useProfile();
-  const { data: officials, isLoading } = useGetOfficials(
-    props.cardId,
-    profile.token
-  );
-  const [open, setOpen] = useState(false);
-
-  if (isLoading) {
-    return <>Loading</>;
-  }
-
   return (
-    <>
-      <Collapse
-        size="large"
-        items={[
-          {
-            key: 1,
-            label: `Officials (${officials?.data.length})`,
-            children: (
+    <TableLayout
+      title="Officials"
+      actions={
+        <Modal
+          button={{ text: "add" }}
+          modal={{
+            title: "Add Official",
+            body: (close) => (
               <>
-                <Button onClick={() => setOpen(true)}>Add</Button>
-                <ListOfficials
-                  officials={officials?.data || []}
-                  cardId={props.cardId}
+                <AddOfficial
+                  onClose={close}
+                  onSubmit={(values: CreateOfficialProps) => {
+                    props.onCreateOfficial(values);
+                  }}
                 />
-                <Modal
-                  title="Add Official"
-                  open={open}
-                  onOk={() => setOpen(false)}
-                  onCancel={() => setOpen(false)}
-                  footer={null}
-                >
-                  <AddOfficial
-                    onClose={() => setOpen(false)}
-                    carId={props.cardId}
-                  />
-                </Modal>
               </>
             ),
-          },
-        ]}
+          }}
+        />
+      }
+    >
+      <ListOfficials
+        officials={props.officials}
+        loading={props.loading}
+        onEditOfficial={(vals) => props.onEditOfficial(vals)}
       />
-    </>
+    </TableLayout>
   );
 };

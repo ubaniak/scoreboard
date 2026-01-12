@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
-import { fetchClient } from "./handlers";
 import type { DeviceStatus } from "../entities/device";
+import { fetchClient } from "./fetchClient";
 
 const keys = {
   all: ["devices"] as const,

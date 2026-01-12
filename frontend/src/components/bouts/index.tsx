@@ -1,51 +1,48 @@
-import { Button, Collapse, Modal } from "antd";
-import { useListBouts } from "../../api/bouts";
-import { useProfile } from "../../providers/login";
-import { ListBouts } from "./list";
+import type { CreateBoutProps, UpdateBoutProps } from "../../api/bouts";
+import type { BoutRequestType } from "../../api/entities";
+import type { Bout } from "../../entities/cards";
+import { TableLayout } from "../../layouts/table";
+import { Modal } from "../modal/modal";
 import { AddBout } from "./add";
-import { useState } from "react";
+import { ListBouts } from "./list";
 
-export type BoutIndexParams = {
-  cardId: string;
+export type BoutsIndexParams = {
+  bouts?: Bout[];
+  loading?: boolean;
+  onAddBout: (values: CreateBoutProps) => void;
+  onEditBout: (values: {
+    toUpdate: UpdateBoutProps;
+    boutInfo: BoutRequestType;
+  }) => void;
 };
-export const BoutIndex = (props: BoutIndexParams) => {
-  const profile = useProfile();
-  const [open, setOpen] = useState(false);
-  const { data, isLoading } = useListBouts(props.cardId, profile.token);
-
-  if (isLoading) {
-    return <>Loading</>;
-  }
-
+export const BoutsIndex = (props: BoutsIndexParams) => {
   return (
-    <>
-      <Collapse
-        size="large"
-        items={[
-          {
-            key: 1,
-            label: `Bouts (${data?.data.length})`,
-            children: (
+    <TableLayout
+      title="Bouts"
+      actions={
+        <Modal
+          button={{ text: "add" }}
+          modal={{
+            title: "Add Bout",
+            body: (close) => (
               <>
-                <Button onClick={() => setOpen(true)}>Add</Button>
-                <ListBouts cardId={props.cardId} bouts={data?.data || []} />
-                <Modal
-                  title="Add Bout"
-                  open={open}
-                  onOk={() => setOpen(false)}
-                  onCancel={() => setOpen(false)}
-                  footer={null}
-                >
-                  <AddBout
-                    onClose={() => setOpen(false)}
-                    carId={props.cardId}
-                  />
-                </Modal>
+                <AddBout
+                  onClose={close}
+                  onSubmit={(values: CreateBoutProps) => {
+                    props.onAddBout(values);
+                  }}
+                />
               </>
             ),
-          },
-        ]}
+          }}
+        />
+      }
+    >
+      <ListBouts
+        bouts={props.bouts}
+        loading={props.loading}
+        onEditBout={(values) => props.onEditBout(values)}
       />
-    </>
+    </TableLayout>
   );
 };

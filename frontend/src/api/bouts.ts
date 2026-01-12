@@ -2,118 +2,117 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { BoutStatus } from "../entities/bouts";
 import { type Bout, type Round, type RoundDetails } from "../entities/cards";
 import { baseUrl } from "./constants";
-import { fetchClient } from "./handlers";
+import type {
+  BoutRequestType,
+  CardRequestType,
+  RoundRequestType,
+  TokenBase,
+} from "./entities";
+import type { Corner, FoulTypes } from "../entities/corner";
+import { fetchClient } from "./fetchClient";
 
-const boutKeys = {
+const keys = {
   all: ["bouts"] as const,
-  list: () => [...boutKeys.all, "list"] as const,
+  list: () => [...keys.all, "list"] as const,
   fouls: ["fouls"],
-  get: (id: string) => [...boutKeys.all, `get-${id}`] as const,
-  settings: (id: string) => [...boutKeys.all, `settings-${id}`] as const,
-  bouts: (id: string) => [...boutKeys.all, `bouts-${id}`] as const,
-  rounds: (id: string) => [...boutKeys.all, `rounds-${id}`] as const,
+  get: (id: string) => [...keys.all, `get-${id}`] as const,
+  settings: (id: string) => [...keys.all, `settings-${id}`] as const,
+  bouts: (id: string) => [...keys.all, `bouts-${id}`] as const,
+  rounds: (id: string) => [...keys.all, `rounds-${id}`] as const,
   round: (boutId: string, roundNumber: number) =>
-    [...boutKeys.all, `bout-${boutId}-round-${roundNumber}`] as const,
+    [...keys.all, `bout-${boutId}-round-${roundNumber}`] as const,
 };
 
-export const useGetBout = (cardId: string, boutId: string, token: string) => {
-  return useQuery({
-    queryKey: boutKeys.get(boutId),
-    queryFn: () => getBout(cardId, boutId, token),
-  });
-};
-
-export const getBout = async (
-  cardId: string,
-  boutId: string,
-  token: string
+export const useGetBoutById = (
+  props: TokenBase & CardRequestType & BoutRequestType
 ) => {
-  return fetchClient<Bout>(`${baseUrl}/api/cards/${cardId}/bouts/${boutId}`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
-
-export const useListBouts = (cardId: string, token: string) => {
   return useQuery({
-    queryKey: boutKeys.list(),
-    queryFn: () => listBouts(cardId, token),
-  });
-};
-
-export const listBouts = async (cardId: string, token: string) => {
-  return fetchClient<Bout[]>(`${baseUrl}/api/cards/${cardId}/bouts`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
+    queryKey: keys.get(props.boutId),
+    queryFn: async () => {
+      return fetchClient<Bout>(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}`,
+        {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        }
+      );
     },
   });
 };
 
-export const useMutateBout = (cardId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (props: CreateBoutProps) => createBout(cardId, props),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.list() });
-    },
-  });
-};
-
-export type CreateBoutProps = {
-  token: string;
-  toCreate: {
-    boutNumber: number;
-    redCorner: string;
-    blueCorner: string;
-    ageCategory: string;
-    gender: string;
-    experience: string;
-  };
-};
-
-const createBout = async (cardId: string, props: CreateBoutProps) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/bouts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
-    },
-    body: JSON.stringify(props.toCreate),
-  });
-};
-
-export type UpdateBoutProps = {
-  token: string;
-  toUpdate: Partial<Bout>;
-};
-
-export const useMutateUpdateBout = (cardId: string, boutId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (props: UpdateBoutProps) => updateBout(cardId, boutId, props),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: boutKeys.get(boutId),
+export const useGetBouts = (props: TokenBase & CardRequestType) => {
+  return useQuery({
+    queryKey: keys.list(),
+    queryFn: () => {
+      return fetchClient<Bout[]>(`${baseUrl}/api/cards/${props.cardId}/bouts`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
       });
     },
   });
 };
 
-const updateBout = async (
-  cardId: string,
-  boutId: string,
-  props: UpdateBoutProps
-) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/bouts/${boutId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${props.token}`,
+export type CreateBoutProps = {
+  boutNumber: number;
+  redCorner: string;
+  blueCorner: string;
+  ageCategory: string;
+  gender: string;
+  experience: string;
+};
+
+export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (toCreate: CreateBoutProps) => {
+      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/bouts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: JSON.stringify(toCreate),
+      });
     },
-    body: JSON.stringify(props.toUpdate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list() });
+    },
+  });
+};
+
+export type UpdateBoutProps = Partial<Bout>;
+
+export const useMutateUpdateBout = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      toUpdate,
+      boutInfo,
+    }: {
+      toUpdate: UpdateBoutProps;
+      boutInfo: BoutRequestType;
+    }) => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${boutInfo.boutId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+          body: JSON.stringify(toUpdate),
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keys.list(),
+      });
+    },
   });
 };
 
@@ -122,7 +121,7 @@ export const useMutateDeleteBout = (cardId: string, token: string) => {
   return useMutation({
     mutationFn: (boutId: string) => deleteBout(cardId, token, boutId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list() });
     },
   });
 };
@@ -137,40 +136,33 @@ const deleteBout = async (cardId: string, token: string, boutId: string) => {
   });
 };
 
-export const useMutateBoutStatus = (
-  cardId: string,
-  boutId: string,
-  token: string
+export const useMutateUpdateBoutStatus = (
+  props: TokenBase & CardRequestType & BoutRequestType
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (status: BoutStatus) =>
-      updateBoutStatus(cardId, boutId, token, status),
+    mutationFn: (body: { status: BoutStatus }) => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/status`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.get(boutId) });
+      queryClient.invalidateQueries({ queryKey: keys.get(props.boutId) });
     },
-  });
-};
-
-const updateBoutStatus = async (
-  cardId: string,
-  boutId: string,
-  token: string,
-  status: BoutStatus
-) => {
-  return fetchClient(`${baseUrl}/api/cards/${cardId}/bouts/${boutId}/status`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ status }),
   });
 };
 
 export const useGetRounds = (cardId: string, boutId: string, token: string) => {
   return useQuery({
-    queryKey: boutKeys.rounds(boutId),
+    queryKey: keys.rounds(boutId),
     queryFn: () => getRounds(cardId, boutId, token),
   });
 };
@@ -191,99 +183,72 @@ export const getRounds = async (
   );
 };
 
+export type MutateAddFoulProps = {
+  corner: Corner;
+  type: FoulTypes;
+  foul: string;
+};
+
 export const useMutateAddFoul = (
-  cardId: string,
-  boutId: string,
-  roundNumber: number,
-  token: string
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      corner,
-      type,
-      foul,
-    }: {
-      corner: string;
-      type: string;
-      foul: string;
-    }) => addFoul(cardId, boutId, roundNumber, token, corner, type, foul),
+    mutationFn: (body: MutateAddFoulProps) => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}/foul`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: boutKeys.fouls,
+        queryKey: keys.fouls,
       });
       queryClient.invalidateQueries({
-        queryKey: boutKeys.round(boutId, roundNumber),
+        queryKey: keys.round(props.boutId, props.roundNumber),
       });
     },
   });
 };
 
-const addFoul = async (
-  cardId: string,
-  boutId: string,
-  roundNumber: number,
-  token: string,
-  corner: string,
-  type: string,
-  foul: string
-) => {
-  return fetchClient(
-    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/foul`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ corner, type, foul }),
-    }
-  );
-};
-
-export const useGetFouls = (token: string) => {
+export const useGetFouls = (props: TokenBase) => {
   return useQuery({
-    queryKey: boutKeys.fouls,
-    queryFn: () => getFouls(token),
-  });
-};
-
-export const getFouls = async (token: string) => {
-  return fetchClient<string[]>(`${baseUrl}/api/cards/0/fouls`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
+    queryKey: keys.fouls,
+    queryFn: () => {
+      return fetchClient<string[]>(`${baseUrl}/api/cards/0/fouls`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
     },
   });
 };
 
 export const useGetRound = (
-  cardId: string,
-  boutId: string,
-  roundNumber: number,
-  token: string
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType
 ) => {
   return useQuery({
-    queryKey: boutKeys.round(boutId, roundNumber),
-    queryFn: () => getRound(cardId, boutId, roundNumber, token),
+    queryKey: keys.round(props.boutId, props.roundNumber),
+    queryFn: () => {
+      return fetchClient<RoundDetails>(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}`,
+        {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        }
+      );
+    },
   });
-};
-
-export const getRound = async (
-  cardId: string,
-  boutId: string,
-  roundNumber: number,
-  token: string
-) => {
-  return fetchClient<RoundDetails>(
-    `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}`,
-    {
-      headers: {
-        "Content-type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
 };
 
 export const useMutateEightCount = (
@@ -303,10 +268,10 @@ export const useMutateEightCount = (
     }) => eightCount(cardId, boutId, roundNumber, token, corner, direction),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: boutKeys.fouls,
+        queryKey: keys.fouls,
       });
       queryClient.invalidateQueries({
-        queryKey: boutKeys.round(boutId, roundNumber),
+        queryKey: keys.round(boutId, roundNumber),
       });
     },
   });
@@ -334,29 +299,26 @@ const eightCount = async (
 };
 
 export const useMutateStartRound = (
-  cardId: string,
-  boutId: string,
-  roundNumber: number,
-  token: string
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => {
       return fetchClient(
-        `${baseUrl}/api/cards/${cardId}/bouts/${boutId}/rounds/${roundNumber}/start`,
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}/start`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${props.token}`,
           },
         }
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({ queryKey: keys.rounds(props.boutId) });
       queryClient.invalidateQueries({
-        queryKey: boutKeys.round(boutId, roundNumber),
+        queryKey: keys.round(props.boutId, props.roundNumber),
       });
     },
   });
@@ -383,9 +345,9 @@ export const useMutateScoreRound = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({ queryKey: keys.rounds(boutId) });
       queryClient.invalidateQueries({
-        queryKey: boutKeys.round(boutId, roundNumber),
+        queryKey: keys.round(boutId, roundNumber),
       });
     },
   });
@@ -413,10 +375,10 @@ export const useMutateEndRound = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boutKeys.bouts(boutId) });
-      queryClient.invalidateQueries({ queryKey: boutKeys.rounds(boutId) });
+      queryClient.invalidateQueries({ queryKey: keys.bouts(boutId) });
+      queryClient.invalidateQueries({ queryKey: keys.rounds(boutId) });
       queryClient.invalidateQueries({
-        queryKey: boutKeys.round(boutId, roundNumber),
+        queryKey: keys.round(boutId, roundNumber),
       });
     },
   });
