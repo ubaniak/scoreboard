@@ -1,12 +1,12 @@
 package entities
 
 type Profile struct {
-	ID         uint
-	Role       string
-	Limit      int
-	HashedCode string
-	JWTToken   string
-	Count      int
+	ID       uint
+	Role     string
+	Limit    int
+	Code     string
+	JWTToken string
+	Count    int
 }
 
 func (p *Profile) IncrementCount() {

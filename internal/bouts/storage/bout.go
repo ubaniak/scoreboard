@@ -18,4 +18,6 @@ type Bout struct {
 	Status             string `gorm:"not null"`
 	Gender             string
 	Decision           string
+	Winner             string
+	NumberOfJudges     int
 }

@@ -13,8 +13,10 @@ type Storage interface {
 	Update(boutId uint, roundNumber int, toUpdate entities.ToUpdate) error
 	ListFouls() ([]string, error)
 	AddFoul(foul *entities.RoundFoul) error
+	RemoveFoul(foul *entities.RoundFoul) error
 	GetFouls(boutId uint, roundNumber int) ([]*entities.RoundFoul, error)
 	Get(boutId uint, roundNumber int) (*entities.Round, error)
+	Current(boutId uint) (*entities.Round, error)
 }
 
 func NewStorage(db *gorm.DB) (Storage, error) {

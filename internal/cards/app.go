@@ -2,6 +2,7 @@ package cards
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 type App struct {
@@ -30,7 +32,7 @@ func NewApp(useCase UseCase, officialApp *officials.App, boutsApp *bouts.App) *A
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("cards")
-	sr.AddRoute("list.cards", "/test", "GET", h.Test)
+	sr.AddRoute("current", "/current", "GET", h.Current)
 	sr.AddRoute("list.cards", "", "GET", h.List, rbac.Admin)
 	sr.AddRoute("create.cards", "", "POST", h.Create, rbac.Admin)
 	sr.AddRoute("update.cards", "/{id}", "PUT", h.Update, rbac.Admin)
@@ -44,11 +46,6 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 type CreateCardRequest struct {
 	Name string `json:"name"`
 	Date string `json:"date"`
-}
-
-func (h *App) Test(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[string](r, w)
-	presenter.WithData("hello").Present()
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -65,23 +62,38 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetCardResponse struct {
-	Id             uint   `json:"id"`
-	Name           string `json:"name"`
-	Date           string `json:"date"`
-	Status         string `json:"status"`
-	NumberOfJudges int    `json:"numberOfJudges"`
+	Id     uint   `json:"id"`
+	Name   string `json:"name"`
+	Date   string `json:"date"`
+	Status string `json:"status"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
 	cardResponse := &GetCardResponse{
-		Id:             card.ID,
-		Name:           card.Name,
-		Date:           card.Date,
-		Status:         string(card.Status),
-		NumberOfJudges: card.NumberOfJudges,
+		Id:     card.ID,
+		Name:   card.Name,
+		Date:   card.Date,
+		Status: string(card.Status),
 	}
 
 	return cardResponse
+}
+
+func (h *App) Current(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[GetCardResponse](r, w)
+
+	card, err := h.useCase.Current()
+
+	if err != nil {
+		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			presenter = presenter.WithStatusCode(http.StatusNotFound)
+		}
+		presenter.WithError(err).Present()
+		return
+	}
+
+	response := mapCardToResponse(*card)
+	presenter.WithData(*response).Present()
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {

@@ -4,22 +4,20 @@ type CardStatus string
 
 const (
 	CardStatusUpComing   = "upcoming"
-	CardStatusInProgress = "inProgress"
+	CardStatusInProgress = "in_progress"
 	CardStatusCancelled  = "cancelled"
 	CardStatusComplete   = "complete"
 )
 
 type Card struct {
-	ID             uint
-	Name           string
-	Date           string
-	Status         CardStatus
-	NumberOfJudges int
+	ID     uint
+	Name   string
+	Date   string
+	Status CardStatus
 }
 
 type UpdateCard struct {
-	Name           *string
-	Date           *string
-	Status         *string
-	NumberOfJudges *int
+	Name   *string
+	Date   *string
+	Status *string
 }

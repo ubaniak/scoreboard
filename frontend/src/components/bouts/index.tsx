@@ -2,7 +2,7 @@ import type { CreateBoutProps, UpdateBoutProps } from "../../api/bouts";
 import type { BoutRequestType } from "../../api/entities";
 import type { Bout } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
-import { Modal } from "../modal/modal";
+import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddBout } from "./add";
 import { ListBouts } from "./list";
 
@@ -20,9 +20,9 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
     <TableLayout
       title="Bouts"
       actions={
-        <Modal
-          button={{ text: "add" }}
-          modal={{
+        <ActionMenu
+          trigger={{ text: "add" }}
+          content={{
             title: "Add Bout",
             body: (close) => (
               <>

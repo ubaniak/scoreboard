@@ -1,58 +1,58 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
-import type { DeviceStatus } from "../entities/device";
+import type { TokenBase } from "./entities";
 import { fetchClient } from "./fetchClient";
+import type { JudgeDevice } from "../entities/device";
 
 const keys = {
   all: ["devices"] as const,
   register: (id: number) => [...keys.all, id] as const,
 };
 
-export const useGetBaseUrl = (token: string) => {
+export const useGetBaseUrl = (props: TokenBase) => {
   return useQuery({
     queryKey: keys.all,
-    queryFn: () => getBaseUrl(token),
-  });
-};
-
-export const getBaseUrl = async (token: string) => {
-  return fetchClient<string>(`${baseUrl}/api/devices/baseurl`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
+    queryFn: () => {
+      return fetchClient<string>(`${baseUrl}/api/devices/baseurl`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
     },
   });
 };
 
-export const useRegister = (token: string, id: number) => {
-  return useQuery({
-    queryKey: keys.register(id),
-    queryFn: () => getRegister(token, id),
-  });
-};
-
-export const getRegister = async (token: string, id: number) => {
-  return fetchClient<string>(`${baseUrl}/api/devices/register/judge/${id}`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
+export const useMutationGenerateCode = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { role: string }) => {
+      return fetchClient<string>(`${baseUrl}/api/devices/code`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["device-status"] });
     },
   });
 };
 
-export const useDeviceStatus = (token: string) => {
+export const useJudgeDevices = (props: TokenBase) => {
   return useQuery({
-    queryKey: [],
-    queryFn: () => getDeviceStatus(token),
+    queryKey: ["device-status"],
+    queryFn: () => {
+      return fetchClient<JudgeDevice[]>(`${baseUrl}/api/devices/judges`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
+    },
     refetchInterval: 5000,
-  });
-};
-
-export const getDeviceStatus = async (token: string) => {
-  return fetchClient<DeviceStatus>(`${baseUrl}/api/devices/judge/status`, {
-    headers: {
-      "Content-type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
   });
 };

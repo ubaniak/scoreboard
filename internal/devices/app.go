@@ -1,12 +1,10 @@
 package devices
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -23,8 +21,8 @@ func NewApp(useCase UseCase) *App {
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("devices")
 	sr.AddRoute("baseUrl", "/baseurl", http.MethodGet, h.BaseUrl, rbac.Admin)
-	sr.AddRoute("status", "/judge/status", http.MethodGet, h.Status, rbac.Admin)
-	sr.AddRoute("register.judge", "/register/judge/{id}", http.MethodGet, h.Register, rbac.Admin)
+	sr.AddRoute("judges", "/judges", http.MethodGet, h.Judges, rbac.Admin)
+	sr.AddRoute("code", "/code", http.MethodPost, h.Code, rbac.Admin)
 	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, rbac.Judge)
 }
 func (h *App) BaseUrl(w http.ResponseWriter, r *http.Request) {
@@ -33,36 +31,52 @@ func (h *App) BaseUrl(w http.ResponseWriter, r *http.Request) {
 	presenter.WithData(ip).Present()
 }
 
-type StatusProfileResponse map[string]string
+type JudgesResponse struct {
+	Role   string `json:"role"`
+	Code   string `json:"code"`
+	Status string `json:"status"`
+}
 
-func (h *App) Status(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[StatusProfileResponse](r, w)
-	profiles, err := h.useCase.JudgeStatus()
+func (h *App) Judges(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[[]JudgesResponse](r, w)
+	judges, err := h.useCase.Judges()
 	if err != nil {
 		presenter.WithError(err).Present()
+		return
 	}
 
-	response := make(StatusProfileResponse, len(profiles))
-	for _, p := range profiles {
-		response[p.Role] = string(p.Status)
+	var response = make([]JudgesResponse, len(judges))
+	for i, judge := range judges {
+		response[i] = JudgesResponse{
+			Role:   judge.Role,
+			Code:   judge.Code,
+			Status: string(judge.Status),
+		}
 	}
 
 	presenter.WithData(response).Present()
 }
 
-func (h *App) Register(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[string](r, w)
-	vars := mux.Vars(r)
-	idStr := vars["id"]
+type RegisterRequest struct {
+	Role Role `json:"role"`
+}
 
-	parsed, err := strconv.ParseInt(idStr, 10, 0)
+func (h *App) Code(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[string](r, w)
+
+	var req RegisterRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := int(parsed)
 
-	code, err := h.useCase.RegisterJudge(id)
+	if !req.Role.Validate() {
+		presenter.WithError(fmt.Errorf("unknown role %s", req.Role)).Present()
+	}
+
+	code, err := h.useCase.GenerateCode(req.Role, Limits[req.Role])
+
 	presenter.WithError(err).WithData(code).Present()
 }
 

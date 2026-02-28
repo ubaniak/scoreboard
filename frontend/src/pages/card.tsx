@@ -6,6 +6,7 @@ import {
   useMutateUpdateBout,
 } from "../api/bouts";
 import { useGetCardById, useMutateUpdateCardStatus } from "../api/cards";
+import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import {
   useGetOfficials,
   useMutateCreateOfficial,
@@ -13,30 +14,43 @@ import {
 } from "../api/officials";
 import { BoutsIndex } from "../components/bouts";
 import { CardSummary } from "../components/cards/summery";
+import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
 import { OfficialIndex } from "../components/officials";
 import type { Card } from "../entities/cards";
+import type { JudgeDevice } from "../entities/device";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
 type CardActionProps = {
   card?: Card;
   start: () => void;
+  judgeDevices?: JudgeDevice[];
+  onRefreshCode: (props: { role: string }) => void;
 };
 
 const CardActions = (props: CardActionProps) => {
-  if (props.card?.status === "upcoming") {
-    return <Button onClick={props.start}>Start</Button>;
-  }
-  return null;
+  return (
+    <div>
+      <Button onClick={props.start}>Start</Button>
+      <JudgeConnectionQuickLook
+        requiredJudges={1}
+        devices={props.judgeDevices || []}
+        onRefreshCode={props.onRefreshCode}
+      />
+    </div>
+  );
 };
 
 export const CardPage = () => {
   const { token } = useProfile();
-  const { cardId } = useParams({ from: "/card/$cardId" });
+  const { cardId } = useParams({ strict: false });
 
   const bouts = useGetBouts({ token, cardId });
   const officials = useGetOfficials({ token, cardId });
   const card = useGetCardById({ token, cardId });
+
+  const judgeDevices = useJudgeDevices({ token });
+  const generateCode = useMutationGenerateCode({ token });
 
   const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
@@ -57,7 +71,16 @@ export const CardPage = () => {
       title="Card details"
       subTitle={<CardSummary card={card.data} />}
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={<CardActions card={card.data} start={start} />}
+      action={
+        <CardActions
+          card={card.data}
+          start={start}
+          judgeDevices={judgeDevices.data || []}
+          onRefreshCode={(values) => {
+            generateCode.mutate(values);
+          }}
+        />
+      }
     >
       <BoutsIndex
         loading={bouts.isLoading}

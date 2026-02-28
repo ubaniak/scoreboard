@@ -9,14 +9,17 @@ import { Button, Col, Modal, Row, Space, Typography } from "antd";
 import { useEffect, useRef, useState } from "react";
 import type { RoundDetails } from "../../entities/cards";
 import { Card } from "../card/card";
+import { StatusTag } from "../status/tag";
 
 const { Title, Text } = Typography;
 
 export type RoundButtonControlBarProps = {
   roundLength: number;
   round?: RoundDetails;
-  nextRound: (currentRound: number) => void;
-  previousRound: (currentRound: number) => void;
+  setRound: (currentRound: number) => void;
+  onRoundStart: () => void;
+  onRoundEnd: () => void;
+  onNextRound: () => void;
 };
 
 const REST_DURATION = 60; // 1 minute
@@ -71,8 +74,10 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
             // Round ended → bell + rest
             bellRef.current?.play().catch(() => {});
             startRest();
+            props.onRoundEnd();
           } else if (phase === "rest") {
             // Rest ended → reset for next round
+            props.onNextRound();
             setPhase("not_started");
             setSecondsLeft(props.roundLength * MINUTES_IN_SECONDS);
           }
@@ -99,7 +104,7 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
     return () => {
       if (intervalRef.current !== null) clearInterval(intervalRef.current);
     };
-  }, [phase, props.roundLength, isActive]);
+  }, [phase, props.roundLength, isActive, props]);
 
   const formatTime = (s: number) => {
     const m = String(Math.floor(s / 60)).padStart(2, "0");
@@ -113,6 +118,7 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
 
     bellRef.current?.play().catch(() => {});
     setPhase("in_progress");
+    props.onRoundStart();
   };
 
   const resetRound = () => {
@@ -133,6 +139,7 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
       okButtonProps: { danger: true },
       onOk: () => {
         setSecondsLeft(props.roundLength * MINUTES_IN_SECONDS);
+        props.onRoundEnd();
       },
     });
   };
@@ -144,7 +151,8 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
           <Button
             type="text"
             onClick={() => {
-              props.nextRound(props.round?.roundNumber || 0);
+              const currRound = props.round?.roundNumber || 0;
+              props.setRound(currRound > 0 ? currRound - 1 : 1);
             }}
             icon={<LeftOutlined />}
             disabled={props.round?.roundNumber === 1}
@@ -155,12 +163,14 @@ export const RoundControlBar = (props: RoundButtonControlBarProps) => {
             icon={<RightOutlined />}
             disabled={props.round?.roundNumber === 3}
             onClick={() => {
-              props.previousRound(props.round?.roundNumber || 0);
+              const currRound = props.round?.roundNumber || 3;
+              props.setRound(currRound < 3 ? currRound + 1 : 3);
             }}
           />
         </Col>
         <Col>
           <Text type="secondary">{phase}</Text>
+          <StatusTag text={props.round?.status || ""} />
         </Col>
       </Row>
 

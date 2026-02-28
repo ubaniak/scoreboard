@@ -2,18 +2,17 @@ package devices
 
 import (
 	"errors"
-	"fmt"
 	"net"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
+	authEntities "github.com/ubaniak/scoreboard/internal/auth/entities"
 	"github.com/ubaniak/scoreboard/internal/devices/entities"
-	"github.com/ubaniak/scoreboard/internal/rbac"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 type UseCase interface {
-	RegisterJudge(number int) (string, error)
-	JudgeStatus() ([]entities.StatusProfile, error)
+	GenerateCode(role Role, number int) (string, error)
+	Judges() ([]entities.JudgeProfile, error)
 	RegisterAdmin() (string, error)
 	LocalIp() string
 }
@@ -26,54 +25,48 @@ func NewUseCase(authUseCase auth.UseCase) UseCase {
 	return &useCase{authUseCase: authUseCase}
 }
 
-func (uc *useCase) register(role string, limit int) (string, error) {
-	_, err := uc.authUseCase.Get(role)
+func (uc *useCase) GenerateCode(role Role, limit int) (string, error) {
+	code, err := uc.authUseCase.GenerateCode(string(role), limit)
 	if err != nil {
-		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			code, err := uc.authUseCase.Register(role, limit)
-			if err != nil {
-				return "", err
-			}
-			return code, nil
-		}
-		return "", nil
+		return "", err
 	}
-
-	return uc.authUseCase.InvalidateRole(role)
+	return code, nil
 }
 
-func (uc *useCase) JudgeStatus() ([]entities.StatusProfile, error) {
-	roles := []string{"judge1", "judge2", "judge3", "judge4", "judge5"}
-	statusProfiles := make([]entities.StatusProfile, len(roles))
-	for i, role := range roles {
+func (uc *useCase) Judges() ([]entities.JudgeProfile, error) {
+	statusProfiles := make([]entities.JudgeProfile, len(JudgeRoles))
+	for i, role := range JudgeRoles {
 		status := entities.DeviceStatusConnected
-		p, err := uc.authUseCase.Get(role)
+		var profile *authEntities.Profile
+		profile, err := uc.authUseCase.Get(string(role))
 		if err != nil {
 			if errors.Is(err, sberrs.ErrRecordNotFound) {
-				status = entities.DeviceStatusUnknown
+				profile = &authEntities.Profile{
+					Role:  string(role),
+					Limit: Limits[role],
+				}
 			} else {
 				return nil, err
 			}
 		}
-		if p != nil && p.JWTToken == "" {
+
+		if profile.JWTToken == "" {
 			status = entities.DeviceStatusOffline
 		}
 
-		statusProfiles[i] = entities.StatusProfile{
-			Role:   role,
-			Status: status,
+		statusProfiles[i] = entities.JudgeProfile{
+			StatusProfile: entities.StatusProfile{
+				Role:   string(role),
+				Status: status,
+			},
+			Code: profile.Code,
 		}
 	}
 	return statusProfiles, nil
 }
 
-func (uc *useCase) RegisterJudge(number int) (string, error) {
-	role := fmt.Sprintf("%s%d", rbac.Judge, number)
-	return uc.register(role, 1)
-}
-
 func (uc *useCase) RegisterAdmin() (string, error) {
-	return uc.register(rbac.Admin, 1)
+	return uc.GenerateCode(AdminRole, Limits[AdminRole])
 }
 
 func (uc *useCase) LocalIp() string {

@@ -1,6 +1,9 @@
 package bouts
 
-import "github.com/ubaniak/scoreboard/internal/bouts/entities"
+import (
+	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
+)
 
 func RoundLength(ageCat entities.AgeCategory, experience entities.Experience) entities.RoundLength {
 	if ageCat == entities.JuniorA {
@@ -67,23 +70,30 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 }
 
 type GetBoutResponse struct {
-	ID                 uint    `json:"id"`
-	BoutNumber         int     `json:"boutNumber"`
-	RedCorner          string  `json:"redCorner"`
-	BlueCorner         string  `json:"blueCorner"`
-	Gender             string  `json:"gender"`
-	WeightClass        int     `json:"weightClass"`
-	GloveSize          string  `json:"gloveSize"`
-	RoundLength        float64 `json:"roundLength"`
-	AgeCategory        string  `json:"ageCategory"`
-	Experience         string  `json:"experience"`
-	RedCornerImageUrl  string  `json:"redCornerImageUrl"`
-	BlueCornerImageUrl string  `json:"blueCornerImageUrl"`
-	Status             string  `json:"status"`
-	Decision           string  `json:"decision"`
+	ID                 uint               `json:"id"`
+	BoutNumber         int                `json:"boutNumber"`
+	RedCorner          string             `json:"redCorner"`
+	BlueCorner         string             `json:"blueCorner"`
+	Gender             string             `json:"gender"`
+	WeightClass        int                `json:"weightClass"`
+	GloveSize          string             `json:"gloveSize"`
+	RoundLength        float64            `json:"roundLength"`
+	AgeCategory        string             `json:"ageCategory"`
+	Experience         string             `json:"experience"`
+	RedCornerImageUrl  string             `json:"redCornerImageUrl"`
+	BlueCornerImageUrl string             `json:"blueCornerImageUrl"`
+	Status             string             `json:"status"`
+	Decision           string             `json:"decision"`
+	Rounds             []GetRoundResponse `json:"rounds"`
+	Winner             string             `json:"winner"`
+	NumberOfJudges     int                `json:"numberOfJudges"`
 }
 
-func EntityToGetBoutResponse(entity *entities.Bout) *GetBoutResponse {
+func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.RoundDetails) *GetBoutResponse {
+	roundResponses := make([]GetRoundResponse, len(rounds))
+	for i, round := range rounds {
+		roundResponses[i] = *EntityToGetRoundResponse(round)
+	}
 	return &GetBoutResponse{
 		ID:                 entity.ID,
 		BoutNumber:         entity.BoutNumber,
@@ -99,6 +109,9 @@ func EntityToGetBoutResponse(entity *entities.Bout) *GetBoutResponse {
 		BlueCornerImageUrl: entity.BlueCornerImageUrl,
 		Status:             string(entity.Status),
 		Decision:           entity.Decision,
+		Rounds:             roundResponses,
+		Winner:             entity.Winner,
+		NumberOfJudges:     entity.NumberOfJudges,
 	}
 }
 

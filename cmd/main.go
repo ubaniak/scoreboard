@@ -28,11 +28,14 @@ import (
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards"
+	"github.com/ubaniak/scoreboard/internal/comment"
+	"github.com/ubaniak/scoreboard/internal/current"
 	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/round"
+	"github.com/ubaniak/scoreboard/internal/scores"
 )
 
 //go:embed all:frontend
@@ -78,6 +81,14 @@ func main() {
 	// -- login
 	loginApp := login.NewApp(authUseCase)
 
+	// -- comments
+
+	commentStorage, err := comment.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	commentsUseCase := comment.NewUseCase(commentStorage)
+
 	// -- devices
 	deviceUseCase := devices.NewUseCase(authUseCase)
 	deviceApp := devices.NewApp(deviceUseCase)
@@ -90,6 +101,15 @@ func main() {
 
 	officialUsecCase := officials.NewUseCase(officialStorage)
 	officialApp := officials.NewApp(officialUsecCase)
+
+	// -- scores
+
+	scoreStorage, err := scores.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+
+	scoreUseCase := scores.NewUseCase(scoreStorage)
 
 	// -- rounds
 
@@ -105,7 +125,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase)
+
+	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
 	boutsApp := bouts.NewApp(boutsUseCase)
 
 	// -- cards
@@ -116,6 +137,11 @@ func main() {
 	cardUseCase := cards.NewUseCase(cardStorage)
 	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
 
+	// -- current
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase)
+	currentApp := current.NewApp(currentUseCase)
+
+	apiRegister.Add(currentApp)
 	apiRegister.Add(healthCheckApp)
 	apiRegister.Add(loginApp)
 	apiRegister.Add(cardApp)

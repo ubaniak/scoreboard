@@ -33,6 +33,29 @@ type RoundDetails struct {
 	Blue        CornerDetails
 }
 
+func (r *RoundDetails) Next() {
+	if r.Status == RoundStatusNotStarted {
+		r.Status = RoundStatusReady
+		return
+	}
+	if r.Status == RoundStatusReady {
+		r.Status = RoundStatusInProgress
+		return
+	}
+	if r.Status == RoundStatusInProgress {
+		r.Status = RoundStatusWaitingForResults
+		return
+	}
+	if r.Status == RoundStatusWaitingForResults {
+		r.Status = RoundStatusScoreComplete
+		return
+	}
+	if r.Status == RoundStatusScoreComplete {
+		r.Status = RoundStatusComplete
+		return
+	}
+}
+
 type CornerDetails struct {
 	Warnings    []string
 	Cautions    []string

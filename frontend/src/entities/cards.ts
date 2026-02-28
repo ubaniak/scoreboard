@@ -7,7 +7,6 @@ export type Card = {
   name: string;
   date: string;
   status: CardStatus;
-  numberOfJudges: number;
 };
 
 export type Official = {
@@ -36,6 +35,7 @@ export type Bout = {
   decision: string;
   roundLength: number;
   weightClass: number;
+  rounds: RoundDetails[];
 };
 
 export type RoundStatus =
@@ -43,6 +43,7 @@ export type RoundStatus =
   | "ready"
   | "in_progress"
   | "waiting_for_results"
+  | "score_complete"
   | "complete";
 
 export type Round = {
@@ -53,7 +54,7 @@ export type Round = {
 export type RoundDetails = {
   boutId: string;
   roundNumber: number;
-  status: string;
+  status: RoundStatus;
   decision: string;
   red: {
     warnings: string[];

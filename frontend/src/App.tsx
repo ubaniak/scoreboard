@@ -8,56 +8,70 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
+import { ApiError } from "./api/fetchClient";
 import "./App.css";
-import { GlobalErrorHandler } from "./components/error/globalErrorHandler";
+import { getEmitter, registerEmitter } from "./events/events";
 import { AppLayout } from "./layouts/app";
 import { BoutPage } from "./pages/bout";
 import { CardPage } from "./pages/card";
 import { HomePage } from "./pages/home";
-import { LoginPage } from "./pages/login";
-import BoutDetailsPage from "./pages/test";
-import { getEmitter, registerEmitter } from "./events/events";
-import { ApiError } from "./api/fetchClient";
 import { JudgePage } from "./pages/judge";
+import { LoginPage } from "./pages/login";
+import { ScoreboardPage } from "./pages/scoreboard";
+import { TimerProvider } from "./providers/timer";
 
 const rootRoute = createRootRoute({
-  component: () => <AppLayout />,
+  component: () => <Outlet />,
+});
+
+// Pathless layout for protected routes (no path = no duplicate with root "/").
+// Child paths are full paths so useParams({ from: "/card/$cardId" }) resolves.
+const protectedLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "protected",
+  component: AppLayout,
+});
+
+// Public routes (no token required) – direct children of root
+const scoreboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/scoreboard",
+  component: ScoreboardPage,
 });
 
 const routeTree = rootRoute.addChildren([
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/",
-    component: HomePage,
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/login",
-    component: LoginPage,
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/card/$cardId",
-    component: CardPage,
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/card/$cardId/bout/$boutId",
-    component: BoutPage,
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/card/test",
-    component: BoutDetailsPage,
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/judge",
-    component: JudgePage,
-  }),
+  protectedLayoutRoute.addChildren([
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/",
+      component: HomePage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/login",
+      component: LoginPage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/card/$cardId",
+      component: CardPage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/card/$cardId/bout/$boutId",
+      component: BoutPage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/judge",
+      component: JudgePage,
+    }),
+  ]),
+  scoreboardRoute,
   // createRoute({
   //   getParentRoute: () => rootRoute,
   //   path: "/supervisor/$Id",
@@ -109,8 +123,9 @@ function App() {
       >
         <AntApp>
           <QueryClientProvider client={queryClient}>
-            <GlobalErrorHandler />
-            <RouterProvider router={router}></RouterProvider>
+            <TimerProvider>
+              <RouterProvider router={router}></RouterProvider>
+            </TimerProvider>
           </QueryClientProvider>
         </AntApp>
       </ConfigProvider>

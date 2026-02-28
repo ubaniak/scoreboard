@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 
-type TagColors =
+export type TagColors =
   | "default"
   | "success"
   | "processing"

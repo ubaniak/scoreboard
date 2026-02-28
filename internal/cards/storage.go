@@ -13,6 +13,7 @@ type Storage interface {
 	Delete(id uint) error
 	Update(id uint, toUpdate *entities.UpdateCard) error
 	Get(id uint) (*entities.Card, error)
+	Current() (*entities.Card, error)
 }
 
 func NewCardStorage(db *gorm.DB) (Storage, error) {

@@ -40,13 +40,25 @@ func (p *HTTPProvider[T]) WithError(err error) *HTTPProvider[T] {
 	return p
 }
 
+func (p *HTTPProvider[T]) sendError(toSend error) {
+	resp := Error{toSend.Error()}
+	err := json.NewEncoder(p.w).Encode(resp)
+	if err != nil {
+		http.Error(p.w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (p *HTTPProvider[T]) Present() {
+	statusCode := http.StatusOK
 	if p.err != nil {
-		http.Error(p.w, p.err.Error(), http.StatusInternalServerError)
+		if p.statusCode != nil {
+			statusCode = *p.statusCode
+		}
+		http.Error(p.w, p.err.Error(), statusCode)
 		return
 	}
 
-	statusCode := http.StatusOK
 	if p.statusCode != nil {
 		statusCode = *p.statusCode
 	}

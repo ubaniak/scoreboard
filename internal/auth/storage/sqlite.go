@@ -15,12 +15,12 @@ type Sqlite struct {
 
 type Profile struct {
 	gorm.Model
-	ID         uint   `gorm:"primaryKey"`
-	Role       string `gorm:"uniqueIndex"`
-	Limit      int    `gorm:"default:0"`
-	HashedCode string
-	JWTToken   string
-	Count      int `gorm:"default:0"`
+	ID       uint   `gorm:"primaryKey"`
+	Role     string `gorm:"uniqueIndex"`
+	Limit    int    `gorm:"default:0"`
+	Code     string
+	JWTToken string
+	Count    int `gorm:"default:0"`
 }
 
 func NewSqlite(db *gorm.DB) (*Sqlite, error) {
@@ -34,12 +34,12 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 
 func (s *Sqlite) Save(profile *entities.Profile) error {
 	p := Profile{
-		ID:         uint(profile.ID),
-		Role:       profile.Role,
-		Limit:      profile.Limit,
-		HashedCode: profile.HashedCode,
-		JWTToken:   profile.JWTToken,
-		Count:      profile.Count,
+		ID:       uint(profile.ID),
+		Role:     profile.Role,
+		Limit:    profile.Limit,
+		Code:     profile.Code,
+		JWTToken: profile.JWTToken,
+		Count:    profile.Count,
 	}
 
 	return s.db.Save(&p).Error
@@ -56,12 +56,12 @@ func (s *Sqlite) Get(role string) (*entities.Profile, error) {
 	}
 
 	return &entities.Profile{
-		ID:         uint(profile.ID),
-		Role:       profile.Role,
-		Limit:      profile.Limit,
-		HashedCode: profile.HashedCode,
-		JWTToken:   profile.JWTToken,
-		Count:      profile.Count,
+		ID:       uint(profile.ID),
+		Role:     profile.Role,
+		Limit:    profile.Limit,
+		Code:     profile.Code,
+		JWTToken: profile.JWTToken,
+		Count:    profile.Count,
 	}, nil
 }
 
@@ -73,11 +73,11 @@ func (s *Sqlite) GetByToken(jwtToken string) (*entities.Profile, error) {
 	}
 
 	return &entities.Profile{
-		ID:         uint(profile.ID),
-		Role:       profile.Role,
-		Limit:      profile.Limit,
-		HashedCode: profile.HashedCode,
-		JWTToken:   profile.JWTToken,
-		Count:      profile.Count,
+		ID:       uint(profile.ID),
+		Role:     profile.Role,
+		Limit:    profile.Limit,
+		Code:     profile.Code,
+		JWTToken: profile.JWTToken,
+		Count:    profile.Count,
 	}, nil
 }

@@ -3,10 +3,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button, Table, type TableProps } from "antd";
 import type { UpdateBoutProps } from "../../api/bouts";
 import type { Bout } from "../../entities/cards";
-import { Modal } from "../modal/modal";
 import { StatusTag } from "../status/tag";
 import { EditBout } from "./edit";
 import type { BoutRequestType } from "../../api/entities";
+import { ActionMenu } from "../actionMenu/actionMenu";
 
 export type ListBoutsProps = {
   bouts?: Bout[];
@@ -81,9 +81,9 @@ export const ListBouts = (props: ListBoutsProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <Modal
-            button={{ shape: "circle", icon: <EditOutlined /> }}
-            modal={{
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            content={{
               title: "hi",
               body: (close) => (
                 <EditBout

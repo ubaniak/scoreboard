@@ -12,6 +12,7 @@ const keys = {
   get: (id: string) => [...keys.all, id] as const,
   settings: (id: string) => [...keys.all, `settings-${id}`] as const,
   officials: (id: string) => [...keys.all, `officials-${id}`] as const,
+  current: ["current"],
 };
 
 export const useGetCardById = (props: TokenBase & CardRequestType) => {
@@ -70,7 +71,6 @@ export const useMutateCreateCards = (props: TokenBase) => {
 export type UpdateCardsProps = {
   name: string;
   date: string;
-  numberOfJudges: number;
 };
 
 export const useMutateUpdateCards = (r: TokenBase) => {

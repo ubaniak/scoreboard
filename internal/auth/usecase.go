@@ -3,18 +3,16 @@ package auth
 import (
 	"errors"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/ubaniak/scoreboard/internal/auth/entities"
 	"github.com/ubaniak/scoreboard/internal/auth/utils"
+	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 const CodeLength = 5
 
 type UseCase interface {
-	Register(role string, limit int) (string, error)
+	GenerateCode(role string, limit int) (string, error)
 	Login(role, registrationCode string) (string, error)
-	InvalidateRole(role string) (string, error)
 	GetProfile(jwtToken string) (*entities.Profile, error)
 	Get(role string) (*entities.Profile, error)
 }
@@ -28,29 +26,6 @@ func NewUseCase(storage Storage, signKey string) UseCase {
 	return &useCase{storage: storage, signKey: signKey}
 }
 
-func (uc *useCase) Register(role string, limit int) (string, error) {
-	code, err := utils.GenerateCode(CodeLength)
-	if err != nil {
-		return "", err
-	}
-	hashed, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-
-	profile := &entities.Profile{
-		Role:       role,
-		Limit:      limit,
-		HashedCode: string(hashed),
-	}
-
-	err = uc.storage.Save(profile)
-	if err != nil {
-		return "", err
-	}
-	return code, nil
-}
-
 func (uc *useCase) Login(role, code string) (string, error) {
 	profile, err := uc.storage.Get(role)
 	if err != nil {
@@ -62,9 +37,8 @@ func (uc *useCase) Login(role, code string) (string, error) {
 	}
 
 	profile.IncrementCount()
-
-	if err := bcrypt.CompareHashAndPassword([]byte(profile.HashedCode), []byte(code)); err != nil {
-		return "", err
+	if code != profile.Code {
+		return "", errors.New("code is not valid")
 	}
 
 	token, err := utils.GenerateJWTToken(role, []byte(uc.signKey))
@@ -82,11 +56,19 @@ func (uc *useCase) Login(role, code string) (string, error) {
 	return token, nil
 }
 
-func (uc *useCase) InvalidateRole(role string) (string, error) {
+func (uc *useCase) GenerateCode(role string, limit int) (string, error) {
 
-	profile, err := uc.storage.Get(role)
+	var profile *entities.Profile
+	var err error
+	profile, err = uc.storage.Get(role)
+
 	if err != nil {
-		return "", err
+		if !errors.Is(err, sberrs.ErrRecordNotFound) {
+			return "", err
+		}
+		profile = &entities.Profile{
+			Role: role,
+		}
 	}
 
 	code, err := utils.GenerateCode(CodeLength)
@@ -94,12 +76,7 @@ func (uc *useCase) InvalidateRole(role string) (string, error) {
 		return "", err
 	}
 
-	hashed, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-
-	profile.HashedCode = string(hashed)
+	profile.Code = code
 	profile.JWTToken = ""
 	profile.Count = 0
 

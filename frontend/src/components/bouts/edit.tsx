@@ -114,6 +114,16 @@ export const EditBout = (props: EditBoutProps) => {
           </Button>
         </Space>
       </Form.Item>
+      {/* <Form.Item<FieldType> label="judges" name="numberOfJudges">
+          <Segmented
+            size={"large"}
+            shape="round"
+            options={[
+              { value: 3, label: "3" },
+              { value: 5, label: "5" },
+            ]}
+          />
+        </Form.Item> */}
       {/* <Form.Item label={null}>
         <Space>
           <Button

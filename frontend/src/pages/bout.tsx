@@ -4,25 +4,29 @@ import {
   useGetBoutById,
   useGetFouls,
   useGetRound,
-  useMutateAddFoul,
+  useMutateEightCount,
+  useMutateEndBout,
+  useMutateHandleFoul,
+  useMutateNextRoundState,
   useMutateUpdateBoutStatus,
+  type EndBoutProps,
 } from "../api/bouts";
 import { useGetCardById } from "../api/cards";
 import { isApisLoading } from "../api/handlers";
+import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { BoutIndex } from "../components/bout";
 import { EditBout } from "../components/bouts/edit";
 import { CardSummary } from "../components/cards/summery";
 import { ApiLoading } from "../components/loading/Apiloading";
-import { Modal } from "../components/modal/modal";
 import type { Bout } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
 const PageActions = ({ bout }: { bout: Bout }) => {
   return (
-    <Modal
-      button={{ text: "Edit" }}
-      modal={{
+    <ActionMenu
+      trigger={{ text: "Edit" }}
+      content={{
         title: "Edit Bout",
         body: (close) => (
           // TODO: Handle this better
@@ -35,20 +39,31 @@ const PageActions = ({ bout }: { bout: Bout }) => {
 
 export const BoutPage = () => {
   const { token } = useProfile();
-  const { cardId, boutId } = useParams({
-    from: "/card/$cardId/bout/$boutId",
-  });
+  const { cardId, boutId } = useParams({ strict: false });
 
   const card = useGetCardById({ token, cardId });
   const bout = useGetBoutById({ token, cardId, boutId });
   const fouls = useGetFouls({ token });
 
   const [roundNumber, setRoundNumber] = useState(1);
-  const round = useGetRound({ token, cardId, boutId, roundNumber });
 
-  const addFoul = useMutateAddFoul({ token, cardId, boutId, roundNumber });
-  const nextRound = (currentRound: number) => {
-    setRoundNumber(currentRound + 1);
+  const round = useGetRound({ token, cardId, boutId, roundNumber });
+  const handleFoul = useMutateHandleFoul({
+    token,
+    cardId,
+    boutId,
+    roundNumber,
+  });
+
+  const handleEightCount = useMutateEightCount({
+    token,
+    cardId,
+    boutId,
+    roundNumber,
+  });
+
+  const setRound = (currentRound: number) => {
+    setRoundNumber(currentRound);
     round.refetch();
   };
 
@@ -58,16 +73,30 @@ export const BoutPage = () => {
     cardId,
   });
 
-  const previousRound = (currentRound: number) => {
-    setRoundNumber(currentRound + 1);
-    round.refetch();
-  };
+  const endBout = useMutateEndBout({
+    token,
+    boutId,
+    cardId,
+  });
 
-  const startBout = () => {
+  const onStartBout = () => {
     updateBoutStatus.mutate({ status: "in_progress" });
   };
 
+  const onEndBout = (value: EndBoutProps) => {
+    endBout.mutate(value);
+  };
+
   const isLoading = isApisLoading({ card, bout, fouls });
+
+  const nextRoundState = useMutateNextRoundState({ token, cardId, boutId });
+
+  const onNextRoundState = async () => {
+    const curr = await nextRoundState.mutateAsync();
+    if (curr > 0) {
+      setRoundNumber(curr);
+    }
+  };
 
   return (
     <PageLayout
@@ -87,14 +116,26 @@ export const BoutPage = () => {
         fouls={fouls.data!}
         round={round.data!}
         controls={{
-          startBout,
-          nextRound,
-          previousRound,
-          addFoul: (value) => {
-            addFoul.mutate(value);
+          onNextRoundState,
+          setRound,
+          handleFoul: (value) => {
+            handleFoul.mutate(value);
           },
+          handleEightCount: (value) => {
+            handleEightCount.mutate(value);
+          },
+          onStartBout,
+          onEndBout,
         }}
       />
     </PageLayout>
   );
 };
+// onStartRound: () => void;
+// onEndRound: () => void;
+// onScoreRound: () => void;
+// onNextRound: () => void;
+// setRound: (currentRound: number) => void;
+// handleFoul: (props: MutateHandleFoulProps) => void;
+// onStartBout: () => void;
+// onEndBout: () => void;

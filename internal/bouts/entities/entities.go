@@ -67,17 +67,21 @@ type Bout struct {
 	BlueCornerImageUrl string
 	Status             BoutStatus
 	Decision           string
+	Winner             string
+	NumberOfJudges     int
 }
 
 type UpdateBout struct {
-	BoutNumber  *int
-	RedCorner   *string
-	BlueCorner  *string
-	Gender      *Gender
-	WeightClass *int
-	GloveSize   *GloveSize
-	RoundLength *RoundLength
-	AgeCategory *AgeCategory
-	Experience  *Experience
-	Decision    *string
+	BoutNumber     *int
+	RedCorner      *string
+	BlueCorner     *string
+	Gender         *Gender
+	WeightClass    *int
+	GloveSize      *GloveSize
+	RoundLength    *RoundLength
+	AgeCategory    *AgeCategory
+	Experience     *Experience
+	Decision       *string
+	Winner         *string
+	NumberOfJudges *int
 }

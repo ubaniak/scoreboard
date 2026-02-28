@@ -14,6 +14,7 @@ type Storage interface {
 	Delete(cardId, id uint) error
 	Update(cardId, id uint, bout *entities.UpdateBout) error
 	SetStatus(cardId, id uint, status entities.BoutStatus) error
+	Current(cardId uint) (*entities.Bout, error)
 }
 
 func NewSqlite(db *gorm.DB) (Storage, error) {

@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
@@ -24,6 +25,11 @@ func NewRbacService(roles *Role, authUseCase auth.UseCase) *RbacService {
 func (s *RbacService) JWTMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(roles) == 0 {
+				fmt.Println("HERE")
+				next.ServeHTTP(w, r)
+			}
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
 				http.Error(w, "Missing or invalid token", http.StatusUnauthorized)

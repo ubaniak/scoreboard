@@ -4,18 +4,26 @@ import {
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import { Divider, Space, Tag, Typography } from "antd";
-import type { MutateAddFoulProps } from "../../api/bouts";
 import { BLUE, RED, type Corner } from "../../entities/corner";
 import { Card } from "../card/card";
-import { AddFoul } from "../fouls/add";
 import { Control } from "./control";
+import { HandleFouls } from "../fouls/handle";
+import type {
+  MutateEightCountProps,
+  MutateHandleFoulProps,
+} from "../../api/bouts";
+import { HandleEightCounts } from "../fouls/eightcounts";
 
 const { Text } = Typography;
 
 export type CornerPanelProps = {
   corner: Corner;
-  fouls: string[];
-  addFoul: (props: MutateAddFoulProps) => void;
+  allFouls: string[];
+  handleFoul: (props: MutateHandleFoulProps) => void;
+  handleEightCount: (props: MutateEightCountProps) => void;
+  warnings: string[];
+  cautions: string[];
+  eightCounts: number;
 };
 
 export const CornerControls = (props: CornerPanelProps) => {
@@ -29,7 +37,7 @@ export const CornerControls = (props: CornerPanelProps) => {
           marginBottom: 14,
         }}
       />
-      <Space direction="vertical" size={6} style={{ width: "100%" }}>
+      <Space orientation="vertical" size={6} style={{ width: "100%" }}>
         <Space align="center" wrap>
           <Tag color={props.corner} style={{ fontWeight: 800, marginRight: 0 }}>
             {props.corner.toUpperCase()}
@@ -41,13 +49,14 @@ export const CornerControls = (props: CornerPanelProps) => {
         <Control
           corner={props.corner}
           icon={<FlagOutlined />}
-          label="Cautions"
+          label={`Cautions (${props.cautions.length})`}
           toolTip="Minor infractions"
           action={
-            <AddFoul
+            <HandleFouls
               corner={props.corner}
-              addFoul={props.addFoul}
-              fouls={props.fouls}
+              handleFoul={props.handleFoul}
+              allFouls={props.allFouls}
+              fouls={props.cautions}
               type="caution"
             />
           }
@@ -55,13 +64,14 @@ export const CornerControls = (props: CornerPanelProps) => {
         <Control
           corner={props.corner}
           icon={<SafetyCertificateOutlined />}
-          label="Warnings"
-          toolTip="Minor infractions"
+          label={`Warnings (${props.warnings.length})`}
+          toolTip="Will remove points"
           action={
-            <AddFoul
+            <HandleFouls
               corner={props.corner}
-              addFoul={props.addFoul}
-              fouls={props.fouls}
+              handleFoul={props.handleFoul}
+              allFouls={props.allFouls}
+              fouls={props.warnings}
               type="warning"
             />
           }
@@ -69,9 +79,24 @@ export const CornerControls = (props: CornerPanelProps) => {
         <Control
           corner={props.corner}
           icon={<ThunderboltOutlined />}
-          label="Eight Counts"
-          toolTip="Minor infractions"
-          action={<>add action</>}
+          label={`Eight Counts (${props.eightCounts})`}
+          toolTip="Eight counts"
+          action={
+            <HandleEightCounts
+              onAdd={() => {
+                props.handleEightCount({
+                  corner: props.corner,
+                  direction: "up",
+                });
+              }}
+              onRemove={() => {
+                props.handleEightCount({
+                  corner: props.corner,
+                  direction: "down",
+                });
+              }}
+            />
+          }
         />
       </Space>
     </Card>

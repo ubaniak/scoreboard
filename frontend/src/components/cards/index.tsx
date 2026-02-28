@@ -5,11 +5,11 @@ import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
 import type { CardRequestType } from "../../api/entities";
 import { type Card } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
-import { Modal } from "../modal/modal";
 import { StatusTag } from "../status/tag";
 import { Table, type TableProps } from "../table/table";
 import { AddCard } from "./add";
 import { EditCard } from "./edit";
+import { ActionMenu } from "../actionMenu/actionMenu";
 
 export type CardTableProps = {
   cards?: Card[];
@@ -66,10 +66,10 @@ export const CardIndex = (props: CardTableProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <Modal
-            button={{ shape: "circle", icon: <EditOutlined /> }}
-            modal={{
-              title: "hi",
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            content={{
+              title: "Edit Card",
               body: (close) => (
                 <EditCard
                   card={record as Card}
@@ -89,11 +89,11 @@ export const CardIndex = (props: CardTableProps) => {
       <TableLayout
         title="Cards"
         actions={
-          <Modal
-            button={{
+          <ActionMenu
+            trigger={{
               text: "Add",
             }}
-            modal={{
+            content={{
               title: "Create Card",
               body: (close) => (
                 <AddCard

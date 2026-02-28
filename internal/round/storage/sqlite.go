@@ -45,6 +45,28 @@ func (s *Sqlite) Get(boutId uint, roundNumber int) (*entities.Round, error) {
 	return result, nil
 }
 
+func (s *Sqlite) Current(boutId uint) (*entities.Round, error) {
+	var round Round
+	if err := s.db.Where("bout_id = ? AND status IN ?", boutId, []entities.RoundStatus{
+		entities.RoundStatusInProgress,
+		entities.RoundStatusReady,
+		entities.RoundStatusWaitingForResults,
+		entities.RoundStatusScoreComplete,
+	}).First(&round).Error; err != nil {
+		return nil, err
+	}
+
+	result := &entities.Round{
+		BoutID:          boutId,
+		RoundNumber:     round.RoundNumber,
+		RedEightCounts:  round.RedEightCounts,
+		BlueEightCounts: round.BlueEightCounts,
+		Status:          entities.RoundStatus(round.Status),
+	}
+
+	return result, nil
+}
+
 func (s *Sqlite) List(boutId uint) ([]*entities.Round, error) {
 	var rounds []Round
 	var response []*entities.Round
@@ -87,7 +109,7 @@ func (s *Sqlite) Update(boutId uint, roundNumber int, toUpdate entities.ToUpdate
 func (s *Sqlite) GetFouls(boutId uint, roundNumber int) ([]*entities.RoundFoul, error) {
 
 	var rf []RoundFoul
-	if err := s.db.Where("bout_id = ? AND round_number = ?", boutId, roundNumber).Find(&rf).Error; err != nil {
+	if err := s.db.Where("bout_id = ? AND round_number = ?", boutId, roundNumber).Find(&rf).Order("count").Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []*entities.RoundFoul{}, nil
 		}
@@ -106,6 +128,19 @@ func (s *Sqlite) GetFouls(boutId uint, roundNumber int) ([]*entities.RoundFoul, 
 	}
 
 	return result, nil
+}
+
+func (s *Sqlite) RemoveFoul(foul *entities.RoundFoul) error {
+	var rf RoundFoul
+	err := s.db.Where("bout_id = ? AND round_number = ? AND corner = ? AND foul = ?", foul.BoutID, foul.RoundNumber, foul.Corner, foul.Foul).
+		Order("id").
+		First(&rf).Error
+	if err != nil {
+		return err
+	}
+
+	err = s.db.Delete(&rf).Error
+	return err
 }
 
 func (s *Sqlite) AddFoul(foul *entities.RoundFoul) error {

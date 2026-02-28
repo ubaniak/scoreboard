@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 type Sqlite struct {
@@ -34,6 +37,7 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		Status:             string(bout.Status),
 		Gender:             string(bout.Gender),
 		Decision:           bout.Decision,
+		NumberOfJudges:     bout.NumberOfJudges,
 	}
 }
 
@@ -54,6 +58,8 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		BlueCornerImageUrl: bout.BlueCornerImageUrl,
 		Status:             entities.BoutStatus(bout.Status),
 		Decision:           bout.Decision,
+		Winner:             bout.Winner,
+		NumberOfJudges:     bout.NumberOfJudges,
 	}
 }
 
@@ -82,6 +88,17 @@ func (s *Sqlite) List(cardId uint) ([]*entities.Bout, error) {
 func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 	var bout Bout
 	if err := s.db.Where("card_id = ? AND id = ?", cardId, id).First(&bout).Error; err != nil {
+		return nil, err
+	}
+	e := s.ToEntity(bout)
+	return e, nil
+}
+func (s *Sqlite) Current(cardId uint) (*entities.Bout, error) {
+	var bout Bout
+	if err := s.db.Where("card_id = ? AND status = ?", cardId, entities.BoutStatusInProgress).First(&bout).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, sberrs.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	e := s.ToEntity(bout)
@@ -140,6 +157,10 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.Decision != nil {
 		bout.Decision = string(*toUpdate.Decision)
+	}
+
+	if toUpdate.Winner != nil {
+		bout.Winner = string(*toUpdate.Winner)
 	}
 
 	if err := s.db.Save(bout).Error; err != nil {

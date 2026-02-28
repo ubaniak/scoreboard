@@ -10,6 +10,7 @@ type UseCase interface {
 	List() ([]entities.Card, error)
 	Delete(id uint) error
 	Get(id uint) (*entities.Card, error)
+	Current() (*entities.Card, error)
 }
 
 type useCase struct {
@@ -22,10 +23,9 @@ func NewUseCase(storage Storage) UseCase {
 
 func (uc *useCase) Create(name, date string) error {
 	card := &entities.Card{
-		Name:           name,
-		Date:           date,
-		Status:         entities.CardStatusUpComing,
-		NumberOfJudges: 5,
+		Name:   name,
+		Date:   date,
+		Status: entities.CardStatusUpComing,
 	}
 	return uc.storage.Create(card)
 }
@@ -36,6 +36,10 @@ func (uc *useCase) Update(id uint, toUpdate *entities.UpdateCard) error {
 
 func (uc *useCase) List() ([]entities.Card, error) {
 	return uc.storage.List()
+}
+
+func (uc *useCase) Current() (*entities.Card, error) {
+	return uc.storage.Current()
 }
 
 func (uc *useCase) Get(id uint) (*entities.Card, error) {

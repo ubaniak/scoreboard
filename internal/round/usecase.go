@@ -1,20 +1,24 @@
 package round
 
 import (
+	"errors"
+
 	"github.com/ubaniak/scoreboard/internal/round/entities"
+	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
+	"gorm.io/gorm"
 )
 
 type UseCase interface {
+	Next(boutId uint) (int, error)
 	CreateRounds(boutID uint) error
 	List(boutId uint) ([]*entities.Round, error)
 	UpdateStatus(boutId uint, roundNumber int, status entities.RoundStatus) error
 	AddFoul(roundFoul *entities.RoundFoul) error
+	RemoveFoul(roundFoul *entities.RoundFoul) error
 	ListFouls() ([]string, error)
 	Get(boutId uint, roundNumber int) (*entities.RoundDetails, error)
+	Current(boutId uint) (*entities.Round, error)
 	EightCount(boutId uint, roundNumber int, corner string, direction string) error
-	Start(boutId uint, roundNumber int) error
-	End(boutId uint, roundNumber int) error
-	Score(boutId uint, roundNumber int) error
 }
 
 type useCase struct {
@@ -23,6 +27,25 @@ type useCase struct {
 
 func NewUseCase(storage Storage) UseCase {
 	return &useCase{storage: storage}
+}
+
+func (u *useCase) Next(boutId uint) (int, error) {
+	roundNumbers := []int{1, 2, 3}
+	rounds := make([]*entities.RoundDetails, 3)
+	for i, roundNumber := range roundNumbers {
+		round, err := u.Get(boutId, roundNumber)
+		if err != nil {
+			return -1, err
+		}
+		rounds[i] = round
+	}
+	currentRound := nextState(rounds)
+
+	for _, round := range rounds {
+		u.UpdateStatus(boutId, round.RoundNumber, round.Status)
+	}
+
+	return currentRound + 1, nil
 }
 
 func (u *useCase) CreateRounds(boutID uint) error {
@@ -106,6 +129,10 @@ func (u *useCase) AddFoul(rf *entities.RoundFoul) error {
 	return u.storage.AddFoul(rf)
 }
 
+func (u *useCase) RemoveFoul(rf *entities.RoundFoul) error {
+	return u.storage.RemoveFoul(rf)
+}
+
 func (u *useCase) EightCount(boutId uint, roundNumber int, corner string, direction string) error {
 	round, err := u.storage.Get(boutId, roundNumber)
 	if err != nil {
@@ -129,25 +156,12 @@ func (u *useCase) EightCount(boutId uint, roundNumber int, corner string, direct
 	})
 
 }
-
-func (u *useCase) Start(boutId uint, roundNumber int) error {
-	return u.UpdateStatus(boutId, roundNumber, entities.RoundStatusInProgress)
-}
-
-func (u *useCase) End(boutId uint, roundNumber int) error {
-	complete := entities.RoundStatusComplete
-	if roundNumber < 3 {
-		err := u.UpdateStatus(boutId, roundNumber+1, entities.RoundStatusReady)
-		if err != nil {
-			return err
+func (u *useCase) Current(boutId uint) (*entities.Round, error) {
+	round, err := u.storage.Current(boutId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, sberrs.ErrRecordNotFound
 		}
 	}
-
-	return u.storage.Update(boutId, roundNumber, entities.ToUpdate{
-		Status: &complete,
-	})
-}
-
-func (u *useCase) Score(boutId uint, roundNumber int) error {
-	return u.UpdateStatus(boutId, roundNumber, entities.RoundStatusWaitingForResults)
+	return round, nil
 }

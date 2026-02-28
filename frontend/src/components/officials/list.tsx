@@ -1,9 +1,9 @@
 import { EditOutlined } from "@ant-design/icons";
 import { Table, type TableProps } from "antd";
 import type { Official } from "../../entities/cards";
-import { Modal } from "../modal/modal";
 import { EditOfficial } from "./edit";
 import type { UpdateOfficialProps } from "../../api/officials";
+import { ActionMenu } from "../actionMenu/actionMenu";
 
 export type ListOfficialsProps = {
   officials?: Official[];
@@ -26,9 +26,9 @@ export const ListOfficials = (props: ListOfficialsProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <Modal
-            button={{ shape: "circle", icon: <EditOutlined /> }}
-            modal={{
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            content={{
               title: "hi",
               body: (close) => (
                 <EditOfficial

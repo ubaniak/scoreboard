@@ -4,7 +4,7 @@ import type {
 } from "../../api/officials";
 import type { Official } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
-import { Modal } from "../modal/modal";
+import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddOfficial } from "./add";
 import { ListOfficials } from "./list";
 
@@ -23,9 +23,9 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
     <TableLayout
       title="Officials"
       actions={
-        <Modal
-          button={{ text: "add" }}
-          modal={{
+        <ActionMenu
+          trigger={{ text: "add" }}
+          content={{
             title: "Add Official",
             body: (close) => (
               <>

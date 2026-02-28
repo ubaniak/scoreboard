@@ -2,6 +2,7 @@ package bouts
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -31,17 +32,19 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("bouts.get", "/{cardId}/bouts/{id}", "GET", a.Get, rbac.Admin)
 	rb.AddRoute("bouts.update", "/{cardId}/bouts/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("bouts.delete", "/{cardId}/bouts/{id}", "DELETE", a.Delete, rbac.Admin)
+	rb.AddRoute("bouts.end", "/{cardId}/bouts/{id}/end", "POST", a.End, rbac.Admin)
 
-	rb.AddRoute("bouts.start", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
+	rb.AddRoute("bouts.status", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
 
 	rb.AddRoute("rounds.list", "/{cardId}/bouts/{id}/rounds", "GET", a.ListRounds, rbac.Admin)
 	rb.AddRoute("rounds.get", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}", "GET", a.GetRound, rbac.Admin)
-	rb.AddRoute("rounds.fouls", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/foul", "POST", a.AddFoul, rbac.Admin)
+	rb.AddRoute("rounds.fouls", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/foul", "POST", a.HandleFoul, rbac.Admin)
 	rb.AddRoute("rounds.eightcounts", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/eightcount", "POST", a.EightCounts, rbac.Admin)
 
-	rb.AddRoute("rounds.start", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/start", "POST", a.StartRound, rbac.Admin)
-	rb.AddRoute("rounds.request_scores", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score", "POST", a.ScoreRound, rbac.Admin)
-	rb.AddRoute("rounds.end", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/end", "POST", a.EndRound, rbac.Admin)
+	rb.AddRoute("rounds.next", "/{cardId}/bouts/{boutId}/rounds/next", "POST", a.NextRoundState, rbac.Admin)
+
+	rb.AddRoute("rounds.score", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score", "POST", a.Score, rbac.JudgeList...)
+	rb.AddRoute("rounds.score.complete", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/complete", "POST", a.ScoreComplete, rbac.JudgeList...)
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +91,7 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]GetBoutResponse, len(bouts))
 	for i, b := range bouts {
-		resp[i] = *EntityToGetBoutResponse(b)
+		resp[i] = *EntityToGetBoutResponse(b, []*roundEntities.RoundDetails{})
 	}
 
 	presenter.WithData(resp).Present()
@@ -115,11 +118,11 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	id := uint(parsedId)
 
-	b, err := h.useCase.Get(cardId, id)
+	b, rounds, err := h.useCase.Get(cardId, id)
 	if err != nil {
 		presenter.WithError(err).Present()
 	}
-	resp := EntityToGetBoutResponse(b)
+	resp := EntityToGetBoutResponse(b, rounds)
 
 	presenter.WithData(resp).Present()
 }
@@ -180,6 +183,38 @@ func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	id := uint(parsedId)
 
 	err = h.useCase.Delete(cardId, id)
+	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+type EndBoutRequest struct {
+	Decision string `json:"decision"`
+	Winner   string `json:"winner"`
+	Comment  string `json:"comment"`
+}
+
+func (h *App) End(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	var req EndBoutRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.End(cardId, id, req.Winner, req.Decision, req.Comment)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
@@ -265,13 +300,14 @@ func (h *App) ListFouls(w http.ResponseWriter, r *http.Request) {
 	presenter.WithData(fouls).Present()
 }
 
-type AddFoulRequest struct {
+type HandleFoulRequest struct {
 	Corner string `json:"corner"`
 	Type   string `json:"type"`
 	Foul   string `json:"foul"`
+	Action string `json:"action"`
 }
 
-func (h *App) AddFoul(w http.ResponseWriter, r *http.Request) {
+func (h *App) HandleFoul(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
 
@@ -286,20 +322,27 @@ func (h *App) AddFoul(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req AddFoulRequest
+	var req HandleFoulRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	err = h.useCase.AddFoul(&roundEntities.RoundFoul{
+	roundFoul := &roundEntities.RoundFoul{
 		BoutID:      boutId,
 		RoundNumber: roundNumber,
 		Corner:      roundEntities.Corner(req.Corner),
 		Type:        roundEntities.FoulType(req.Type),
 		Foul:        req.Foul,
-	})
+	}
+
+	if req.Action == "add" {
+		err = h.useCase.AddFoul(roundFoul)
+	}
+	if req.Action == "remove" {
+		err = h.useCase.RemoveFoul(roundFoul)
+	}
 
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -315,6 +358,24 @@ type GetRoundResponse struct {
 	Status      string                `json:"status"`
 	Red         CornerDetailsResponse `json:"red"`
 	Blue        CornerDetailsResponse `json:"blue"`
+}
+
+func EntityToGetRoundResponse(entity *roundEntities.RoundDetails) *GetRoundResponse {
+	return &GetRoundResponse{
+		BoutID:      entity.BoutID,
+		RoundNumber: entity.RoundNumber,
+		Status:      string(entity.Status),
+		Red: CornerDetailsResponse{
+			Warnings:    entity.Red.Warnings,
+			Cautions:    entity.Red.Cautions,
+			EightCounts: entity.Red.EightCounts,
+		},
+		Blue: CornerDetailsResponse{
+			Warnings:    entity.Blue.Warnings,
+			Cautions:    entity.Blue.Cautions,
+			EightCounts: entity.Blue.EightCounts,
+		},
+	}
 }
 
 type CornerDetailsResponse struct {
@@ -405,8 +466,8 @@ func (h *App) EightCounts(w http.ResponseWriter, r *http.Request) {
 	presenter.Present()
 }
 
-func (h *App) StartRound(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[int](r, w)
 	vars := mux.Vars(r)
 
 	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
@@ -414,56 +475,31 @@ func (h *App) StartRound(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	roundNumber, err := muxutils.ParseVars[int](vars, "roundNumber")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 
-	err = h.useCase.StartRound(boutId, roundNumber)
+	currentRound, err := h.useCase.NextRoundState(boutId)
 
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	presenter.Present()
+	presenter.WithData(currentRound).Present()
 }
 
-func (h *App) ScoreRound(w http.ResponseWriter, r *http.Request) {
+type ScoreRequest struct {
+	Red  int `json:"red"`
+	Blue int `json:"blue"`
+}
+
+func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
 
-	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
-	roundNumber, err := muxutils.ParseVars[int](vars, "roundNumber")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
-
-	err = h.useCase.ScoreRound(boutId, roundNumber)
-
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
-
-	presenter.Present()
-}
-
-func (h *App) EndRound(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
-	vars := mux.Vars(r)
 	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-
 	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -475,7 +511,67 @@ func (h *App) EndRound(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.EndRound(cardId, boutId, roundNumber)
+	role, ok := rbac.GetRoleFromCtx(r.Context())
+	if !ok {
+		presenter.WithError(errors.New("unknown role")).Present()
+		return
+	}
+
+	var req ScoreRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.Score(cardId, boutId, roundNumber, role, req.Red, req.Blue)
+
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	presenter.Present()
+}
+
+type CompleteScoreRequest struct {
+	JudgeNumber int `json:"judgeNumber"`
+}
+
+func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	roundNumber, err := muxutils.ParseVars[int](vars, "roundNumber")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	role, ok := rbac.GetRoleFromCtx(r.Context())
+	if !ok {
+		presenter.WithError(errors.New("unknown role")).Present()
+		return
+	}
+
+	var req CompleteScoreRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.CompleteScore(cardId, boutId, roundNumber, role)
 
 	if err != nil {
 		presenter.WithError(err).Present()
