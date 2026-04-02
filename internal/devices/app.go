@@ -23,7 +23,7 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("baseUrl", "/baseurl", http.MethodGet, h.BaseUrl, rbac.Admin)
 	sr.AddRoute("judges", "/judges", http.MethodGet, h.Judges, rbac.Admin)
 	sr.AddRoute("code", "/code", http.MethodPost, h.Code, rbac.Admin)
-	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, rbac.Judge)
+	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, rbac.JudgeList...)
 }
 func (h *App) BaseUrl(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[string](r, w)
@@ -86,6 +86,12 @@ func (h *App) JudgeHealthCheck(w http.ResponseWriter, r *http.Request) {
 	role, ok := rbac.GetRoleFromCtx(r.Context())
 	if !ok {
 		presenter.WithError(errors.New("no role")).Present()
+		return
+	}
+
+	if err := h.useCase.HealthCheck(role); err != nil {
+		presenter.WithError(err).Present()
+		return
 	}
 
 	presenter.WithData(fmt.Sprintf("Hello %s", role)).Present()

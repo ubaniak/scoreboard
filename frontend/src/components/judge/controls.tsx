@@ -1,14 +1,14 @@
 import { Button, Col, Flex, Row, Typography } from "antd";
 import { useState } from "react";
 import { Card } from "../card/card";
+import type { Controls } from ".";
 const { Title } = Typography;
 
-export type ControlsProps = {
-  score: (props: { red: number; blue: number; judgeNumber: number }) => void;
-  complete: () => void;
+export type ScoreControlsProps = {
+  controls: Controls;
 };
 
-export const Controls = (props: ControlsProps) => {
+export const ScoreControls = (props: ScoreControlsProps) => {
   const [redScore, setRedScore] = useState(0);
   const [blueScore, setBlueScore] = useState(0);
 
@@ -35,15 +35,16 @@ export const Controls = (props: ControlsProps) => {
     const setWin = color == "red" ? setRedScore : setBlueScore;
     const setLose = color == "red" ? setBlueScore : setRedScore;
 
+    const red = color == "red" ? win : lose;
+    const blue = color == "red" ? lose : win;
     setWin(win);
     setLose(lose);
+
+    props.controls.scoreRound({ red, blue });
   };
 
   return (
     <Card>
-      <Flex justify="center" gap="large" vertical align="center">
-        <Button>Submit</Button>
-      </Flex>
       <Row>
         <Col span={12}>
           <Flex justify="flex-start" gap="large" vertical align="center">
@@ -97,7 +98,13 @@ export const Controls = (props: ControlsProps) => {
         </Col>
       </Row>
       <Flex justify="center" gap="large" vertical align="center">
-        <Button onClick={() => props.complete()}>Submit</Button>
+        <Button
+          onClick={() => {
+            props.controls.complete();
+          }}
+        >
+          Submit Score
+        </Button>
       </Flex>
     </Card>
   );

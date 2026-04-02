@@ -1,10 +1,12 @@
 package entities
 
 type CurrentCardResponse struct {
+	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }
 
 type CurrentBoutResponse struct {
+	ID          uint   `json:"id"`
 	BoutNumber  int    `json:"boutNumber"`
 	RedCorner   string `json:"redCorner"`
 	BlueCorner  string `json:"blueCorner"`
@@ -17,22 +19,30 @@ type CurrentBoutResponse struct {
 	Status      string `json:"status"`
 }
 
+type CurrentScoreResponse struct {
+	Red  int `json:"red"`
+	Blue int `json:"blue"`
+}
+
 type CurrentRoundResponse struct {
 	RoundNumber int    `json:"roundNumber"`
 	Status      string `json:"status"`
 }
 
 type CurrentResponse struct {
-	Card  *CurrentCardResponse  `json:"card,omitempty"`
-	Bout  *CurrentBoutResponse  `json:"bout,omitempty"`
-	Round *CurrentRoundResponse `json:"round,omitempty"`
+	Card   *CurrentCardResponse              `json:"card,omitempty"`
+	Bout   *CurrentBoutResponse              `json:"bout,omitempty"`
+	Round  *CurrentRoundResponse             `json:"round,omitempty"`
+	Scores map[int][]CurrentScoreResponse    `json:"scores,omitempty"`
 }
 
 type CurrentCard struct {
+	ID   uint
 	Name string
 }
 
 type CurrentBout struct {
+	ID          uint
 	Number      int
 	RedCorner   string
 	BlueCorner  string
@@ -45,13 +55,19 @@ type CurrentBout struct {
 	Status      string
 }
 
+type CurrentScore struct {
+	Red  int
+	Blue int
+}
+
 type CurrentRound struct {
 	Number int
 	Status string
 }
 
 type Current struct {
-	Card  *CurrentCard
-	Bout  *CurrentBout
-	Round *CurrentRound
+	Card   *CurrentCard
+	Bout   *CurrentBout
+	Round  *CurrentRound
+	Scores map[int][]CurrentScore
 }

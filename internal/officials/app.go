@@ -1,12 +1,13 @@
 package officials
 
 import (
+	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strconv"
-
 	"github.com/gorilla/mux"
 
+	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -21,6 +22,7 @@ func NewApp(useCase UseCase) *App {
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("official.create", "/{cardId}/officials", "POST", a.Create, rbac.Admin)
+	rb.AddRoute("official.import", "/{cardId}/officials/import", "POST", a.ImportCSV, rbac.Admin)
 	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.List, rbac.Admin)
 	rb.AddRoute("official.update", "/{cardId}/officials/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("official.delete", "/{cardId}/officials/{id}", "DELETE", a.Delete, rbac.Admin)
@@ -33,14 +35,11 @@ type CreateOfficialRequest struct {
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
 
 	var createReq CreateOfficialRequest
 	err = json.NewDecoder(r.Body).Decode(&createReq)
@@ -61,14 +60,11 @@ type ListOfficialResponse struct {
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]ListOfficialResponse](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
 
 	officials, err := h.useCase.Get(cardId)
 	if err != nil {
@@ -94,14 +90,11 @@ type UpdateOfficialRequest struct {
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	CardidStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(CardidStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
 
 	var req UpdateOfficialRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -110,14 +103,11 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
 	err = h.useCase.Update(cardId, id, req.Name)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
@@ -126,24 +116,73 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardIdStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(cardIdStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	Id := uint(parsedId)
 
-	err = h.useCase.Delete(cardId, Id)
+	err = h.useCase.Delete(cardId, id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+// ImportCSV accepts a multipart form upload with a "file" field containing a CSV.
+// Expected CSV columns (with header row): name
+func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		presenter.WithError(errors.New("failed to parse multipart form")).Present()
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		presenter.WithError(errors.New("missing 'file' field in form")).Present()
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		presenter.WithError(errors.New("invalid CSV: " + err.Error())).Present()
+		return
+	}
+
+	if len(records) < 2 {
+		presenter.WithError(errors.New("CSV must contain a header row and at least one data row")).Present()
+		return
+	}
+
+	header := records[0]
+	colIndex := make(map[string]int, len(header))
+	for i, col := range header {
+		colIndex[col] = i
+	}
+
+	if _, ok := colIndex["name"]; !ok {
+		presenter.WithError(errors.New("CSV missing required column: name")).Present()
+		return
+	}
+
+	names := make([]string, 0, len(records)-1)
+	for _, row := range records[1:] {
+		names = append(names, row[colIndex["name"]])
+	}
+
+	err = h.useCase.CreateBulk(cardId, names)
+	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }

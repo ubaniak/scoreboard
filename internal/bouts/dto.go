@@ -1,6 +1,8 @@
 package bouts
 
 import (
+	"fmt"
+
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
 )
@@ -42,6 +44,19 @@ type CreateRequest struct {
 	AgeCategory string `json:"ageCategory"`
 	Experience  string `json:"experience"`
 	Gender      string `json:"gender"`
+}
+
+func (r *CreateRequest) Validate() error {
+	if !entities.Gender(r.Gender).IsValid() {
+		return fmt.Errorf("invalid gender %q", r.Gender)
+	}
+	if !entities.Experience(r.Experience).IsValid() {
+		return fmt.Errorf("invalid experience %q", r.Experience)
+	}
+	if !entities.AgeCategory(r.AgeCategory).IsValid() {
+		return fmt.Errorf("invalid ageCategory %q", r.AgeCategory)
+	}
+	return nil
 }
 
 func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
@@ -116,15 +131,29 @@ func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.Roun
 }
 
 type UpdateRequest struct {
-	BoutNumber  *int     `json:"boutNumber"`
-	RedCorner   *string  `json:"redCorner"`
-	BlueCorner  *string  `json:"blueCorner"`
-	Gender      *string  `json:"gender"`
-	WeightClass *int     `json:"weightClass"`
-	GloveSize   *string  `json:"gloveSize"`
-	RoundLength *float64 `json:"roundLength"`
-	AgeCategory *string  `json:"ageCategory"`
-	Experience  *string  `json:"experience"`
+	BoutNumber     *int     `json:"boutNumber"`
+	RedCorner      *string  `json:"redCorner"`
+	BlueCorner     *string  `json:"blueCorner"`
+	Gender         *string  `json:"gender"`
+	WeightClass    *int     `json:"weightClass"`
+	GloveSize      *string  `json:"gloveSize"`
+	RoundLength    *float64 `json:"roundLength"`
+	AgeCategory    *string  `json:"ageCategory"`
+	Experience     *string  `json:"experience"`
+	NumberOfJudges *int     `json:"numberOfJudges"`
+}
+
+func (r *UpdateRequest) Validate() error {
+	if r.Gender != nil && !entities.Gender(*r.Gender).IsValid() {
+		return fmt.Errorf("invalid gender %q", *r.Gender)
+	}
+	if r.Experience != nil && !entities.Experience(*r.Experience).IsValid() {
+		return fmt.Errorf("invalid experience %q", *r.Experience)
+	}
+	if r.AgeCategory != nil && !entities.AgeCategory(*r.AgeCategory).IsValid() {
+		return fmt.Errorf("invalid ageCategory %q", *r.AgeCategory)
+	}
+	return nil
 }
 
 func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout {
@@ -151,15 +180,16 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 	}
 
 	return &entities.UpdateBout{
-		BoutNumber:  req.BoutNumber,
-		RedCorner:   req.RedCorner,
-		BlueCorner:  req.BlueCorner,
-		Gender:      gender,
-		WeightClass: req.WeightClass,
-		GloveSize:   gloveSize,
-		RoundLength: roundLength,
-		AgeCategory: ageCategory,
-		Experience:  experience,
+		BoutNumber:     req.BoutNumber,
+		RedCorner:      req.RedCorner,
+		BlueCorner:     req.BlueCorner,
+		Gender:         gender,
+		WeightClass:    req.WeightClass,
+		GloveSize:      gloveSize,
+		RoundLength:    roundLength,
+		AgeCategory:    ageCategory,
+		Experience:     experience,
+		NumberOfJudges: req.NumberOfJudges,
 	}
 
 }

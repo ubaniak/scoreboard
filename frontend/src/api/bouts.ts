@@ -12,23 +12,20 @@ import type {
 import { fetchClient } from "./fetchClient";
 
 const keys = {
-  all: ["bouts"] as const,
-  list: () => [...keys.all, "list"] as const,
-  current: ["current_bout"],
-  fouls: ["fouls"],
-  get: (id: string) => [...keys.all, `get-${id}`] as const,
-  settings: (id: string) => [...keys.all, `settings-${id}`] as const,
-  bouts: (id: string) => [...keys.all, `bouts-${id}`] as const,
-  rounds: (id: string) => [...keys.all, `rounds-${id}`] as const,
-  round: (boutId: string, roundNumber: number) =>
-    [...keys.all, `bout-${boutId}-round-${roundNumber}`] as const,
+  all: (token: string) => ["bouts", token] as const,
+  list: (token: string) => [...keys.all(token), "list"] as const,
+  fouls: (token: string) => [...keys.all(token), "fouls"] as const,
+  get: (token: string, id: string) =>
+    [...keys.all(token), `get-${id}`] as const,
+  round: (token: string, boutId: string, roundNumber: number) =>
+    [...keys.all(token), `bout-${boutId}-round-${roundNumber}`] as const,
 };
 
 export const useGetBoutById = (
   props: TokenBase & CardRequestType & BoutRequestType,
 ) => {
   return useQuery({
-    queryKey: keys.get(props.boutId),
+    queryKey: keys.get(props.token, props.boutId),
     queryFn: async () => {
       return fetchClient<Bout>(
         `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}`,
@@ -45,7 +42,7 @@ export const useGetBoutById = (
 
 export const useGetBouts = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: keys.list(),
+    queryKey: keys.list(props.token),
     queryFn: () => {
       return fetchClient<Bout[]>(`${baseUrl}/api/cards/${props.cardId}/bouts`, {
         headers: {
@@ -80,7 +77,7 @@ export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
@@ -111,10 +108,10 @@ export const useMutateEndBout = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keys.list(),
+        queryKey: keys.list(props.token),
       });
       queryClient.invalidateQueries({
-        queryKey: keys.get(props.boutId),
+        queryKey: keys.get(props.token, props.boutId),
       });
     },
   });
@@ -146,11 +143,28 @@ export const useMutateUpdateBout = (props: TokenBase & CardRequestType) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keys.list(),
+        queryKey: keys.list(props.token),
       });
-      queryClient.invalidateQueries({
-        queryKey: keys.current,
+    },
+  });
+};
+
+export const useMutateImportBouts = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/bouts/import`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: form,
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
@@ -160,7 +174,7 @@ export const useMutateDeleteBout = (cardId: string, token: string) => {
   return useMutation({
     mutationFn: (boutId: string) => deleteBout(cardId, token, boutId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(token) });
     },
   });
 };
@@ -194,7 +208,9 @@ export const useMutateUpdateBoutStatus = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.get(props.boutId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.get(props.token, props.boutId),
+      });
     },
   });
 };
@@ -226,23 +242,23 @@ export const useMutateHandleFoul = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keys.fouls,
+        queryKey: keys.fouls(props.token),
       });
       queryClient.invalidateQueries({
-        queryKey: keys.round(props.boutId, props.roundNumber),
+        queryKey: keys.round(props.token, props.boutId, props.roundNumber),
       });
       queryClient.invalidateQueries({
-        queryKey: keys.get(props.boutId),
+        queryKey: keys.get(props.token, props.boutId),
       });
     },
   });
 };
 
-export const useGetFouls = (props: TokenBase) => {
+export const useGetFouls = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: keys.fouls,
+    queryKey: keys.fouls(props.token),
     queryFn: () => {
-      return fetchClient<string[]>(`${baseUrl}/api/cards/0/fouls`, {
+      return fetchClient<string[]>(`${baseUrl}/api/cards/${props.cardId}/fouls`, {
         headers: {
           "Content-type": "application/json",
           Authorization: `Bearer ${props.token}`,
@@ -256,7 +272,7 @@ export const useGetRound = (
   props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType,
 ) => {
   return useQuery({
-    queryKey: keys.round(props.boutId, props.roundNumber),
+    queryKey: keys.round(props.token, props.boutId, props.roundNumber),
     queryFn: () => {
       return fetchClient<RoundDetails>(
         `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}`,
@@ -295,10 +311,10 @@ export const useMutateEightCount = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keys.fouls,
+        queryKey: keys.round(props.token, props.boutId, props.roundNumber),
       });
       queryClient.invalidateQueries({
-        queryKey: keys.get(props.boutId),
+        queryKey: keys.get(props.token, props.boutId),
       });
     },
   });
@@ -322,7 +338,9 @@ export const useMutateNextRoundState = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.get(props.boutId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.get(props.token, props.boutId),
+      });
     },
   });
 };

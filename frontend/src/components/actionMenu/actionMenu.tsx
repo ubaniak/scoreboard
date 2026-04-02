@@ -15,6 +15,7 @@ export type ActionMenuProps = {
     title: string | React.ReactNode;
     body: (close: () => void) => React.ReactNode;
   };
+  width?: number;
 };
 
 export const ActionMenu = (props: ActionMenuProps) => {
@@ -44,7 +45,7 @@ export const ActionMenu = (props: ActionMenuProps) => {
         title={props.content.title}
         open={open}
         footer={null}
-        size={800}
+        width={props.width ?? 800}
         onClose={close}
       >
         {props.content.body(close)}

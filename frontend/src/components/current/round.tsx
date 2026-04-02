@@ -4,6 +4,7 @@ import type { Current } from "../../entities/current";
 export type ShowRoundProps = {
   current?: Current;
 };
+
 export const CurrentRoundCard = (props: ShowRoundProps) => {
   return (
     <>

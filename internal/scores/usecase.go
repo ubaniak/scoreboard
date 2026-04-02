@@ -7,6 +7,7 @@ import (
 
 type UseCase interface {
 	Create(cardId, boutId uint, numberOfJudges int) error
+	Recreate(cardId, boutId uint, numberOfJudges int) error
 	RequestScores(cardId, boutId uint, roundNumber int) error
 	Score(cardId, boutId uint, roundNumber int, JudgeRole string, red, blue int) error
 	Complete(cardId, boutId uint, roundNumber int, JudgeRole string) error
@@ -39,6 +40,13 @@ func (u *usecase) Create(cardId, boutId uint, numberOfJudges int) error {
 	}
 
 	return nil
+}
+
+func (u *usecase) Recreate(cardId, boutId uint, numberOfJudges int) error {
+	if err := u.storage.DeleteByBout(cardId, boutId); err != nil {
+		return err
+	}
+	return u.Create(cardId, boutId, numberOfJudges)
 }
 
 func (u *usecase) RequestScores(cardId, boutId uint, roundNumber int) error {

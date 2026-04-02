@@ -5,14 +5,14 @@ import type { Official } from "../entities/cards";
 import { fetchClient } from "./fetchClient";
 
 const keys = {
-  all: ["officials"] as const,
-  list: () => [...keys.all, "list"] as const,
-  get: (id: string) => [...keys.all, id] as const,
+  all: (token: string) => ["officials", token] as const,
+  list: (token: string) => [...keys.all(token), "list"] as const,
+  get: (token: string, id: string) => [...keys.all(token), id] as const,
 };
 
 export const useGetOfficials = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: keys.list(),
+    queryKey: keys.list(props.token),
     queryFn: async () => {
       return fetchClient<Official[]>(
         `${baseUrl}/api/cards/${props.cardId}/officials`,
@@ -45,7 +45,27 @@ export const useMutateCreateOfficial = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
+export const useMutateImportOfficials = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/officials/import`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: form,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
@@ -77,7 +97,7 @@ export const useMutateUpdateOfficial = (props: TokenBase & CardRequestType) => {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };

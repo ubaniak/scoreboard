@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
@@ -26,8 +25,8 @@ func (s *RbacService) JWTMiddleware(roles ...string) func(http.Handler) http.Han
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if len(roles) == 0 {
-				fmt.Println("HERE")
 				next.ServeHTTP(w, r)
+				return
 			}
 
 			authHeader := r.Header.Get("Authorization")

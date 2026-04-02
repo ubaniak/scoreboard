@@ -10,6 +10,7 @@ import (
 
 type UseCase interface {
 	Create(cardId uint, bout *entities.Bout) error
+	CreateBulk(cardId uint, bouts []*entities.Bout) error
 	Update(cardId, id uint, bout *entities.UpdateBout) error
 	List(cardId uint) ([]*entities.Bout, error)
 	Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.RoundDetails, error)
@@ -19,17 +20,6 @@ type UseCase interface {
 
 	Current(cardId uint) (*entities.Bout, error)
 	CurrentRound(boutId uint) (*roundEntities.Round, error)
-	// round funcs
-	ListRounds(boutId uint) ([]*roundEntities.Round, error)
-	GetRound(cardId, boutId uint, roundNumber int) (*roundEntities.RoundDetails, error)
-	AddFoul(rf *roundEntities.RoundFoul) error
-	RemoveFoul(rf *roundEntities.RoundFoul) error
-	EightCount(boutId uint, roundNumber int, corner string, direction string) error
-	Fouls() ([]string, error)
-	NextRoundState(boutId uint) (int, error)
-
-	Score(cardId, boutId uint, roundNumber int, judgeNumber string, red, blue int) error
-	CompleteScore(cardId, boutId uint, roundNumber int, JudgeNumber string) error
 }
 
 type useCase struct {
@@ -61,8 +51,25 @@ func (uc *useCase) Create(cardId uint, bout *entities.Bout) error {
 	return nil
 }
 
+func (uc *useCase) CreateBulk(cardId uint, bouts []*entities.Bout) error {
+	for _, bout := range bouts {
+		if err := uc.Create(cardId, bout); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (uc *useCase) Update(cardId, id uint, bout *entities.UpdateBout) error {
-	return uc.storage.Update(cardId, id, bout)
+	if err := uc.storage.Update(cardId, id, bout); err != nil {
+		return err
+	}
+	if bout.NumberOfJudges != nil {
+		if err := uc.score.Recreate(cardId, id, *bout.NumberOfJudges); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (uc *useCase) List(cardId uint) ([]*entities.Bout, error) {
@@ -108,38 +115,12 @@ func (uc *useCase) UpdateStatus(cardId, boutId uint, status entities.BoutStatus)
 		return err
 	}
 	if status == entities.BoutStatusInProgress {
-		uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusReady)
+		if err = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusReady); err != nil {
+			return err
+		}
 	}
 
 	return nil
-}
-
-func (uc *useCase) ListRounds(boutId uint) ([]*roundEntities.Round, error) {
-	return uc.roundUseCase.List(boutId)
-}
-
-func (uc *useCase) Fouls() ([]string, error) {
-	return uc.roundUseCase.ListFouls()
-}
-
-func (uc *useCase) GetRound(cardId, boutId uint, roundNumber int) (*roundEntities.RoundDetails, error) {
-	return uc.roundUseCase.Get(boutId, roundNumber)
-}
-
-func (uc *useCase) AddFoul(rf *roundEntities.RoundFoul) error {
-	return uc.roundUseCase.AddFoul(rf)
-}
-
-func (uc *useCase) RemoveFoul(rf *roundEntities.RoundFoul) error {
-	return uc.roundUseCase.RemoveFoul(rf)
-}
-
-func (uc *useCase) EightCount(boutId uint, roundNumber int, corner string, direction string) error {
-	return uc.roundUseCase.EightCount(boutId, roundNumber, corner, direction)
-}
-
-func (uc *useCase) NextRoundState(boutId uint) (int, error) {
-	return uc.roundUseCase.Next(boutId)
 }
 
 func (uc *useCase) Current(cardId uint) (*entities.Bout, error) {
@@ -158,10 +139,3 @@ func (uc *useCase) CurrentRound(boutId uint) (*roundEntities.Round, error) {
 	return round, nil
 }
 
-func (uc *useCase) Score(cardId, boutId uint, roundNumber int, judgeNumber string, red, blue int) error {
-	return uc.score.Score(cardId, boutId, roundNumber, judgeNumber, red, blue)
-}
-
-func (uc *useCase) CompleteScore(cardId, boutId uint, roundNumber int, JudgeNumber string) error {
-	return uc.score.Complete(cardId, boutId, roundNumber, JudgeNumber)
-}

@@ -5,8 +5,10 @@ import type {
   MutateHandleFoulProps,
 } from "../../api/bouts";
 import type { Bout, RoundDetails } from "../../entities/cards";
+import type { ScoresByRound } from "../../entities/scores";
 import { Card } from "../card/card";
 import { RoundIndex } from "../round";
+import { Scores } from "../score/scores";
 import { Show } from "../show/show";
 import { CornerInfo } from "./cornerInfo";
 import { DescribeBout } from "./describe";
@@ -24,6 +26,7 @@ export type BoutIndexProps = {
   fouls?: string[];
   bout?: Bout;
   round?: RoundDetails;
+  scores?: ScoresByRound;
   isLoading?: boolean;
   loadingComponent?: React.ReactNode | null;
   controls: Controls;
@@ -60,12 +63,15 @@ export const BoutIndex = (props: BoutIndexProps) => {
           round={props.round}
           fouls={props.fouls || []}
           rounds={props.bout?.rounds}
-          // length={props.bout?.roundLength || 0}
-          length={0.2}
+          scores={props.scores}
+          length={props.bout?.roundLength || 0}
           handleFoul={props.controls.handleFoul}
           handleEightCount={props.controls.handleEightCount}
           onChange={props.controls.setRound}
         />
+      </Show>
+      <Show show={true}>
+        <Scores scores={props.scores ?? {}} rounds={props.bout?.rounds} />
       </Show>
     </>
   );

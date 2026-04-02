@@ -3,11 +3,15 @@ package login
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
+	"github.com/ubaniak/scoreboard/internal/middleware"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
+
+var loginRateLimiter = middleware.NewRateLimiter(10, time.Minute)
 
 type App struct {
 	useCase auth.UseCase
@@ -18,7 +22,7 @@ func NewApp(useCase auth.UseCase) *App {
 }
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	rb.AddRoute("login", "/login", "POST", h.Login)
+	rb.AddRoute("login", "/login", "POST", loginRateLimiter.Middleware(h.Login))
 	rb.AddRoute("login", "/login", "GET", h.Get)
 }
 

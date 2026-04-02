@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"time"
 
 	"github.com/ubaniak/scoreboard/internal/auth/entities"
 	"github.com/ubaniak/scoreboard/internal/auth/utils"
@@ -15,6 +16,7 @@ type UseCase interface {
 	Login(role, registrationCode string) (string, error)
 	GetProfile(jwtToken string) (*entities.Profile, error)
 	Get(role string) (*entities.Profile, error)
+	RecordHealthCheck(role string) error
 }
 
 type useCase struct {
@@ -98,4 +100,14 @@ func (uc *useCase) GetProfile(jwtToken string) (*entities.Profile, error) {
 
 func (uc *useCase) Get(role string) (*entities.Profile, error) {
 	return uc.storage.Get(role)
+}
+
+func (uc *useCase) RecordHealthCheck(role string) error {
+	profile, err := uc.storage.Get(role)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	profile.LastHealthCheck = &now
+	return uc.storage.Save(profile)
 }

@@ -4,6 +4,7 @@ import "github.com/ubaniak/scoreboard/internal/officials/entities"
 
 type UseCase interface {
 	Create(cardId uint, name string) error
+	CreateBulk(cardId uint, names []string) error
 	Update(cardId, id uint, name string) error
 	Get(cardId uint) ([]entities.Official, error)
 	Delete(cardId, id uint) error
@@ -22,6 +23,15 @@ func (uc *useCase) Create(cardId uint, name string) error {
 		Name: name,
 	}
 	return uc.storage.Save(cardId, o)
+}
+
+func (uc *useCase) CreateBulk(cardId uint, names []string) error {
+	for _, name := range names {
+		if err := uc.Create(cardId, name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (uc *useCase) Update(cardId, id uint, name string) error {

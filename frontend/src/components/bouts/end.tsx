@@ -9,10 +9,15 @@ import {
 } from "antd";
 import { useState } from "react";
 import type { EndBoutProps } from "../../api/bouts";
+import type { RoundDetails } from "../../entities/cards";
+import type { ScoresByRound } from "../../entities/scores";
+import { Scores } from "../score/scores";
 
 export type EndBoutFormProps = {
   onClose: () => void;
   onSubmit: (values: EndBoutProps) => void;
+  scores?: ScoresByRound;
+  rounds?: RoundDetails[];
 };
 export const EndBout = (props: EndBoutFormProps) => {
   const onFinish: FormProps<EndBoutProps>["onFinish"] = async (values) => {
@@ -21,6 +26,10 @@ export const EndBout = (props: EndBoutFormProps) => {
   };
   const [decision, setDecision] = useState<string | null>();
   return (
+    <>
+      {props.scores && (
+        <Scores scores={props.scores} rounds={props.rounds} />
+      )}
     <Form
       labelCol={{ span: 4 }}
       wrapperCol={{ span: 14 }}
@@ -81,5 +90,6 @@ export const EndBout = (props: EndBoutFormProps) => {
         </Space>
       </Form.Item>
     </Form>
+    </>
   );
 };

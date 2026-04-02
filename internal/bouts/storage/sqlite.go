@@ -95,7 +95,7 @@ func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 }
 func (s *Sqlite) Current(cardId uint) (*entities.Bout, error) {
 	var bout Bout
-	if err := s.db.Where("card_id = ? AND status = ?", cardId, entities.BoutStatusInProgress).First(&bout).Error; err != nil {
+	if err := s.db.Where("card_id = ? AND status = ? OR status = ?", cardId, entities.BoutStatusInProgress, entities.BoutStatusNotStarted).First(&bout).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, sberrs.ErrRecordNotFound
 		}
@@ -161,6 +161,10 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.Winner != nil {
 		bout.Winner = string(*toUpdate.Winner)
+	}
+
+	if toUpdate.NumberOfJudges != nil {
+		bout.NumberOfJudges = *toUpdate.NumberOfJudges
 	}
 
 	if err := s.db.Save(bout).Error; err != nil {

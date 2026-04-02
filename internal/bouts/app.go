@@ -1,9 +1,12 @@
 package bouts
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -12,22 +15,27 @@ import (
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	"github.com/ubaniak/scoreboard/internal/round"
 	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
+	"github.com/ubaniak/scoreboard/internal/scores"
+	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
 )
 
 type App struct {
-	useCase UseCase
+	useCase      UseCase
+	roundUseCase round.UseCase
+	scoreUseCase scores.UseCase
 }
 
-func NewApp(useCase UseCase) *App {
-	return &App{useCase: useCase}
+func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase) *App {
+	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase}
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	// TODO: move to own package
 	rb.AddRoute("fouls", "/{cardId}/fouls", "GET", a.ListFouls, rbac.Admin)
 
 	rb.AddRoute("bouts.create", "/{cardId}/bouts", "POST", a.Create, rbac.Admin)
+	rb.AddRoute("bouts.import", "/{cardId}/bouts/import", "POST", a.ImportCSV, rbac.Admin)
 	rb.AddRoute("bouts.list", "/{cardId}/bouts", "GET", a.List, rbac.Admin)
 	rb.AddRoute("bouts.get", "/{cardId}/bouts/{id}", "GET", a.Get, rbac.Admin)
 	rb.AddRoute("bouts.update", "/{cardId}/bouts/{id}", "PUT", a.Update, rbac.Admin)
@@ -45,23 +53,27 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 	rb.AddRoute("rounds.score", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score", "POST", a.Score, rbac.JudgeList...)
 	rb.AddRoute("rounds.score.complete", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/complete", "POST", a.ScoreComplete, rbac.JudgeList...)
+
+	allowedRoles := append([]string{rbac.Admin}, rbac.JudgeList...)
+	rb.AddRoute("scores.list", "/{cardId}/bouts/{boutId}/scores", "GET", a.ListScores, allowedRoles...)
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
 
 	var createReq CreateRequest
 	err = json.NewDecoder(r.Body).Decode(&createReq)
 	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if err = createReq.Validate(); err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
@@ -75,18 +87,16 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]GetBoutResponse](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
 
 	bouts, err := h.useCase.List(cardId)
 	if err != nil {
 		presenter.WithError(err).Present()
+		return
 	}
 
 	resp := make([]GetBoutResponse, len(bouts))
@@ -100,27 +110,21 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[*GetBoutResponse](r, w)
 	vars := mux.Vars(r)
-	cardIdStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(cardIdStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
 	b, rounds, err := h.useCase.Get(cardId, id)
 	if err != nil {
 		presenter.WithError(err).Present()
+		return
 	}
 	resp := EntityToGetBoutResponse(b, rounds)
 
@@ -130,27 +134,24 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardIdStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(cardIdStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
 	var req UpdateRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if err = req.Validate(); err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
@@ -164,23 +165,16 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardIdStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(cardIdStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
 	err = h.useCase.Delete(cardId, id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
@@ -225,23 +219,16 @@ type UpdateStatusRequest struct {
 func (h *App) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardIdStr := vars["cardId"]
-
-	parsed, err := strconv.ParseUint(cardIdStr, 10, 0)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	cardId := uint(parsed)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
 	var req UpdateStatusRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -250,7 +237,13 @@ func (h *App) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.UpdateStatus(cardId, id, entities.BoutStatus(req.Status))
+	status := entities.BoutStatus(req.Status)
+	if !status.IsValid() {
+		presenter.WithError(fmt.Errorf("invalid status %q", req.Status)).Present()
+		return
+	}
+
+	err = h.useCase.UpdateStatus(cardId, id, status)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
@@ -262,17 +255,13 @@ type ListRoundResponse struct {
 func (h *App) ListRounds(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]ListRoundResponse](r, w)
 	vars := mux.Vars(r)
-
-	idStr := vars["id"]
-
-	parsedId, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsedId)
 
-	rounds, err := h.useCase.ListRounds(id)
+	rounds, err := h.roundUseCase.List(id)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -291,7 +280,7 @@ func (h *App) ListRounds(w http.ResponseWriter, r *http.Request) {
 func (h *App) ListFouls(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]string](r, w)
 
-	fouls, err := h.useCase.Fouls()
+	fouls, err := h.roundUseCase.ListFouls()
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -338,10 +327,10 @@ func (h *App) HandleFoul(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Action == "add" {
-		err = h.useCase.AddFoul(roundFoul)
+		err = h.roundUseCase.AddFoul(roundFoul)
 	}
 	if req.Action == "remove" {
-		err = h.useCase.RemoveFoul(roundFoul)
+		err = h.roundUseCase.RemoveFoul(roundFoul)
 	}
 
 	if err != nil {
@@ -388,11 +377,6 @@ func (h *App) GetRound(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[*GetRoundResponse](r, w)
 	vars := mux.Vars(r)
 
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -404,7 +388,7 @@ func (h *App) GetRound(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roundDetails, err := h.useCase.GetRound(cardId, boutId, roundNumber)
+	roundDetails, err := h.roundUseCase.Get(boutId, roundNumber)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -456,7 +440,7 @@ func (h *App) EightCounts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.EightCount(boutId, roundNumber, req.Corner, req.Direction)
+	err = h.roundUseCase.EightCount(boutId, roundNumber, req.Corner, req.Direction)
 
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -476,7 +460,7 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentRound, err := h.useCase.NextRoundState(boutId)
+	currentRound, err := h.roundUseCase.Next(boutId)
 
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -524,7 +508,7 @@ func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.Score(cardId, boutId, roundNumber, role, req.Red, req.Blue)
+	err = h.scoreUseCase.Score(cardId, boutId, roundNumber, role, req.Red, req.Blue)
 
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -532,10 +516,6 @@ func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.Present()
-}
-
-type CompleteScoreRequest struct {
-	JudgeNumber int `json:"judgeNumber"`
 }
 
 func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
@@ -564,14 +544,7 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req CompleteScoreRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
-
-	err = h.useCase.CompleteScore(cardId, boutId, roundNumber, role)
+	err = h.scoreUseCase.Complete(cardId, boutId, roundNumber, role)
 
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -579,4 +552,170 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.Present()
+}
+
+type ScoreResponse struct {
+	RoundNumber int     `json:"roundNumber"`
+	JudgeRole   string  `json:"judgeRole"`
+	JudgeName   *string `json:"judgeName,omitempty"`
+	Red         int     `json:"red"`
+	Blue        int     `json:"blue"`
+	Status      *string `json:"status,omitempty"`
+}
+
+func scoreToResponse(s *scoreEntities.Score, isAdmin bool) ScoreResponse {
+	resp := ScoreResponse{
+		RoundNumber: s.RoundNumber,
+		JudgeRole:   s.JudgeRole,
+		Red:         s.Red,
+		Blue:        s.Blue,
+	}
+	if isAdmin {
+		resp.JudgeName = &s.JudgeName
+		status := string(s.Status)
+		resp.Status = &status
+	}
+	return resp
+}
+
+// ImportCSV accepts a multipart form upload with a "file" field containing a CSV.
+// Expected CSV columns (with header row): red,blue,age,experience
+// Bout numbers are assigned sequentially starting from 1.
+// Optional columns: weightClass (int), gender (male/female) — defaults to 0 and "male".
+func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		presenter.WithError(errors.New("failed to parse multipart form")).Present()
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		presenter.WithError(errors.New("missing 'file' field in form")).Present()
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		presenter.WithError(errors.New("invalid CSV: " + err.Error())).Present()
+		return
+	}
+
+	if len(records) < 2 {
+		presenter.WithError(errors.New("CSV must contain a header row and at least one data row")).Present()
+		return
+	}
+
+	// Build column index from header
+	header := records[0]
+	colIndex := make(map[string]int, len(header))
+	for i, col := range header {
+		colIndex[col] = i
+	}
+
+	for _, required := range []string{"red", "blue", "age", "experience"} {
+		if _, ok := colIndex[required]; !ok {
+			presenter.WithError(errors.New("CSV missing required column: " + required)).Present()
+			return
+		}
+	}
+
+	bouts := make([]*entities.Bout, 0, len(records)-1)
+	for i, row := range records[1:] {
+		red := row[colIndex["red"]]
+		blue := row[colIndex["blue"]]
+		ageCategory := entities.AgeCategory(row[colIndex["age"]])
+		experience := entities.Experience(row[colIndex["experience"]])
+
+		gender := entities.Gender(entities.Male)
+		if idx, ok := colIndex["gender"]; ok && idx < len(row) {
+			gender = entities.Gender(row[idx])
+		}
+
+		if !ageCategory.IsValid() {
+			presenter.WithError(fmt.Errorf("row %d: invalid ageCategory %q", i+1, ageCategory)).Present()
+			return
+		}
+		if !experience.IsValid() {
+			presenter.WithError(fmt.Errorf("row %d: invalid experience %q", i+1, experience)).Present()
+			return
+		}
+		if !gender.IsValid() {
+			presenter.WithError(fmt.Errorf("row %d: invalid gender %q", i+1, gender)).Present()
+			return
+		}
+
+		weightClass := 0
+		if idx, ok := colIndex["weightClass"]; ok && idx < len(row) {
+			if wc, parseErr := strconv.Atoi(row[idx]); parseErr == nil {
+				weightClass = wc
+			}
+		}
+
+		roundLength := RoundLength(ageCategory, experience)
+		gloveSize := GloveSize(weightClass, ageCategory, gender)
+
+		bouts = append(bouts, &entities.Bout{
+			CardID:      cardId,
+			BoutNumber:  i + 1,
+			RedCorner:   red,
+			BlueCorner:  blue,
+			AgeCategory: ageCategory,
+			Experience:  experience,
+			Gender:      gender,
+			WeightClass: weightClass,
+			RoundLength: roundLength,
+			GloveSize:   gloveSize,
+			Status:      entities.BoutStatusNotStarted,
+		})
+	}
+
+	err = h.useCase.CreateBulk(cardId, bouts)
+	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
+}
+
+func (h *App) ListScores(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[map[int][]ScoreResponse](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	role, _ := rbac.GetRoleFromCtx(r.Context())
+	isAdmin := role == rbac.Admin
+
+	scoreList, err := h.scoreUseCase.List(cardId, boutId)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	sort.Slice(scoreList, func(i, j int) bool {
+		return scoreList[i].JudgeRole < scoreList[j].JudgeRole
+	})
+
+	resp := make(map[int][]ScoreResponse)
+	for _, s := range scoreList {
+		resp[s.RoundNumber] = append(resp[s.RoundNumber], scoreToResponse(s, isAdmin))
+	}
+
+	presenter.WithData(resp).Present()
 }

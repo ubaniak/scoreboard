@@ -5,13 +5,14 @@ import { fetchClient } from "./fetchClient";
 import type { JudgeDevice } from "../entities/device";
 
 const keys = {
-  all: ["devices"] as const,
-  register: (id: number) => [...keys.all, id] as const,
+  all: (token: string) => ["devices", token] as const,
+  status: (token: string) => [...keys.all(token), "status"] as const,
+  healthcheck: (token: string) => [...keys.all(token), "healthcheck"] as const,
 };
 
 export const useGetBaseUrl = (props: TokenBase) => {
   return useQuery({
-    queryKey: keys.all,
+    queryKey: keys.all(props.token),
     queryFn: () => {
       return fetchClient<string>(`${baseUrl}/api/devices/baseurl`, {
         headers: {
@@ -42,9 +43,24 @@ export const useMutationGenerateCode = (props: TokenBase) => {
   });
 };
 
+export const useHealthCheck = (props: TokenBase) => {
+  return useQuery({
+    queryKey: keys.healthcheck(props.token),
+    queryFn: () => {
+      return fetchClient<string>(`${baseUrl}/api/devices/healthcheck`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
+    },
+    refetchInterval: 5000,
+  });
+};
+
 export const useJudgeDevices = (props: TokenBase) => {
   return useQuery({
-    queryKey: ["device-status"],
+    queryKey: keys.status(props.token),
     queryFn: () => {
       return fetchClient<JudgeDevice[]>(`${baseUrl}/api/devices/judges`, {
         headers: {

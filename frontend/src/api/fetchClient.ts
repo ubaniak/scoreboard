@@ -29,14 +29,13 @@ export const fetchClient = async <T>(
 export const HandleSuccessResponse = async <T>(
   response: Response
 ): Promise<Data<T>> => {
-  try {
-    const json = await response.json();
-    if (Object.keys(json).length === 0) {
-      console.log("Received empty JSON response.");
-      return {} as Data<T>;
-    }
-    return json as Data<T>;
-  } catch {
+  const text = await response.text();
+  if (!text) {
     return {} as Data<T>;
   }
+  const json = JSON.parse(text) as Data<T>;
+  if (Object.keys(json).length === 0) {
+    return {} as Data<T>;
+  }
+  return json;
 };

@@ -35,12 +35,14 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 	response := entities.CurrentResponse{}
 	if current.Card != nil {
 		response.Card = &entities.CurrentCardResponse{
+			ID:   current.Card.ID,
 			Name: current.Card.Name,
 		}
 	}
 
 	if current.Bout != nil {
 		response.Bout = &entities.CurrentBoutResponse{
+			ID:          current.Bout.ID,
 			BoutNumber:  current.Bout.Number,
 			RedCorner:   current.Bout.RedCorner,
 			BlueCorner:  current.Bout.BlueCorner,
@@ -58,6 +60,17 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 		response.Round = &entities.CurrentRoundResponse{
 			RoundNumber: current.Round.Number,
 			Status:      current.Round.Status,
+		}
+	}
+
+	if len(current.Scores) > 0 {
+		response.Scores = make(map[int][]entities.CurrentScoreResponse)
+		for roundNum, roundScores := range current.Scores {
+			mapped := make([]entities.CurrentScoreResponse, len(roundScores))
+			for i, s := range roundScores {
+				mapped[i] = entities.CurrentScoreResponse{Red: s.Red, Blue: s.Blue}
+			}
+			response.Scores[roundNum] = mapped
 		}
 	}
 

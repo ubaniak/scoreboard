@@ -22,6 +22,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/joho/godotenv"
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
@@ -48,6 +49,10 @@ const (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
@@ -62,7 +67,11 @@ func main() {
 		panic(err)
 	}
 
-	authUseCase := auth.NewUseCase(authStorage, "my_secret_sign_key")
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		panic("JWT_SECRET environment variable is not set")
+	}
+	authUseCase := auth.NewUseCase(authStorage, jwtSecret)
 
 	roles := rbac.NewRole()
 	roles.AddRole(rbac.Admin)
@@ -127,7 +136,7 @@ func main() {
 	}
 
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
-	boutsApp := bouts.NewApp(boutsUseCase)
+	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase)
 
 	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)
@@ -138,7 +147,7 @@ func main() {
 	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase)
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase)
 	currentApp := current.NewApp(currentUseCase)
 
 	apiRegister.Add(currentApp)
@@ -149,7 +158,16 @@ func main() {
 
 	apiRegister.Register(rb)
 
-	srv := startServer(r)
+	allowedOrigins := []string{
+		"http://localhost:8080",
+		"http://localhost:5173",
+		"http://localhost:4173",
+	}
+	if origins := os.Getenv("CORS_ORIGINS"); origins != "" {
+		allowedOrigins = strings.Split(origins, ",")
+	}
+
+	srv := startServer(r, allowedOrigins)
 
 	systray.Run(func() {
 		systray.SetTitle(AppTitle)
@@ -182,12 +200,11 @@ func main() {
 	})
 }
 
-func startServer(r *mux.Router) *http.Server {
+func startServer(r *mux.Router, allowedOrigins []string) *http.Server {
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
+		AllowedOrigins: allowedOrigins,
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	})
 
 	staticFS, err := fs.Sub(webAssets, staticFilePath)

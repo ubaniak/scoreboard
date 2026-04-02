@@ -11,6 +11,7 @@ type Storage interface {
 	Update(t *entities.Score) error
 	List(cardId, boutId uint) ([]*entities.Score, error)
 	Get(cardId, boutId uint, roundNumber int, judgeRole string) (*entities.Score, error)
+	DeleteByBout(cardId, boutId uint) error
 }
 
 func NewSqlite(db *gorm.DB) (Storage, error) {

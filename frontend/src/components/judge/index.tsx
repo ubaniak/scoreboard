@@ -1,10 +1,17 @@
 import { Tag } from "antd";
+import type { ScoreRoundProps } from "../../api/score";
 import type { Current } from "../../entities/current";
 import { BoutInfo } from "./bout";
-import { Controls } from "./controls";
+import { ScoreControls } from "./controls";
+
+export type Controls = {
+  scoreRound: (values: ScoreRoundProps) => void;
+  complete: () => void;
+};
 
 export type JudgeIndexProps = {
   current?: Current;
+  controls: Controls;
 };
 export const JudgeIndex = (props: JudgeIndexProps) => {
   return (
@@ -15,7 +22,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
 
       <BoutInfo current={props.current} />
 
-      <Controls />
+      <ScoreControls controls={props.controls} />
     </>
   );
 };

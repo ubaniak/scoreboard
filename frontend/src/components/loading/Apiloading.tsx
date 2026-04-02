@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ApiObject, ApiType } from "../../api/handlers";
+import type { ApiObject } from "../../api/handlers";
 import { LoadingProgress, type ProgressStep } from "./loadingProgress";
 
 type StepProgressProps = {

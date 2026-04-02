@@ -12,9 +12,11 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
+import { TimerProvider } from "./providers/timer";
 import { ApiError } from "./api/fetchClient";
 import "./App.css";
 import { getEmitter, registerEmitter } from "./events/events";
+import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import { AppLayout } from "./layouts/app";
 import { BoutPage } from "./pages/bout";
 import { CardPage } from "./pages/card";
@@ -22,7 +24,6 @@ import { HomePage } from "./pages/home";
 import { JudgePage } from "./pages/judge";
 import { LoginPage } from "./pages/login";
 import { ScoreboardPage } from "./pages/scoreboard";
-import { TimerProvider } from "./providers/timer";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -81,13 +82,12 @@ const routeTree = rootRoute.addChildren([
 
 const router = createRouter({ routeTree });
 
-function App() {
-  registerEmitter<Error>("errors");
-  registerEmitter<ApiError>("apiErrors");
-  const errorsBus = getEmitter("errors");
-  const apiErrorBus = getEmitter("apiErrors");
+registerEmitter<Error>("errors");
+registerEmitter<ApiError>("apiErrors");
+const errorsBus = getEmitter("errors");
+const apiErrorBus = getEmitter("apiErrors");
 
-  const queryClient = new QueryClient({
+const queryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {
         if (error instanceof ApiError) {
@@ -112,8 +112,9 @@ function App() {
         retry: false,
       },
     },
-  });
+});
 
+function App() {
   return (
     <>
       <ConfigProvider
@@ -124,7 +125,9 @@ function App() {
         <AntApp>
           <QueryClientProvider client={queryClient}>
             <TimerProvider>
-              <RouterProvider router={router}></RouterProvider>
+              <ErrorBoundary>
+                <RouterProvider router={router}></RouterProvider>
+              </ErrorBoundary>
             </TimerProvider>
           </QueryClientProvider>
         </AntApp>

@@ -6,6 +6,7 @@ import type { Official } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddOfficial } from "./add";
+import { ImportOfficialsCSV } from "./importCSV";
 import { ListOfficials } from "./list";
 
 export type OfficialIndexProps = {
@@ -16,6 +17,7 @@ export type OfficialIndexProps = {
     officialId: string;
   }) => void;
   onCreateOfficial: (values: CreateOfficialProps) => void;
+  onImport: (file: File) => void;
 };
 
 export const OfficialIndex = (props: OfficialIndexProps) => {
@@ -23,22 +25,33 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
     <TableLayout
       title="Officials"
       actions={
-        <ActionMenu
-          trigger={{ text: "add" }}
-          content={{
-            title: "Add Official",
-            body: (close) => (
-              <>
-                <AddOfficial
-                  onClose={close}
-                  onSubmit={(values: CreateOfficialProps) => {
-                    props.onCreateOfficial(values);
-                  }}
-                />
-              </>
-            ),
-          }}
-        />
+        <>
+          <ActionMenu
+            trigger={{ text: "import" }}
+            content={{
+              title: "Import Officials",
+              body: (close) => (
+                <ImportOfficialsCSV onClose={close} onImport={props.onImport} />
+              ),
+            }}
+          />
+          <ActionMenu
+            trigger={{ text: "add" }}
+            content={{
+              title: "Add Official",
+              body: (close) => (
+                <>
+                  <AddOfficial
+                    onClose={close}
+                    onSubmit={(values: CreateOfficialProps) => {
+                      props.onCreateOfficial(values);
+                    }}
+                  />
+                </>
+              ),
+            }}
+          />
+        </>
       }
     >
       <ListOfficials

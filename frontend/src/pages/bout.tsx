@@ -1,13 +1,15 @@
-import { useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   useGetBoutById,
   useGetFouls,
   useGetRound,
+  useMutateDeleteBout,
   useMutateEightCount,
   useMutateEndBout,
   useMutateHandleFoul,
   useMutateNextRoundState,
+  useMutateUpdateBout,
   useMutateUpdateBoutStatus,
   type EndBoutProps,
 } from "../api/bouts";
@@ -21,16 +23,41 @@ import { ApiLoading } from "../components/loading/Apiloading";
 import type { Bout } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
+import { useGetScores } from "../api/score";
+import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
+import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
 
-const PageActions = ({ bout }: { bout: Bout }) => {
+const PageActions = ({
+  bout,
+  cardId,
+  token,
+}: {
+  bout: Bout;
+  cardId: string;
+  token: string;
+}) => {
+  const navigate = useNavigate();
+  const deleteBout = useMutateDeleteBout(cardId, token);
+  const updateBout = useMutateUpdateBout({ token, cardId });
+
   return (
     <ActionMenu
       trigger={{ text: "Edit" }}
       content={{
         title: "Edit Bout",
         body: (close) => (
-          // TODO: Handle this better
-          <EditBout bout={bout} onClose={close} onSubmit={() => {}} />
+          <EditBout
+            bout={bout}
+            onClose={close}
+            onSubmit={(toUpdate) => {
+              updateBout.mutate({ toUpdate, boutInfo: { boutId: bout.id } });
+            }}
+            onDelete={() => {
+              deleteBout.mutate(bout.id, {
+                onSuccess: () => navigate({ to: `/card/${cardId}` }),
+              });
+            }}
+          />
         ),
       }}
     />
@@ -43,7 +70,10 @@ export const BoutPage = () => {
 
   const card = useGetCardById({ token, cardId });
   const bout = useGetBoutById({ token, cardId, boutId });
-  const fouls = useGetFouls({ token });
+  const fouls = useGetFouls({ token, cardId });
+
+  const judgeDevices = useJudgeDevices({ token });
+  const generateCode = useMutationGenerateCode({ token });
 
   const [roundNumber, setRoundNumber] = useState(1);
 
@@ -79,6 +109,8 @@ export const BoutPage = () => {
     cardId,
   });
 
+  const scores = useGetScores({ token, cardId, boutId });
+
   const onStartBout = () => {
     updateBoutStatus.mutate({ status: "in_progress" });
   };
@@ -100,9 +132,20 @@ export const BoutPage = () => {
 
   return (
     <PageLayout
-      action={<PageActions bout={bout.data!} />}
+      action={<PageActions bout={bout.data!} cardId={cardId!} token={token} />}
       title="Bout details"
-      subTitle={<CardSummary card={card.data!} />}
+      subTitle={
+        <>
+          <CardSummary card={card.data!} />
+          <JudgeConnectionQuickLook
+            requiredJudges={bout.data?.numberOfJudges ?? 5}
+            devices={judgeDevices.data || []}
+            onRefreshCode={(values) => {
+              generateCode.mutate(values);
+            }}
+          />
+        </>
+      }
       breadCrumbs={[
         { title: <a href="/">home</a> },
         { title: <a href={`/card/${cardId}`}>card</a> },
@@ -115,6 +158,7 @@ export const BoutPage = () => {
         bout={bout.data!}
         fouls={fouls.data!}
         round={round.data!}
+        scores={scores.data}
         controls={{
           onNextRoundState,
           setRound,

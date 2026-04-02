@@ -5,19 +5,16 @@ import { baseUrl } from "./constants";
 import type { CardRequestType, TokenBase } from "./entities";
 import { fetchClient } from "./fetchClient";
 
-// TODO: Add token to all the keys
 const keys = {
-  all: ["cards"] as const,
-  list: () => [...keys.all, "list"] as const,
-  get: (id: string) => [...keys.all, id] as const,
-  settings: (id: string) => [...keys.all, `settings-${id}`] as const,
-  officials: (id: string) => [...keys.all, `officials-${id}`] as const,
-  current: ["current"],
+  all: (token: string) => ["cards", token] as const,
+  list: (token: string) => [...keys.all(token), "list"] as const,
+  get: (token: string, id: string) => [...keys.all(token), id] as const,
+  officials: (token: string, id: string) => [...keys.all(token), `officials-${id}`] as const,
 };
 
 export const useGetCardById = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: [props.cardId],
+    queryKey: keys.get(props.token, props.cardId),
     queryFn: async () => {
       return fetchClient<Card>(`${baseUrl}/api/cards/${props.cardId}`, {
         headers: {
@@ -31,7 +28,7 @@ export const useGetCardById = (props: TokenBase & CardRequestType) => {
 
 export const useListCards = (props: TokenBase) => {
   return useQuery({
-    queryKey: keys.list(),
+    queryKey: keys.list(props.token),
     enabled: !!props.token,
     queryFn: async () => {
       return await fetchClient<Card[]>(`${baseUrl}/api/cards`, {
@@ -63,7 +60,7 @@ export const useMutateCreateCards = (props: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
@@ -93,7 +90,7 @@ export const useMutateUpdateCards = (r: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(r.token) });
     },
   });
 };
@@ -118,7 +115,7 @@ export const useMutateUpdateCardStatus = (r: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
+      queryClient.invalidateQueries({ queryKey: keys.list(r.token) });
     },
   });
 };

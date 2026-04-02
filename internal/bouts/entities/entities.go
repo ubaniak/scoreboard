@@ -51,6 +51,30 @@ const (
 	Female = "female"
 )
 
+func (g Gender) IsValid() bool {
+	return g == Male || g == Female
+}
+
+func (e Experience) IsValid() bool {
+	return e == Novice || e == Open
+}
+
+func (a AgeCategory) IsValid() bool {
+	switch a {
+	case JuniorA, JuniorB, JuniorC, Youth, Elite, Masters:
+		return true
+	}
+	return false
+}
+
+func (s BoutStatus) IsValid() bool {
+	switch s {
+	case BoutStatusNotStarted, BoutStatusInProgress, BoutStatusCompleted, BoutStatusCancelled:
+		return true
+	}
+	return false
+}
+
 type Bout struct {
 	ID                 uint
 	CardID             uint

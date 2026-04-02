@@ -2,6 +2,7 @@ package round
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ubaniak/scoreboard/internal/round/entities"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
@@ -42,7 +43,9 @@ func (u *useCase) Next(boutId uint) (int, error) {
 	currentRound := nextState(rounds)
 
 	for _, round := range rounds {
-		u.UpdateStatus(boutId, round.RoundNumber, round.Status)
+		if err := u.UpdateStatus(boutId, round.RoundNumber, round.Status); err != nil {
+			return -1, err
+		}
 	}
 
 	return currentRound + 1, nil
@@ -111,9 +114,9 @@ func (u *useCase) Get(boutId uint, roundNumber int) (*entities.RoundDetails, err
 		}
 		if foul.Corner == entities.Blue {
 			if foul.Type == entities.FoulTypeWarning {
-				result.Blue.Warnings = append(result.Red.Warnings, foul.Foul)
+				result.Blue.Warnings = append(result.Blue.Warnings, foul.Foul)
 			} else {
-				result.Blue.Cautions = append(result.Red.Cautions, foul.Foul)
+				result.Blue.Cautions = append(result.Blue.Cautions, foul.Foul)
 			}
 		}
 	}
@@ -134,27 +137,31 @@ func (u *useCase) RemoveFoul(rf *entities.RoundFoul) error {
 }
 
 func (u *useCase) EightCount(boutId uint, roundNumber int, corner string, direction string) error {
+	if corner != string(entities.Red) && corner != string(entities.Blue) {
+		return fmt.Errorf("invalid corner %q", corner)
+	}
+
 	round, err := u.storage.Get(boutId, roundNumber)
 	if err != nil {
 		return err
 	}
+
 	value := 1
 	if direction == "down" {
 		value = -1
 	}
 
 	if corner == string(entities.Red) {
-		round.RedEightCounts = round.RedEightCounts + value
+		round.RedEightCounts = max(0, round.RedEightCounts+value)
 	}
 	if corner == string(entities.Blue) {
-		round.BlueEightCounts = round.BlueEightCounts + value
+		round.BlueEightCounts = max(0, round.BlueEightCounts+value)
 	}
 
 	return u.storage.Update(boutId, roundNumber, entities.ToUpdate{
 		RedEightCounts:  &round.RedEightCounts,
 		BlueEightCounts: &round.BlueEightCounts,
 	})
-
 }
 func (u *useCase) Current(boutId uint) (*entities.Round, error) {
 	round, err := u.storage.Current(boutId)
@@ -162,6 +169,7 @@ func (u *useCase) Current(boutId uint) (*entities.Round, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, sberrs.ErrRecordNotFound
 		}
+		return nil, err
 	}
 	return round, nil
 }

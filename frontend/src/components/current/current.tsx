@@ -3,6 +3,7 @@ import type { Current } from "../../entities/current";
 import { Show } from "../show/show";
 import { CurrentBoutCard } from "./bout";
 import { CurrentRoundCard } from "./round";
+import { CurrentScores } from "./score";
 
 export type ShowCurrentProps = {
   current?: Current;
@@ -18,6 +19,9 @@ export const ShowCurrent = (props: ShowCurrentProps) => {
       </Show>
       <Show show={props.current?.round !== undefined}>
         <CurrentRoundCard current={props.current} />
+      </Show>
+      <Show show={!!props.current?.scores}>
+        <CurrentScores current={props.current} />
       </Show>
     </Space>
   );

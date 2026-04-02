@@ -15,6 +15,7 @@ export type ListBoutsProps = {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
   }) => void;
+  onDeleteBout?: (boutId: string) => void;
 };
 export const ListBouts = (props: ListBoutsProps) => {
   const navigate = useNavigate();
@@ -94,6 +95,11 @@ export const ListBouts = (props: ListBoutsProps) => {
                       toUpdate,
                       boutInfo: { boutId: record.id },
                     })
+                  }
+                  onDelete={
+                    props.onDeleteBout
+                      ? () => props.onDeleteBout!(record.id)
+                      : undefined
                   }
                 />
               ),

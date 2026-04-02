@@ -3,6 +3,7 @@ package devices
 import (
 	"errors"
 	"net"
+	"time"
 
 	"github.com/ubaniak/scoreboard/internal/auth"
 	authEntities "github.com/ubaniak/scoreboard/internal/auth/entities"
@@ -15,6 +16,7 @@ type UseCase interface {
 	Judges() ([]entities.JudgeProfile, error)
 	RegisterAdmin() (string, error)
 	LocalIp() string
+	HealthCheck(role string) error
 }
 
 type useCase struct {
@@ -50,7 +52,7 @@ func (uc *useCase) Judges() ([]entities.JudgeProfile, error) {
 			}
 		}
 
-		if profile.JWTToken == "" {
+		if profile.JWTToken == "" || profile.LastHealthCheck == nil || time.Since(*profile.LastHealthCheck) > 4*time.Second {
 			status = entities.DeviceStatusOffline
 		}
 
@@ -67,6 +69,10 @@ func (uc *useCase) Judges() ([]entities.JudgeProfile, error) {
 
 func (uc *useCase) RegisterAdmin() (string, error) {
 	return uc.GenerateCode(AdminRole, Limits[AdminRole])
+}
+
+func (uc *useCase) HealthCheck(role string) error {
+	return uc.authUseCase.RecordHealthCheck(role)
 }
 
 func (uc *useCase) LocalIp() string {

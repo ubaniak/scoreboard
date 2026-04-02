@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards/entities"
+	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -111,18 +111,18 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[*GetCardResponse](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsed)
 
 	card, err := h.useCase.Get(id)
 	if err != nil {
-		//TODO: Handle not found
+		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			presenter.WithStatusCode(http.StatusNotFound).WithError(err).Present()
+			return
+		}
 		presenter.WithError(err).Present()
 		return
 	}
@@ -135,14 +135,11 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsed)
 
 	var req UpdateCardRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -160,14 +157,11 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	parsed, err := strconv.ParseUint(idStr, 10, 0)
+	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		presenter.WithError(err).Present()
 		return
 	}
-	id := uint(parsed)
 
 	err = h.useCase.Delete(id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()

@@ -1,3 +1,4 @@
+import { DeleteOutlined } from "@ant-design/icons";
 import {
   Button,
   Form,
@@ -16,6 +17,7 @@ export type EditBoutProps = {
   bout: Bout;
   onClose: () => void;
   onSubmit: (values: UpdateBoutProps) => void;
+  onDelete?: () => void;
 };
 
 export const EditBout = (props: EditBoutProps) => {
@@ -104,6 +106,16 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
+      <Form.Item<UpdateBoutProps> label="Judges" name="numberOfJudges">
+        <Segmented
+          size={"large"}
+          shape="round"
+          options={[
+            { value: 3, label: "3" },
+            { value: 5, label: "5" },
+          ]}
+        />
+      </Form.Item>
       <Form.Item label={null}>
         <Space>
           <Button type="text" onClick={props.onClose}>
@@ -112,31 +124,20 @@ export const EditBout = (props: EditBoutProps) => {
           <Button type="primary" htmlType="submit">
             Submit
           </Button>
+          {props.onDelete && (
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                props.onDelete!();
+                props.onClose();
+              }}
+            >
+              Delete
+            </Button>
+          )}
         </Space>
       </Form.Item>
-      {/* <Form.Item<FieldType> label="judges" name="numberOfJudges">
-          <Segmented
-            size={"large"}
-            shape="round"
-            options={[
-              { value: 3, label: "3" },
-              { value: 5, label: "5" },
-            ]}
-          />
-        </Form.Item> */}
-      {/* <Form.Item label={null}>
-        <Space>
-          <Button
-            color="danger"
-            variant="outlined"
-            onClick={handleDelete}
-            icon={<DeleteOutlined />}
-            iconPlacement={"end"}
-          >
-            Delete
-          </Button>
-        </Space>
-      </Form.Item> */}
     </Form>
   );
 };

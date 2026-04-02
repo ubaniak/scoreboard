@@ -7,23 +7,24 @@ import type {
 } from "./entities";
 import { fetchClient } from "./fetchClient";
 import { baseUrl } from "./constants";
+import type { ScoresByRound } from "../entities/scores";
 
 const keys = {
-  all: ["scores"] as const,
+  all: (token?: string) => ["scores", token] as const,
 };
 
 export const useGetScores = (
-  props: TokenBase & CardRequestType & BoutRequestType,
+  props: Partial<TokenBase> & CardRequestType & BoutRequestType,
 ) => {
   return useQuery({
-    queryKey: keys.all,
+    queryKey: keys.all(props.token),
     queryFn: async () => {
-      return fetchClient<string>(
+      return fetchClient<ScoresByRound>(
         `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/scores`,
         {
           headers: {
             "Content-type": "application/json",
-            Authorization: `Bearer ${props.token}`,
+            ...(props.token && { Authorization: `Bearer ${props.token}` }),
           },
         },
       );
@@ -31,17 +32,17 @@ export const useGetScores = (
   });
 };
 
-export type ScoreBoutProps = {
+export type ScoreRoundProps = {
   red: number;
   blue: number;
 };
 
-export const useMutateScoreBout = (
+export const useMutateScoreRound = (
   props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: ScoreBoutProps) => {
+    mutationFn: (body: ScoreRoundProps) => {
       return fetchClient(
         `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}/score`,
         {
@@ -55,7 +56,30 @@ export const useMutateScoreBout = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.all });
+      queryClient.invalidateQueries({ queryKey: keys.all(props.token) });
+    },
+  });
+};
+
+export const useMutateCompleteScoreRound = (
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}/score/complete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.all(props.token) });
     },
   });
 };

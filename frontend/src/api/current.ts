@@ -7,7 +7,7 @@ const keys = {
   current: ["current"],
 };
 
-export const useGetCurrent = () => {
+export const useGetCurrent = (options?: { refetchInterval?: number }) => {
   return useQuery({
     queryKey: keys.current,
     queryFn: async () => {
@@ -17,5 +17,6 @@ export const useGetCurrent = () => {
         },
       });
     },
+    refetchInterval: options?.refetchInterval,
   });
 };

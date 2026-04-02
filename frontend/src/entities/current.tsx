@@ -3,6 +3,7 @@ import type { AgeCategory } from "./cards";
 
 export type Current = {
   card?: {
+    id: string;
     name: string;
   };
   bout?: {
@@ -23,4 +24,5 @@ export type Current = {
     roundNumber: number;
     status: string;
   };
+  scores?: Record<number, { red: number; blue: number }[]>;
 };

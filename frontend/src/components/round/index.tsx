@@ -13,6 +13,7 @@ import type {
   MutateHandleFoulProps,
 } from "../../api/bouts";
 import type { RoundDetails } from "../../entities/cards";
+import type { ScoresByRound } from "../../entities/scores";
 import { Card } from "../card/card";
 import { StatusTag } from "../status/tag";
 import { Timer } from "../timer/timer";
@@ -23,6 +24,7 @@ import { EndBout } from "../bouts/end";
 export type RoundIndexProps = {
   round?: RoundDetails;
   rounds?: RoundDetails[];
+  scores?: ScoresByRound;
   length: number;
   onChange: (roundNumber: number) => void;
   fouls: string[];
@@ -84,6 +86,7 @@ export const RoundIndex = (props: RoundIndexProps) => {
               ({currentRound}){props.rounds[currentRound - 1].status}
             </Button>
             <ActionMenu
+              width={1200}
               trigger={{
                 override: (onOpen) => {
                   return (
@@ -107,6 +110,8 @@ export const RoundIndex = (props: RoundIndexProps) => {
                     onSubmit={(values) => {
                       props.controls.onEndBout(values);
                     }}
+                    scores={props.scores}
+                    rounds={props.rounds}
                   />
                 ),
               }}

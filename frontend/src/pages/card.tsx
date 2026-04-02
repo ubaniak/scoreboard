@@ -3,6 +3,8 @@ import { Button } from "antd";
 import {
   useGetBouts,
   useMutateCreateBout,
+  useMutateDeleteBout,
+  useMutateImportBouts,
   useMutateUpdateBout,
 } from "../api/bouts";
 import { useGetCardById, useMutateUpdateCardStatus } from "../api/cards";
@@ -10,33 +12,24 @@ import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import {
   useGetOfficials,
   useMutateCreateOfficial,
+  useMutateImportOfficials,
   useMutateUpdateOfficial,
 } from "../api/officials";
 import { BoutsIndex } from "../components/bouts";
 import { CardSummary } from "../components/cards/summery";
 import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
 import { OfficialIndex } from "../components/officials";
-import type { Card } from "../entities/cards";
-import type { JudgeDevice } from "../entities/device";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
 type CardActionProps = {
-  card?: Card;
   start: () => void;
-  judgeDevices?: JudgeDevice[];
-  onRefreshCode: (props: { role: string }) => void;
 };
 
 const CardActions = (props: CardActionProps) => {
   return (
     <div>
       <Button onClick={props.start}>Start</Button>
-      <JudgeConnectionQuickLook
-        requiredJudges={1}
-        devices={props.judgeDevices || []}
-        onRefreshCode={props.onRefreshCode}
-      />
     </div>
   );
 };
@@ -54,9 +47,12 @@ export const CardPage = () => {
 
   const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
+  const deleteBout = useMutateDeleteBout(cardId, token);
+  const importBouts = useMutateImportBouts({ token, cardId });
 
   const addOfficial = useMutateCreateOfficial({ token, cardId });
   const updateOfficial = useMutateUpdateOfficial({ token, cardId });
+  const importOfficials = useMutateImportOfficials({ token, cardId });
   const updateCardStatus = useMutateUpdateCardStatus({ token });
 
   const start = () => {
@@ -69,18 +65,20 @@ export const CardPage = () => {
   return (
     <PageLayout
       title="Card details"
-      subTitle={<CardSummary card={card.data} />}
-      breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={
-        <CardActions
-          card={card.data}
-          start={start}
-          judgeDevices={judgeDevices.data || []}
-          onRefreshCode={(values) => {
-            generateCode.mutate(values);
-          }}
-        />
+      subTitle={
+        <>
+          <CardSummary card={card.data} />
+          <JudgeConnectionQuickLook
+            requiredJudges={Math.max(...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]))}
+            devices={judgeDevices.data || []}
+            onRefreshCode={(values) => {
+              generateCode.mutate(values);
+            }}
+          />
+        </>
       }
+      breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
+      action={<CardActions start={start} />}
     >
       <BoutsIndex
         loading={bouts.isLoading}
@@ -91,6 +89,8 @@ export const CardPage = () => {
         onEditBout={(values) => {
           updateBout.mutate(values);
         }}
+        onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
+        onImport={(file) => importBouts.mutateAsync(file)}
       />
       <OfficialIndex
         loading={officials.isLoading}
@@ -101,6 +101,7 @@ export const CardPage = () => {
         onCreateOfficial={(values) => {
           addOfficial.mutate(values);
         }}
+        onImport={(file) => importOfficials.mutate(file)}
       />
     </PageLayout>
   );

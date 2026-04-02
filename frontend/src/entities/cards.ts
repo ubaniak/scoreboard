@@ -35,6 +35,7 @@ export type Bout = {
   decision: string;
   roundLength: number;
   weightClass: number;
+  numberOfJudges: number;
   rounds: RoundDetails[];
 };
 
