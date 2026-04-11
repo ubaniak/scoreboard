@@ -1,111 +1,308 @@
-import { Button, Col, Flex, Row, Typography } from "antd";
+import { Button, Drawer } from "antd";
 import { useState } from "react";
-import { Card } from "../card/card";
 import type { Controls } from ".";
-const { Title } = Typography;
+import type { Current } from "../../entities/current";
+
+type Margin = 9 | 8 | 7;
+type Winner = "red" | "blue";
 
 export type ScoreControlsProps = {
   controls: Controls;
+  submitted: boolean;
+  current?: Current;
+  role: string;
+  judgeName: string;
 };
 
 export const ScoreControls = (props: ScoreControlsProps) => {
-  const [redScore, setRedScore] = useState(0);
-  const [blueScore, setBlueScore] = useState(0);
+  const [pendingWinner, setPendingWinner] = useState<Winner | null>(null);
+  const [selected, setSelected] = useState<{ winner: Winner; margin: Margin } | null>(null);
 
-  const setWin = (color: string) => {
-    let win = color === "red" ? redScore : blueScore;
-    let lose = color === "red" ? blueScore : redScore;
+  const isLocked = props.submitted;
 
-    if (win === 0 && lose === 0) {
-      win = 10;
-      lose = 9;
-    } else {
-      if (win === 10) {
-        lose = lose - 1;
-      } else {
-        win = win + 1;
-      }
-
-      if (win === 10 && lose === 10) {
-        win = 10;
-        lose = 9;
-      }
-    }
-
-    const setWin = color == "red" ? setRedScore : setBlueScore;
-    const setLose = color == "red" ? setBlueScore : setRedScore;
-
-    const red = color == "red" ? win : lose;
-    const blue = color == "red" ? lose : win;
-    setWin(win);
-    setLose(lose);
-
-    props.controls.scoreRound({ red, blue });
+  const handleWinnerTap = (winner: Winner) => {
+    if (isLocked) return;
+    setPendingWinner(winner);
   };
 
+  const handleMarginSelect = (margin: Margin) => {
+    if (!pendingWinner) return;
+    const scores = {
+      red: pendingWinner === "red" ? 10 : margin,
+      blue: pendingWinner === "blue" ? 10 : margin,
+    };
+    setSelected({ winner: pendingWinner, margin });
+    setPendingWinner(null);
+    props.controls.scoreRound(scores);
+  };
+
+  const handleChangeScore = () => {
+    setSelected(null);
+  };
+
+  const redCorner = props.current?.bout?.redCorner ?? "Red";
+  const blueCorner = props.current?.bout?.blueCorner ?? "Blue";
+
+  const redScore = selected ? (selected.winner === "red" ? 10 : selected.margin) : null;
+  const blueScore = selected ? (selected.winner === "blue" ? 10 : selected.margin) : null;
+
+  const redDimmed = !!selected && selected.winner !== "red";
+  const blueDimmed = !!selected && selected.winner !== "blue";
+
   return (
-    <Card>
-      <Row>
-        <Col span={12}>
-          <Flex justify="flex-start" gap="large" vertical align="center">
-            <Title
-              level={1}
+    <>
+      <div
+        style={{
+          position: "fixed",
+          top: 64,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          zIndex: 100,
+        }}
+      >
+        {/* Red half */}
+        <div
+          onClick={() => handleWinnerTap("red")}
+          style={{
+            flex: 1,
+            background: "#991b1b",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: isLocked ? "default" : "pointer",
+            opacity: redDimmed ? 0.45 : 1,
+            transition: "opacity 0.3s ease",
+            userSelect: "none",
+            WebkitTapHighlightColor: "transparent",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              letterSpacing: 4,
+              color: "rgba(255,255,255,0.55)",
+              textTransform: "uppercase",
+              marginBottom: 16,
+            }}
+          >
+            Red Corner
+          </div>
+          <div
+            style={{
+              fontSize: 32,
+              fontWeight: 800,
+              color: "white",
+              textAlign: "center",
+              padding: "0 24px",
+              lineHeight: 1.2,
+            }}
+          >
+            {redCorner}
+          </div>
+          {redScore !== null && (
+            <div
               style={{
-                margin: 0,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: 3,
-                transition: "color 0.3s ease, transform 0.3s ease",
+                fontSize: 96,
+                fontWeight: 900,
+                color: "white",
+                lineHeight: 1,
+                marginTop: 32,
               }}
             >
               {redScore}
-            </Title>
-            <Button
+            </div>
+          )}
+        </div>
+
+        {/* Blue half */}
+        <div
+          onClick={() => handleWinnerTap("blue")}
+          style={{
+            flex: 1,
+            background: "#1d4ed8",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: isLocked ? "default" : "pointer",
+            opacity: blueDimmed ? 0.45 : 1,
+            transition: "opacity 0.3s ease",
+            userSelect: "none",
+            WebkitTapHighlightColor: "transparent",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              letterSpacing: 4,
+              color: "rgba(255,255,255,0.55)",
+              textTransform: "uppercase",
+              marginBottom: 16,
+            }}
+          >
+            Blue Corner
+          </div>
+          <div
+            style={{
+              fontSize: 32,
+              fontWeight: 800,
+              color: "white",
+              textAlign: "center",
+              padding: "0 24px",
+              lineHeight: 1.2,
+            }}
+          >
+            {blueCorner}
+          </div>
+          {blueScore !== null && (
+            <div
               style={{
-                background: "#ff4d4f",
-              }}
-              shape="circle"
-              variant="filled"
-              size="large"
-              onClick={() => setWin("red")}
-            />
-          </Flex>
-        </Col>
-        <Col span={12}>
-          <Flex justify="flex-start" gap="large" vertical align="center">
-            <Title
-              level={1}
-              style={{
-                margin: 0,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: 3,
-                transition: "color 0.3s ease, transform 0.3s ease",
+                fontSize: 96,
+                fontWeight: 900,
+                color: "white",
+                lineHeight: 1,
+                marginTop: 32,
               }}
             >
               {blueScore}
-            </Title>
-            <Button
-              style={{
-                background: "#1677ff",
-              }}
-              shape="circle"
-              variant="filled"
-              size="large"
-              onClick={() => setWin("blue")}
-            />
-          </Flex>
-        </Col>
-      </Row>
-      <Flex justify="center" gap="large" vertical align="center">
-        <Button
-          onClick={() => {
-            props.controls.complete();
+            </div>
+          )}
+        </div>
+
+        {/* Role / name badge */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.45)",
+            color: "rgba(255,255,255,0.75)",
+            padding: "4px 20px",
+            borderRadius: 20,
+            fontSize: 11,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
           }}
         >
-          Submit Score
-        </Button>
-      </Flex>
-    </Card>
+          {props.role} — {props.judgeName}
+        </div>
+
+        {/* Round badge */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: selected ? 120 : 40,
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: 11,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            transition: "bottom 0.3s ease",
+          }}
+        >
+          Round {props.current?.round?.roundNumber}
+        </div>
+
+        {/* Submit button */}
+        {selected && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 40,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <Button
+              size="large"
+              disabled={props.submitted}
+              onClick={() => props.controls.complete()}
+              style={{
+                background: props.submitted ? "rgba(255,255,255,0.1)" : "white",
+                color: props.submitted ? "rgba(255,255,255,0.4)" : "#111",
+                border: "none",
+                fontWeight: 700,
+                letterSpacing: 2,
+                padding: "0 56px",
+                height: 56,
+                fontSize: 14,
+                borderRadius: 28,
+              }}
+            >
+              {props.submitted ? "SUBMITTED" : "SUBMIT SCORE"}
+            </Button>
+            {!props.submitted && (
+              <span
+                onClick={handleChangeScore}
+                style={{
+                  fontSize: 11,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.3)",
+                  cursor: "pointer",
+                }}
+              >
+                Change score
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Margin selection drawer */}
+      <Drawer
+        open={!!pendingWinner}
+        placement="bottom"
+        onClose={() => setPendingWinner(null)}
+        title={
+          pendingWinner
+            ? `${pendingWinner === "red" ? redCorner : blueCorner} wins`
+            : ""
+        }
+        styles={{
+          wrapper: { height: "auto" },
+          header: {
+            textTransform: "uppercase",
+            letterSpacing: 3,
+            fontSize: 13,
+          },
+          body: { paddingBottom: 32 },
+        }}
+      >
+        <div style={{ display: "flex", gap: 12 }}>
+          {([9, 8, 7] as Margin[]).map((margin) => (
+            <button
+              key={margin}
+              onClick={() => handleMarginSelect(margin)}
+              style={{
+                flex: 1,
+                height: 88,
+                background: pendingWinner === "red" ? "#991b1b" : "#1d4ed8",
+                color: "white",
+                border: "none",
+                borderRadius: 14,
+                fontSize: 28,
+                fontWeight: 800,
+                cursor: "pointer",
+                letterSpacing: 1,
+              }}
+            >
+              10-{margin}
+            </button>
+          ))}
+        </div>
+      </Drawer>
+    </>
   );
 };

@@ -44,6 +44,8 @@ type CreateRequest struct {
 	AgeCategory string `json:"ageCategory"`
 	Experience  string `json:"experience"`
 	Gender      string `json:"gender"`
+	Referee     string `json:"referee"`
+	BoutType    string `json:"boutType"`
 }
 
 func (r *CreateRequest) Validate() error {
@@ -55,6 +57,9 @@ func (r *CreateRequest) Validate() error {
 	}
 	if !entities.AgeCategory(r.AgeCategory).IsValid() {
 		return fmt.Errorf("invalid ageCategory %q", r.AgeCategory)
+	}
+	if r.BoutType != "" && !entities.BoutType(r.BoutType).IsValid() {
+		return fmt.Errorf("invalid boutType %q", r.BoutType)
 	}
 	return nil
 }
@@ -81,6 +86,8 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 		BlueCornerImageUrl: "",
 		Status:             entities.BoutStatusNotStarted,
 		Gender:             gender,
+		Referee:            req.Referee,
+		BoutType:           entities.BoutType(req.BoutType),
 	}
 }
 
@@ -102,12 +109,18 @@ type GetBoutResponse struct {
 	Rounds             []GetRoundResponse `json:"rounds"`
 	Winner             string             `json:"winner"`
 	NumberOfJudges     int                `json:"numberOfJudges"`
+	Comments           []string           `json:"comments"`
+	Referee            string             `json:"referee"`
+	BoutType           string             `json:"boutType"`
 }
 
-func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.RoundDetails) *GetBoutResponse {
+func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
 	roundResponses := make([]GetRoundResponse, len(rounds))
 	for i, round := range rounds {
 		roundResponses[i] = *EntityToGetRoundResponse(round)
+	}
+	if comments == nil {
+		comments = []string{}
 	}
 	return &GetBoutResponse{
 		ID:                 entity.ID,
@@ -127,6 +140,9 @@ func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.Roun
 		Rounds:             roundResponses,
 		Winner:             entity.Winner,
 		NumberOfJudges:     entity.NumberOfJudges,
+		Comments:           comments,
+		Referee:            entity.Referee,
+		BoutType:           string(entity.BoutType),
 	}
 }
 
@@ -141,6 +157,8 @@ type UpdateRequest struct {
 	AgeCategory    *string  `json:"ageCategory"`
 	Experience     *string  `json:"experience"`
 	NumberOfJudges *int     `json:"numberOfJudges"`
+	Referee        *string  `json:"referee"`
+	BoutType       *string  `json:"boutType"`
 }
 
 func (r *UpdateRequest) Validate() error {
@@ -152,6 +170,9 @@ func (r *UpdateRequest) Validate() error {
 	}
 	if r.AgeCategory != nil && !entities.AgeCategory(*r.AgeCategory).IsValid() {
 		return fmt.Errorf("invalid ageCategory %q", *r.AgeCategory)
+	}
+	if r.BoutType != nil && !entities.BoutType(*r.BoutType).IsValid() {
+		return fmt.Errorf("invalid boutType %q", *r.BoutType)
 	}
 	return nil
 }
@@ -179,6 +200,11 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 		roundLength = (*entities.RoundLength)(req.RoundLength)
 	}
 
+	var boutType *entities.BoutType
+	if req.BoutType != nil {
+		boutType = (*entities.BoutType)(req.BoutType)
+	}
+
 	return &entities.UpdateBout{
 		BoutNumber:     req.BoutNumber,
 		RedCorner:      req.RedCorner,
@@ -190,6 +216,8 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 		AgeCategory:    ageCategory,
 		Experience:     experience,
 		NumberOfJudges: req.NumberOfJudges,
+		Referee:        req.Referee,
+		BoutType:       boutType,
 	}
 
 }

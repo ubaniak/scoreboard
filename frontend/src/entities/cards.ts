@@ -22,6 +22,8 @@ export type AgeCategory =
   | "elite"
   | "master";
 
+export type BoutType = "sparring" | "developmental" | "scored";
+
 export type Bout = {
   id: string;
   boutNumber: number;
@@ -33,10 +35,14 @@ export type Bout = {
   experience: "novice" | "open";
   gloveSize: "10oz" | "12oz" | "16oz";
   decision: string;
+  winner: string;
   roundLength: number;
   weightClass: number;
   numberOfJudges: number;
   rounds: RoundDetails[];
+  comments: string[];
+  referee: string;
+  boutType: BoutType;
 };
 
 export type RoundStatus =

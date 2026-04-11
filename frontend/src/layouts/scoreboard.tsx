@@ -7,7 +7,7 @@ export type ScoreboardLayoutProps = {
 
 export const ScoreboardLayout = (props: ScoreboardLayoutProps) => {
   return (
-    <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <Layout style={{ minHeight: "100vh", background: "#0b0f1a" }}>
       <GlobalErrorHandler />
       <div
         style={{

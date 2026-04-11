@@ -9,6 +9,7 @@ export type Current = {
   bout?: {
     id: string;
     boutNumber: number;
+    boutType: string;
     redCorner: string;
     blueCorner: string;
     status: BoutStatus;

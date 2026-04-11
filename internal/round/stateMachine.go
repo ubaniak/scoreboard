@@ -15,15 +15,18 @@ func nextState(rounds []*entities.RoundDetails) int {
 		break
 	}
 
-	if currActiveRoundIndex < 0 {
+	if currActiveRoundIndex >= 0 {
+		rounds[currActiveRoundIndex].Next()
 		return currActiveRoundIndex
 	}
 
-	rounds[currActiveRoundIndex].Next()
-
-	if rounds[currActiveRoundIndex].Status == entities.RoundStatusComplete && currActiveRoundIndex < len(rounds)-1 {
-		rounds[currActiveRoundIndex+1].Status = entities.RoundStatusInProgress
-		return currActiveRoundIndex + 1
+	// No active round — start the next not_started round at in_progress (rest period is over)
+	for i, round := range rounds {
+		if round.Status == entities.RoundStatusNotStarted {
+			rounds[i].Status = entities.RoundStatusInProgress
+			return i
+		}
 	}
-	return currActiveRoundIndex
+
+	return -1
 }

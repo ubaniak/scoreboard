@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/events"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -25,10 +26,11 @@ type App struct {
 	useCase      UseCase
 	roundUseCase round.UseCase
 	scoreUseCase scores.UseCase
+	broadcaster  *events.Broadcaster
 }
 
-func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase) *App {
-	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase}
+func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster) *App {
+	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster}
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -41,6 +43,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("bouts.update", "/{cardId}/bouts/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("bouts.delete", "/{cardId}/bouts/{id}", "DELETE", a.Delete, rbac.Admin)
 	rb.AddRoute("bouts.end", "/{cardId}/bouts/{id}/end", "POST", a.End, rbac.Admin)
+	rb.AddRoute("bouts.complete", "/{cardId}/bouts/{id}/complete", "POST", a.Complete, rbac.Admin)
 
 	rb.AddRoute("bouts.status", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
 
@@ -51,6 +54,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 	rb.AddRoute("rounds.next", "/{cardId}/bouts/{boutId}/rounds/next", "POST", a.NextRoundState, rbac.Admin)
 
+	rb.AddRoute("rounds.score.ready", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/ready", "POST", a.ScoreReady, rbac.JudgeList...)
 	rb.AddRoute("rounds.score", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score", "POST", a.Score, rbac.JudgeList...)
 	rb.AddRoute("rounds.score.complete", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/complete", "POST", a.ScoreComplete, rbac.JudgeList...)
 
@@ -101,7 +105,7 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]GetBoutResponse, len(bouts))
 	for i, b := range bouts {
-		resp[i] = *EntityToGetBoutResponse(b, []*roundEntities.RoundDetails{})
+		resp[i] = *EntityToGetBoutResponse(b, []*roundEntities.RoundDetails{}, []string{})
 	}
 
 	presenter.WithData(resp).Present()
@@ -121,12 +125,12 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, rounds, err := h.useCase.Get(cardId, id)
+	b, rounds, comments, err := h.useCase.Get(cardId, id)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-	resp := EntityToGetBoutResponse(b, rounds)
+	resp := EntityToGetBoutResponse(b, rounds, comments)
 
 	presenter.WithData(resp).Present()
 }
@@ -209,6 +213,9 @@ func (h *App) End(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.End(cardId, id, req.Winner, req.Decision, req.Comment)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
@@ -244,6 +251,9 @@ func (h *App) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.UpdateStatus(cardId, id, status)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
@@ -454,6 +464,11 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[int](r, w)
 	vars := mux.Vars(r)
 
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
 	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
 	if err != nil {
 		presenter.WithError(err).Present()
@@ -461,13 +476,105 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentRound, err := h.roundUseCase.Next(boutId)
-
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
+	// Sync bout status based on the round transition
+	var boutStatus entities.BoutStatus
+	if currentRound <= 0 {
+		// All rounds complete
+		boutStatus = entities.BoutStatusWaitingForDecision
+	} else {
+		round, err := h.roundUseCase.Get(boutId, currentRound)
+		if err == nil {
+			switch round.Status {
+			case roundEntities.RoundStatusInProgress:
+				boutStatus = entities.BoutStatusInProgress
+			case roundEntities.RoundStatusWaitingForResults:
+				boutStatus = entities.BoutStatusWaitingForScores
+			case roundEntities.RoundStatusScoreComplete:
+				boutStatus = entities.BoutStatusScoreComplete
+			case roundEntities.RoundStatusComplete:
+				boutStatus = entities.BoutStatusRest
+			}
+		}
+	}
+	if boutStatus != "" {
+		_ = h.useCase.UpdateStatus(cardId, boutId, boutStatus)
+	}
+
+	h.broadcaster.Notify()
 	presenter.WithData(currentRound).Present()
+}
+
+func (h *App) Complete(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.Complete(cardId, id)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
+	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+type ScoreReadyRequest struct {
+	Name string `json:"name"`
+}
+
+func (h *App) ScoreReady(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	roundNumber, err := muxutils.ParseVars[int](vars, "roundNumber")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	role, ok := rbac.GetRoleFromCtx(r.Context())
+	if !ok {
+		presenter.WithError(errors.New("unknown role")).Present()
+		return
+	}
+
+	var req ScoreReadyRequest
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.scoreUseCase.Ready(cardId, boutId, roundNumber, role, req.Name)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	h.broadcaster.Notify()
+	presenter.Present()
 }
 
 type ScoreRequest struct {
@@ -515,6 +622,7 @@ func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.broadcaster.Notify()
 	presenter.Present()
 }
 
@@ -551,6 +659,28 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-advance round to score_complete when all judges have submitted
+	allScores, err := h.scoreUseCase.List(cardId, boutId)
+	if err == nil {
+		allComplete := true
+		roundScoreCount := 0
+		for _, s := range allScores {
+			if s.RoundNumber != roundNumber {
+				continue
+			}
+			roundScoreCount++
+			if s.Status != scoreEntities.ScoreStatusComplete {
+				allComplete = false
+				break
+			}
+		}
+		if allComplete && roundScoreCount > 0 {
+			_ = h.roundUseCase.UpdateStatus(boutId, roundNumber, roundEntities.RoundStatusScoreComplete)
+			_ = h.useCase.UpdateStatus(cardId, boutId, entities.BoutStatusScoreComplete)
+		}
+	}
+
+	h.broadcaster.Notify()
 	presenter.Present()
 }
 
@@ -662,6 +792,13 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		boutType := entities.BoutTypeScored
+		if idx, ok := colIndex["boutType"]; ok && idx < len(row) {
+			if bt := entities.BoutType(row[idx]); bt.IsValid() {
+				boutType = bt
+			}
+		}
+
 		roundLength := RoundLength(ageCategory, experience)
 		gloveSize := GloveSize(weightClass, ageCategory, gender)
 
@@ -676,6 +813,7 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 			WeightClass: weightClass,
 			RoundLength: roundLength,
 			GloveSize:   gloveSize,
+			BoutType:    boutType,
 			Status:      entities.BoutStatusNotStarted,
 		})
 	}

@@ -4,6 +4,7 @@ type ScoreStatus string
 
 const (
 	ScoreStatusNotStarted ScoreStatus = "not_started"
+	ScoreStatusReady      ScoreStatus = "ready"
 	ScoreStatusRequested  ScoreStatus = "requested"
 	ScoreStatusComplete   ScoreStatus = "complete"
 )

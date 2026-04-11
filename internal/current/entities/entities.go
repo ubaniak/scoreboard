@@ -8,6 +8,7 @@ type CurrentCardResponse struct {
 type CurrentBoutResponse struct {
 	ID          uint   `json:"id"`
 	BoutNumber  int    `json:"boutNumber"`
+	BoutType    string `json:"boutType"`
 	RedCorner   string `json:"redCorner"`
 	BlueCorner  string `json:"blueCorner"`
 	Gender      string `json:"gender"`
@@ -44,6 +45,7 @@ type CurrentCard struct {
 type CurrentBout struct {
 	ID          uint
 	Number      int
+	BoutType    string
 	RedCorner   string
 	BlueCorner  string
 	Gender      string

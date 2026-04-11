@@ -30,6 +30,9 @@ func (u *usecase) Current() (*entities.Current, error) {
 
 	card, err := u.cards.Current()
 	if err != nil {
+		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			return &current, nil
+		}
 		return nil, err
 	}
 
@@ -49,6 +52,7 @@ func (u *usecase) Current() (*entities.Current, error) {
 	current.Bout = &entities.CurrentBout{
 		ID:          bout.ID,
 		Number:      bout.BoutNumber,
+		BoutType:    string(bout.BoutType),
 		RedCorner:   bout.RedCorner,
 		BlueCorner:  bout.BlueCorner,
 		Gender:      string(bout.Gender),

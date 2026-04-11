@@ -1,7 +1,11 @@
-red,blue,age,experience,gender,weightClass
-John Smith,Carlos Ruiz,elite,novice,male,65
-Jane Doe,Maria Lopez,elite,open,female,57
-Tom Baker,Mike Chen,juniorA,novice,male,54
-Sarah Kim,Emma Wilson,juniorB,novice,female,48
-David Patel,James O'Brien,masters,novice,male,75
-Lisa Nguyen,Amy Zhang,youth,novice,female,52
+red,blue,age,experience,gender,weightClass,boutType
+John Smith,Carlos Ruiz,elite,novice,male,65,scored
+Jane Doe,Maria Lopez,elite,open,female,57,scored
+Tom Baker,Mike Chen,juniorA,novice,male,54,scored
+Sarah Kim,Emma Wilson,juniorB,novice,female,48,scored
+David Patel,James O'Brien,masters,novice,male,75,scored
+Lisa Nguyen,Amy Zhang,youth,novice,female,52,scored
+Ryan Cole,Jake Morrison,elite,open,male,70,sparring
+Sophie Turner,Mia Patel,juniorA,novice,female,46,sparring
+Liam Foster,Noah Grant,youth,novice,male,50,developmental
+Chloe Adams,Zoe Bennett,juniorB,novice,female,52,developmental

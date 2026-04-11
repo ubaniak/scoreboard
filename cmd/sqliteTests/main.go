@@ -291,6 +291,7 @@ type Bout struct {
 	RoundLength        RoundLength `gorm:"not null"`
 	AgeCategory        AgeCategory `gorm:"not null"`
 	Experience         Experience  `gorm:"not null"`
+	BoutType           string
 	RedCornerImageUrl  string
 	BlueCornerImageUrl string
 	Rounds             []Round    `gorm:"foreignKey:BoutID"`
@@ -750,6 +751,7 @@ func main() {
 	bout1 := Bout{
 		CardID:      card.ID,
 		BoutNumber:  1,
+		BoutType:    "sparring",
 		RedCorner:   "Fighter A",
 		BlueCorner:  "Fighter B",
 		WeightClass: "40kg",
@@ -758,7 +760,7 @@ func main() {
 		AgeCategory: Elite,
 		Experience:  Open,
 		Status:      BoutStatusCompleted,
-		Decision:    "Red Corner by Decision",
+		Decision:    "",
 	}
 	bout1.SetAuditUser("Supervisor")
 	db.Create(&bout1)
@@ -766,6 +768,7 @@ func main() {
 	bout2 := Bout{
 		CardID:      card.ID,
 		BoutNumber:  2,
+		BoutType:    "sparring",
 		RedCorner:   "Fighter C",
 		BlueCorner:  "Fighter D",
 		WeightClass: "45kg",
@@ -782,6 +785,7 @@ func main() {
 	bout3 := Bout{
 		CardID:      card.ID,
 		BoutNumber:  3,
+		BoutType:    "developmental",
 		RedCorner:   "Fighter E",
 		BlueCorner:  "Fighter F",
 		WeightClass: "50kg",
@@ -798,6 +802,7 @@ func main() {
 	bout4 := Bout{
 		CardID:      card.ID,
 		BoutNumber:  4,
+		BoutType:    "developmental",
 		RedCorner:   "Fighter G",
 		BlueCorner:  "Fighter H",
 		WeightClass: "55kg",

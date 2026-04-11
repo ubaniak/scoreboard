@@ -6,13 +6,14 @@ import { fetchClient } from "./fetchClient";
 
 const keys = {
   all: (token: string) => ["officials", token] as const,
-  list: (token: string) => [...keys.all(token), "list"] as const,
+  list: (token: string, cardId: string) => [...keys.all(token), cardId, "list"] as const,
   get: (token: string, id: string) => [...keys.all(token), id] as const,
 };
 
 export const useGetOfficials = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: keys.list(props.token),
+    queryKey: keys.list(props.token, props.cardId),
+    enabled: !!props.cardId && !!props.token,
     queryFn: async () => {
       return fetchClient<Official[]>(
         `${baseUrl}/api/cards/${props.cardId}/officials`,
@@ -45,7 +46,7 @@ export const useMutateCreateOfficial = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
     },
   });
 };
@@ -65,7 +66,7 @@ export const useMutateImportOfficials = (props: TokenBase & CardRequestType) => 
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
     },
   });
 };
@@ -97,7 +98,7 @@ export const useMutateUpdateOfficial = (props: TokenBase & CardRequestType) => {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
     },
   });
 };

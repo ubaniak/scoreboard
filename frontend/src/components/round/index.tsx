@@ -2,11 +2,12 @@ import {
   CheckOutlined,
   LoadingOutlined,
   LockOutlined,
+  PauseCircleOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import { Button, Col, Row, Space, Steps } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   EndBoutProps,
   MutateEightCountProps,
@@ -14,8 +15,8 @@ import type {
 } from "../../api/bouts";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
+import { useTimer } from "../../providers/timer";
 import { Card } from "../card/card";
-import { StatusTag } from "../status/tag";
 import { Timer } from "../timer/timer";
 import { CornerControls } from "../bout/cornerControls";
 import { ActionMenu } from "../actionMenu/actionMenu";
@@ -60,9 +61,14 @@ const calculateSteps = (rounds: RoundDetails[]) => {
 };
 
 export const RoundIndex = (props: RoundIndexProps) => {
-  // const { secondsLeft, controls } = useTimer();
+  const timer = useTimer();
   const currentRound = props.round?.roundNumber || 1;
   const [selectedRound, setSelectedRound] = useState(currentRound - 1);
+
+  useEffect(() => {
+    timer.controls.setup(props.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.length, currentRound]);
 
   const steps = calculateSteps(props.rounds || []);
   return (
@@ -71,42 +77,42 @@ export const RoundIndex = (props: RoundIndexProps) => {
         <Steps
           items={steps}
           current={selectedRound}
-          onChange={(value) => setSelectedRound(value - 1)}
+          onChange={(value) => {
+            setSelectedRound(value);
+            props.onChange(value + 1);
+          }}
         />
       }
     >
+      {props.round && (
+        <Row justify="center" style={{ margin: "12px 0 8px" }}>
+          <span style={{ fontWeight: 600, fontSize: 16 }}>{props.round.status.replace(/_/g, " ")}</span>
+        </Row>
+      )}
       <Row justify="center" style={{ margin: "12px 0 16px" }}>
         {props.rounds && (
           <Space>
-            <Button
-              onClick={() => {
-                props.controls.onNextRoundState();
-              }}
-            >
-              ({currentRound}){props.rounds[currentRound - 1].status}
+            <Button onClick={props.controls.onNextRoundState}>
+              Advance Round State
             </Button>
             <ActionMenu
               width={1200}
               trigger={{
-                override: (onOpen) => {
-                  return (
-                    <Button
-                      danger
-                      icon={<StopOutlined />}
-                      onClick={() => {
-                        onOpen();
-                      }}
-                    >
-                      End
-                    </Button>
-                  );
-                },
+                override: (onOpen) => (
+                  <Button
+                    danger
+                    icon={<StopOutlined />}
+                    onClick={onOpen}
+                  >
+                    End Bout
+                  </Button>
+                ),
               }}
               content={{
                 title: "End bout",
                 body: (close) => (
                   <EndBout
-                    onClose={() => close()}
+                    onClose={close}
                     onSubmit={(values) => {
                       props.controls.onEndBout(values);
                     }}
@@ -121,9 +127,6 @@ export const RoundIndex = (props: RoundIndexProps) => {
       </Row>
       <Card>
         <Row justify="center" style={{ margin: "12px 0 16px" }}>
-          <StatusTag text={props.round?.status || ""} />
-        </Row>
-        <Row justify="center" style={{ margin: "12px 0 16px" }}>
           <Timer />
         </Row>
         <Row justify="center">
@@ -131,16 +134,23 @@ export const RoundIndex = (props: RoundIndexProps) => {
             <Button
               type="primary"
               icon={<PlayCircleOutlined />}
-              onClick={() => {}}
+              disabled={timer.isRunning}
+              onClick={() => {
+                timer.controls.ringBell();
+                timer.controls.play();
+              }}
             >
               Start
             </Button>
 
-            <Button onClick={() => {}}>Reset</Button>
-
-            <Button danger icon={<StopOutlined />} onClick={() => {}}>
-              End
+            <Button
+              icon={timer.isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              onClick={timer.isRunning ? timer.controls.pause : timer.controls.play}
+            >
+              {timer.isRunning ? "Pause" : "Resume"}
             </Button>
+
+            <Button onClick={timer.controls.reset}>Reset</Button>
           </Space>
         </Row>
       </Card>

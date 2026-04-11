@@ -1,9 +1,22 @@
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetCurrent } from "../api/current";
 import { ShowCurrent } from "../components/current/current";
 import { ScoreboardLayout } from "../layouts/scoreboard";
+import { baseUrl } from "../api/constants";
 
 export const ScoreboardPage = () => {
-  const current = useGetCurrent({ refetchInterval: 3000 });
+  const queryClient = useQueryClient();
+  const current = useGetCurrent();
+
+  useEffect(() => {
+    const es = new EventSource(`${baseUrl}/api/current/events`);
+    es.addEventListener("update", () => {
+      queryClient.invalidateQueries({ queryKey: ["current"] });
+    });
+    return () => es.close();
+  }, [queryClient]);
+
   return (
     <ScoreboardLayout>
       <ShowCurrent current={current.data} />

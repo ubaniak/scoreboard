@@ -14,7 +14,7 @@ export const Card = (props: CardProps) => {
       extra={props.extra}
       style={{
         borderRadius: 16,
-        boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
         marginBottom: 16,
       }}
       styles={{

@@ -36,7 +36,32 @@ export const StatusTag = ({ text }: { text: string }) => {
     message = "In progress";
   }
 
-  if (text === "complete") {
+  if (text === "score_complete") {
+    message = "Scores submitted";
+    color = "success";
+  }
+
+  if (text === "waiting_for_scores") {
+    message = "Waiting for scores";
+    color = "warning";
+  }
+
+  if (text === "rest") {
+    message = "Rest";
+    color = "default";
+  }
+
+  if (text === "waiting_for_decision") {
+    message = "Waiting for decision";
+    color = "warning";
+  }
+
+  if (text === "decision_made") {
+    message = "Decision made";
+    color = "success";
+  }
+
+  if (text === "complete" || text === "completed") {
     message = "Complete";
     color = "success";
   }

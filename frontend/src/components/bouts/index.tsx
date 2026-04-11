@@ -1,14 +1,19 @@
 import type { CreateBoutProps, UpdateBoutProps } from "../../api/bouts";
 import type { BoutRequestType } from "../../api/entities";
-import type { Bout } from "../../entities/cards";
+import type { Bout, Card, Official } from "../../entities/cards";
+import type { ScoresByRound } from "../../entities/scores";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddBout } from "./add";
+import { ExportCard } from "./exportCard";
 import { ImportBoutsCSV } from "./importCSV";
 import { ListBouts } from "./list";
 
 export type BoutsIndexParams = {
+  card?: Card;
   bouts?: Bout[];
+  officials?: Official[];
+  allBoutScores?: Record<string, ScoresByRound>;
   loading?: boolean;
   onAddBout: (values: CreateBoutProps) => void;
   onEditBout: (values: {
@@ -35,6 +40,21 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
               ),
             }}
           />
+          {props.card && (
+            <ActionMenu
+              trigger={{ text: "export" }}
+              content={{
+                title: "Export Bouts",
+                body: () => (
+                  <ExportCard
+                    card={props.card!}
+                    bouts={props.bouts ?? []}
+                    allBoutScores={props.allBoutScores ?? {}}
+                  />
+                ),
+              }}
+            />
+          )}
           <ActionMenu
             trigger={{ text: "add" }}
             content={{
@@ -57,6 +77,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
       <ListBouts
         bouts={props.bouts}
         loading={props.loading}
+        officials={props.officials}
         onEditBout={(values) => props.onEditBout(values)}
         onDeleteBout={props.onDeleteBout}
       />

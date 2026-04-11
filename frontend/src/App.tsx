@@ -119,7 +119,10 @@ function App() {
     <>
       <ConfigProvider
         theme={{
-          algorithm: theme.defaultAlgorithm,
+          algorithm: theme.darkAlgorithm,
+          token: {
+            colorBgBase: "#0b0f1a",
+          },
         }}
       >
         <AntApp>

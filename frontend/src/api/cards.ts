@@ -114,8 +114,9 @@ export const useMutateUpdateCardStatus = (r: TokenBase) => {
         body: JSON.stringify({ status }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: keys.list(r.token) });
+      queryClient.invalidateQueries({ queryKey: keys.get(r.token, id.cardId) });
     },
   });
 };

@@ -1,24 +1,27 @@
 package current
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ubaniak/scoreboard/internal/current/entities"
+	"github.com/ubaniak/scoreboard/internal/events"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
 type App struct {
-	useCase UseCase
+	useCase     UseCase
+	broadcaster *events.Broadcaster
 }
 
-func NewApp(useCase UseCase) *App {
-	return &App{useCase: useCase}
+func NewApp(useCase UseCase, broadcaster *events.Broadcaster) *App {
+	return &App{useCase: useCase, broadcaster: broadcaster}
 }
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	sr := rb.AddSubroute("current")
-	sr.AddRoute("current", "", http.MethodGet, h.Current)
+	rb.AddRoute("current", "/current", http.MethodGet, h.Current)
+	rb.AddRoute("current.events", "/current/events", http.MethodGet, h.Events)
 }
 
 func (h *App) Current(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +47,7 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 		response.Bout = &entities.CurrentBoutResponse{
 			ID:          current.Bout.ID,
 			BoutNumber:  current.Bout.Number,
+			BoutType:    current.Bout.BoutType,
 			RedCorner:   current.Bout.RedCorner,
 			BlueCorner:  current.Bout.BlueCorner,
 			Gender:      current.Bout.Gender,
@@ -75,4 +79,35 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.WithData(response).Present()
+}
+
+func (h *App) Events(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+
+	rc := http.NewResponseController(w)
+
+	// Send an initial ping so the client knows the connection is established.
+	fmt.Fprintf(w, ": ping\n\n")
+	if err := rc.Flush(); err != nil {
+		return
+	}
+
+	ch := h.broadcaster.Subscribe()
+	defer h.broadcaster.Unsubscribe(ch)
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ch:
+			fmt.Fprintf(w, "event: update\ndata: {}\n\n")
+			if err := rc.Flush(); err != nil {
+				return
+			}
+		}
+	}
 }

@@ -3,11 +3,32 @@ package entities
 type BoutStatus string
 
 const (
-	BoutStatusNotStarted BoutStatus = "not_started"
-	BoutStatusInProgress BoutStatus = "in_progress"
-	BoutStatusCompleted  BoutStatus = "completed"
-	BoutStatusCancelled  BoutStatus = "cancelled"
+	BoutStatusNotStarted        BoutStatus = "not_started"
+	BoutStatusInProgress        BoutStatus = "in_progress"
+	BoutStatusWaitingForScores  BoutStatus = "waiting_for_scores"
+	BoutStatusScoreComplete     BoutStatus = "score_complete"
+	BoutStatusRest              BoutStatus = "rest"
+	BoutStatusWaitingForDecision BoutStatus = "waiting_for_decision"
+	BoutStatusDecisionMade      BoutStatus = "decision_made"
+	BoutStatusCompleted         BoutStatus = "completed"
+	BoutStatusCancelled         BoutStatus = "cancelled"
 )
+
+type BoutType string
+
+const (
+	BoutTypeSparring      BoutType = "sparring"
+	BoutTypeDevelopmental BoutType = "developmental"
+	BoutTypeScored        BoutType = "scored"
+)
+
+func (b BoutType) IsValid() bool {
+	switch b {
+	case BoutTypeSparring, BoutTypeDevelopmental, BoutTypeScored:
+		return true
+	}
+	return false
+}
 
 type Experience string
 
@@ -69,7 +90,10 @@ func (a AgeCategory) IsValid() bool {
 
 func (s BoutStatus) IsValid() bool {
 	switch s {
-	case BoutStatusNotStarted, BoutStatusInProgress, BoutStatusCompleted, BoutStatusCancelled:
+	case BoutStatusNotStarted, BoutStatusInProgress,
+		BoutStatusWaitingForScores, BoutStatusScoreComplete, BoutStatusRest,
+		BoutStatusWaitingForDecision, BoutStatusDecisionMade,
+		BoutStatusCompleted, BoutStatusCancelled:
 		return true
 	}
 	return false
@@ -93,6 +117,8 @@ type Bout struct {
 	Decision           string
 	Winner             string
 	NumberOfJudges     int
+	Referee            string
+	BoutType           BoutType
 }
 
 type UpdateBout struct {
@@ -108,4 +134,6 @@ type UpdateBout struct {
 	Decision       *string
 	Winner         *string
 	NumberOfJudges *int
+	Referee        *string
+	BoutType       *BoutType
 }

@@ -33,7 +33,7 @@ func (s *Sqlite) Add(entityKind string, entityId uint, comment string) error {
 func (s *Sqlite) Get(entityKind string, entityId uint) ([]entities.Comment, error) {
 
 	var comments []Comment
-	if err := s.db.Where("entityKind = ? AND entityId = ?", entityKind, entityId).Find(&comments).Error; err != nil {
+	if err := s.db.Where("entity_kind = ? AND entity_id = ?", entityKind, entityId).Find(&comments).Error; err != nil {
 		return nil, err
 	}
 

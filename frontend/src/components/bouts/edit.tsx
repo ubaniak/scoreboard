@@ -2,26 +2,34 @@ import { DeleteOutlined } from "@ant-design/icons";
 import {
   Button,
   Form,
-  Input,
   InputNumber,
   Segmented,
   Select,
   Space,
+  Input,
   type FormProps,
 } from "antd";
 import { useEffect } from "react";
 import type { UpdateBoutProps } from "../../api/bouts";
-import type { Bout } from "../../entities/cards";
+import type { Bout, Official } from "../../entities/cards";
 
 export type EditBoutProps = {
   bout: Bout;
+  officials?: Official[];
   onClose: () => void;
   onSubmit: (values: UpdateBoutProps) => void;
   onDelete?: () => void;
 };
 
 export const EditBout = (props: EditBoutProps) => {
+  const officialOptions = (props.officials ?? []).map((o) => ({
+    value: o.name,
+    label: o.name,
+  }));
   const [form] = Form.useForm<Bout>();
+  const boutType = Form.useWatch("boutType", form);
+  const isScored = !boutType || boutType === "scored";
+
   useEffect(() => {
     form.setFieldsValue({
       ...props.bout,
@@ -42,6 +50,17 @@ export const EditBout = (props: EditBoutProps) => {
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
+      <Form.Item<UpdateBoutProps> label="Bout Type" name="boutType">
+        <Segmented
+          size={"large"}
+          shape="round"
+          options={[
+            { value: "sparring", label: "Sparring" },
+            { value: "developmental", label: "Developmental" },
+            { value: "scored", label: "Scored" },
+          ]}
+        />
+      </Form.Item>
       <Form.Item<UpdateBoutProps> label="Bout #" name="boutNumber">
         <InputNumber />
       </Form.Item>
@@ -106,14 +125,23 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Judges" name="numberOfJudges">
-        <Segmented
-          size={"large"}
-          shape="round"
-          options={[
-            { value: 3, label: "3" },
-            { value: 5, label: "5" },
-          ]}
+      {isScored && (
+        <Form.Item<UpdateBoutProps> label="Judges" name="numberOfJudges">
+          <Segmented
+            size={"large"}
+            shape="round"
+            options={[
+              { value: 3, label: "3" },
+              { value: 5, label: "5" },
+            ]}
+          />
+        </Form.Item>
+      )}
+      <Form.Item<UpdateBoutProps> label="Referee" name="referee">
+        <Select
+          options={officialOptions}
+          allowClear
+          placeholder="Select referee..."
         />
       </Form.Item>
       <Form.Item label={null}>

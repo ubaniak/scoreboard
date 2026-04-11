@@ -23,7 +23,8 @@ func NewApp(useCase UseCase) *App {
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("official.create", "/{cardId}/officials", "POST", a.Create, rbac.Admin)
 	rb.AddRoute("official.import", "/{cardId}/officials/import", "POST", a.ImportCSV, rbac.Admin)
-	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.List, rbac.Admin)
+	allowedRoles := append([]string{rbac.Admin}, rbac.JudgeList...)
+	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.List, allowedRoles...)
 	rb.AddRoute("official.update", "/{cardId}/officials/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("official.delete", "/{cardId}/officials/{id}", "DELETE", a.Delete, rbac.Admin)
 }

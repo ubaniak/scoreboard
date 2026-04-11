@@ -20,4 +20,6 @@ type Bout struct {
 	Decision           string
 	Winner             string
 	NumberOfJudges     int
+	Referee            string
+	BoutType           string
 }

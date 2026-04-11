@@ -9,6 +9,7 @@ type UseCase interface {
 	Create(cardId, boutId uint, numberOfJudges int) error
 	Recreate(cardId, boutId uint, numberOfJudges int) error
 	RequestScores(cardId, boutId uint, roundNumber int) error
+	Ready(cardId, boutId uint, roundNumber int, judgeRole, judgeName string) error
 	Score(cardId, boutId uint, roundNumber int, JudgeRole string, red, blue int) error
 	Complete(cardId, boutId uint, roundNumber int, JudgeRole string) error
 	List(cardId, boutId uint) ([]*entities.Score, error)
@@ -67,6 +68,16 @@ func (u *usecase) RequestScores(cardId, boutId uint, roundNumber int) error {
 	}
 
 	return nil
+}
+
+func (u *usecase) Ready(cardId, boutId uint, roundNumber int, judgeRole, judgeName string) error {
+	score, err := u.storage.Get(cardId, boutId, roundNumber, judgeRole)
+	if err != nil {
+		return err
+	}
+	score.Status = entities.ScoreStatusReady
+	score.JudgeName = judgeName
+	return u.storage.Update(score)
 }
 
 func (u *usecase) Score(cardId, boutId uint, roundNumber int, JudgeRole string, red, blue int) error {

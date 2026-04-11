@@ -1,8 +1,8 @@
 import { EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Table, type TableProps } from "antd";
+import { Button, Table, Tag, type TableProps } from "antd";
 import type { UpdateBoutProps } from "../../api/bouts";
-import type { Bout } from "../../entities/cards";
+import type { Bout, Official } from "../../entities/cards";
 import { StatusTag } from "../status/tag";
 import { EditBout } from "./edit";
 import type { BoutRequestType } from "../../api/entities";
@@ -11,6 +11,7 @@ import { ActionMenu } from "../actionMenu/actionMenu";
 export type ListBoutsProps = {
   bouts?: Bout[];
   loading?: boolean;
+  officials?: Official[];
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
@@ -34,6 +35,14 @@ export const ListBouts = (props: ListBoutsProps) => {
             {text}
           </Button>
         </>
+      ),
+    },
+    {
+      title: "Bout Type",
+      dataIndex: "boutType",
+      key: "boutType",
+      render: (value: string) => (
+        <span style={{ textTransform: "capitalize" }}>{value || "scored"}</span>
       ),
     },
     {
@@ -78,6 +87,34 @@ export const ListBouts = (props: ListBoutsProps) => {
       render: (value) => <StatusTag text={value} />,
     },
     {
+      title: "Winner",
+      dataIndex: "winner",
+      key: "winner",
+      render: (value) => {
+        if (!value || value === "na") return null;
+        return <Tag color={value}>{value === "red" ? "Red" : "Blue"}</Tag>;
+      },
+    },
+    {
+      title: "Decision",
+      dataIndex: "decision",
+      key: "decision",
+      render: (value) => {
+        const labels: Record<string, string> = {
+          ud: "Unanimous Decision",
+          sd: "Split Decision",
+          md: "Majority Decision",
+          rsc: "RSC",
+          "rsc-i": "RSC (Injury)",
+          abd: "Abandon",
+          dq: "Disqualified",
+          c: "Cancelled",
+          wo: "Walk Over",
+        };
+        return value ? labels[value] ?? value : null;
+      },
+    },
+    {
       title: "Action",
       key: "action",
       render: (_, record) => {
@@ -89,6 +126,7 @@ export const ListBouts = (props: ListBoutsProps) => {
               body: (close) => (
                 <EditBout
                   bout={record as Bout}
+                  officials={props.officials}
                   onClose={close}
                   onSubmit={(toUpdate) =>
                     props.onEditBout({

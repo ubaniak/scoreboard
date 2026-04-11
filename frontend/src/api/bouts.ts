@@ -61,6 +61,8 @@ export type CreateBoutProps = {
   ageCategory: string;
   gender: string;
   experience: string;
+  referee: string;
+  boutType: string;
 };
 
 export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
@@ -189,6 +191,30 @@ const deleteBout = async (cardId: string, token: string, boutId: string) => {
   });
 };
 
+export const useMutateCompleteBout = (
+  props: TokenBase & CardRequestType & BoutRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/complete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.get(props.token, props.boutId) });
+    },
+  });
+};
+
 export const useMutateUpdateBoutStatus = (
   props: TokenBase & CardRequestType & BoutRequestType,
 ) => {
@@ -258,12 +284,15 @@ export const useGetFouls = (props: TokenBase & CardRequestType) => {
   return useQuery({
     queryKey: keys.fouls(props.token),
     queryFn: () => {
-      return fetchClient<string[]>(`${baseUrl}/api/cards/${props.cardId}/fouls`, {
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${props.token}`,
+      return fetchClient<string[]>(
+        `${baseUrl}/api/cards/${props.cardId}/fouls`,
+        {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
         },
-      });
+      );
     },
   });
 };
@@ -321,7 +350,7 @@ export const useMutateEightCount = (
 };
 
 export const useMutateNextRoundState = (
-  props: TokenBase & CardRequestType & BoutRequestType,
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -340,6 +369,9 @@ export const useMutateNextRoundState = (
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: keys.get(props.token, props.boutId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keys.round(props.token, props.boutId, props.roundNumber),
       });
     },
   });

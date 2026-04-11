@@ -1,4 +1,4 @@
-export type ScoreStatus = "not_started" | "requested" | "complete";
+export type ScoreStatus = "not_started" | "requested" | "ready" | "complete";
 
 export type Score = {
   judgeRole: string;

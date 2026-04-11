@@ -33,10 +33,22 @@ export const AddBout = (props: AddBoutProps) => {
         ageCategory: "",
         gender: "male",
         experience: "novice",
+        boutType: "scored",
       }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
+      <Form.Item<CreateBoutProps> label="Bout Type" name="boutType">
+        <Segmented
+          size={"large"}
+          shape="round"
+          options={[
+            { value: "sparring", label: "Sparring" },
+            { value: "developmental", label: "Developmental" },
+            { value: "scored", label: "Scored" },
+          ]}
+        />
+      </Form.Item>
       <Form.Item<CreateBoutProps> label="Bout Number" name="boutNumber">
         <InputNumber />
       </Form.Item>
@@ -77,6 +89,9 @@ export const AddBout = (props: AddBoutProps) => {
             { value: "open", label: "Open" },
           ]}
         />
+      </Form.Item>
+      <Form.Item<CreateBoutProps> label="Referee" name="referee">
+        <Input />
       </Form.Item>
       <Form.Item label={null}>
         <Space>

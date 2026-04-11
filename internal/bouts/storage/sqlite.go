@@ -38,6 +38,8 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		Gender:             string(bout.Gender),
 		Decision:           bout.Decision,
 		NumberOfJudges:     bout.NumberOfJudges,
+		Referee:            bout.Referee,
+		BoutType:           string(bout.BoutType),
 	}
 }
 
@@ -60,6 +62,8 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		Decision:           bout.Decision,
 		Winner:             bout.Winner,
 		NumberOfJudges:     bout.NumberOfJudges,
+		Referee:            bout.Referee,
+		BoutType:           entities.BoutType(bout.BoutType),
 	}
 }
 
@@ -95,7 +99,11 @@ func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 }
 func (s *Sqlite) Current(cardId uint) (*entities.Bout, error) {
 	var bout Bout
-	if err := s.db.Where("card_id = ? AND status = ? OR status = ?", cardId, entities.BoutStatusInProgress, entities.BoutStatusNotStarted).First(&bout).Error; err != nil {
+	excluded := []string{
+		string(entities.BoutStatusCompleted),
+		string(entities.BoutStatusCancelled),
+	}
+	if err := s.db.Where("card_id = ? AND status NOT IN ?", cardId, excluded).First(&bout).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, sberrs.ErrRecordNotFound
 		}
@@ -165,6 +173,14 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.NumberOfJudges != nil {
 		bout.NumberOfJudges = *toUpdate.NumberOfJudges
+	}
+
+	if toUpdate.Referee != nil {
+		bout.Referee = *toUpdate.Referee
+	}
+
+	if toUpdate.BoutType != nil {
+		bout.BoutType = string(*toUpdate.BoutType)
 	}
 
 	if err := s.db.Save(bout).Error; err != nil {

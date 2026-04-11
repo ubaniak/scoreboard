@@ -1,11 +1,14 @@
 package bouts
 
 import (
+	"fmt"
+
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/round"
 	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
 	"github.com/ubaniak/scoreboard/internal/scores"
+	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
 )
 
 type UseCase interface {
@@ -13,9 +16,10 @@ type UseCase interface {
 	CreateBulk(cardId uint, bouts []*entities.Bout) error
 	Update(cardId, id uint, bout *entities.UpdateBout) error
 	List(cardId uint) ([]*entities.Bout, error)
-	Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.RoundDetails, error)
+	Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.RoundDetails, []string, error)
 	Delete(cardId, id uint) error
-	End(cardId, boutid uint, winner, decision, comment string) error
+	End(cardId, boutId uint, winner, decision, comment string) error
+	Complete(cardId, boutId uint) error
 	UpdateStatus(cardId, boutId uint, status entities.BoutStatus) error
 
 	Current(cardId uint) (*entities.Bout, error)
@@ -34,7 +38,16 @@ func NewUseCase(storage Storage, roundUseCase round.UseCase, comments comment.Us
 }
 
 func (uc *useCase) Create(cardId uint, bout *entities.Bout) error {
-	bout.NumberOfJudges = 5
+	if bout.BoutType == "" {
+		bout.BoutType = entities.BoutTypeScored
+	}
+
+	numJudges := 5
+	if bout.BoutType == entities.BoutTypeSparring || bout.BoutType == entities.BoutTypeDevelopmental {
+		numJudges = 0
+	}
+	bout.NumberOfJudges = numJudges
+
 	boutId, err := uc.storage.Save(cardId, bout)
 	if err != nil {
 		return err
@@ -43,9 +56,10 @@ func (uc *useCase) Create(cardId uint, bout *entities.Bout) error {
 	if err != nil {
 		return err
 	}
-	err = uc.score.Create(cardId, boutId, 5)
-	if err != nil {
-		return err
+	if numJudges > 0 {
+		if err = uc.score.Create(cardId, boutId, numJudges); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -76,19 +90,27 @@ func (uc *useCase) List(cardId uint) ([]*entities.Bout, error) {
 	return uc.storage.List(cardId)
 }
 
-func (uc *useCase) Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.RoundDetails, error) {
+func (uc *useCase) Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.RoundDetails, []string, error) {
 	bout, err := uc.storage.Get(cardId, boutId)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	rounds := make([]*roundEntities.RoundDetails, 3)
 	for i, roundNumber := range []int{1, 2, 3} {
 		rounds[i], err = uc.roundUseCase.Get(boutId, roundNumber)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
-	return bout, rounds, nil
+	commentEntities, err := uc.comments.Get("bout", boutId)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	comments := make([]string, len(commentEntities))
+	for i, c := range commentEntities {
+		comments[i] = c.Comment
+	}
+	return bout, rounds, comments, nil
 }
 
 func (uc *useCase) Delete(cardId, id uint) error {
@@ -100,7 +122,7 @@ func (uc *useCase) End(cardId, boutId uint, winner, decision, comment string) er
 	if err != nil {
 		return err
 	}
-	err = uc.UpdateStatus(cardId, boutId, entities.BoutStatusCompleted)
+	err = uc.storage.SetStatus(cardId, boutId, entities.BoutStatusDecisionMade)
 	if err != nil {
 		return err
 	}
@@ -109,17 +131,49 @@ func (uc *useCase) End(cardId, boutId uint, winner, decision, comment string) er
 	}
 	return nil
 }
+
+func (uc *useCase) Complete(cardId, boutId uint) error {
+	return uc.storage.SetStatus(cardId, boutId, entities.BoutStatusCompleted)
+}
 func (uc *useCase) UpdateStatus(cardId, boutId uint, status entities.BoutStatus) error {
-	err := uc.storage.SetStatus(cardId, boutId, status)
-	if err != nil {
-		return err
-	}
+	var prevStatus entities.BoutStatus
 	if status == entities.BoutStatusInProgress {
-		if err = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusReady); err != nil {
+		bout, err := uc.storage.Get(cardId, boutId)
+		if err != nil {
 			return err
+		}
+		prevStatus = bout.Status
+		// Only validate preconditions on the initial start
+		if prevStatus == entities.BoutStatusNotStarted {
+			switch bout.BoutType {
+			case entities.BoutTypeDevelopmental:
+				if bout.Referee == "" {
+					return fmt.Errorf("a referee is required to start a developmental bout")
+				}
+			case entities.BoutTypeScored:
+				if bout.Referee == "" {
+					return fmt.Errorf("a referee is required to start a scored bout")
+				}
+				allScores, err := uc.score.List(cardId, boutId)
+				if err != nil {
+					return err
+				}
+				for _, s := range allScores {
+					if s.RoundNumber == 1 && s.Status == scoreEntities.ScoreStatusNotStarted {
+						return fmt.Errorf("all judges must be ready before starting a scored bout")
+					}
+				}
+			}
 		}
 	}
 
+	if err := uc.storage.SetStatus(cardId, boutId, status); err != nil {
+		return err
+	}
+	// On initial start only, advance round 1 to in_progress
+	if status == entities.BoutStatusInProgress && prevStatus == entities.BoutStatusNotStarted {
+		_ = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusInProgress)
+	}
 	return nil
 }
 
@@ -138,4 +192,5 @@ func (uc *useCase) CurrentRound(boutId uint) (*roundEntities.Round, error) {
 	}
 	return round, nil
 }
+
 

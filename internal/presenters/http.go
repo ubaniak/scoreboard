@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -55,6 +56,7 @@ func (p *HTTPProvider[T]) Present() {
 		if p.statusCode != nil {
 			statusCode = *p.statusCode
 		}
+		log.Printf("ERROR %s %s: %v", p.r.Method, p.r.URL.Path, p.err)
 		http.Error(p.w, p.err.Error(), statusCode)
 		return
 	}

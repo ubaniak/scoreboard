@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BoutRequestType,
   CardRequestType,
@@ -11,6 +11,8 @@ import type { ScoresByRound } from "../entities/scores";
 
 const keys = {
   all: (token?: string) => ["scores", token] as const,
+  bout: (token: string, cardId: string, boutId: string) =>
+    ["scores", token, cardId, boutId] as const,
 };
 
 export const useGetScores = (
@@ -28,6 +30,30 @@ export const useGetScores = (
           },
         },
       );
+    },
+  });
+};
+
+export const useMutateReadyScore = (
+  props: TokenBase & CardRequestType & BoutRequestType & RoundRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/rounds/${props.roundNumber}/score/ready`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+          body: JSON.stringify({ name }),
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.all(props.token) });
     },
   });
 };
@@ -81,5 +107,29 @@ export const useMutateCompleteScoreRound = (
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.all(props.token) });
     },
+  });
+};
+
+export const useGetAllBoutScores = (props: TokenBase & CardRequestType & { boutIds: string[] }) => {
+  return useQueries({
+    queries: props.boutIds.map((boutId) => ({
+      queryKey: keys.bout(props.token, props.cardId, boutId),
+      queryFn: () =>
+        fetchClient<ScoresByRound>(
+          `${baseUrl}/api/cards/${props.cardId}/bouts/${boutId}/scores`,
+          {
+            headers: {
+              "Content-type": "application/json",
+              Authorization: `Bearer ${props.token}`,
+            },
+          }
+        ),
+    })),
+    combine: (results) => ({
+      data: Object.fromEntries(
+        props.boutIds.map((id, i) => [id, results[i].data ?? {}])
+      ) as Record<string, ScoresByRound>,
+      isLoading: results.some((r) => r.isLoading),
+    }),
   });
 };

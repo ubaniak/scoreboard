@@ -13,11 +13,11 @@ export type PageLayoutProps = {
 
 export const PageLayout = (props: PageLayoutProps) => {
   return (
-    <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <Layout style={{ minHeight: "100vh", background: "#0b0f1a" }}>
       <Header
         style={{
-          background: "#fff",
-          borderBottom: "1px solid #f0f0f0",
+          background: "#131929",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
           padding: "0 16px",
         }}
       >

@@ -32,6 +32,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
 	"github.com/ubaniak/scoreboard/internal/devices"
+	"github.com/ubaniak/scoreboard/internal/events"
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -135,8 +136,10 @@ func main() {
 		panic(err)
 	}
 
+	broadcaster := events.NewBroadcaster()
+
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
-	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase)
+	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster)
 
 	// -- cards
 	cardStorage, err := cards.NewCardStorage(db)
@@ -148,7 +151,7 @@ func main() {
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase)
-	currentApp := current.NewApp(currentUseCase)
+	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
 	apiRegister.Add(healthCheckApp)

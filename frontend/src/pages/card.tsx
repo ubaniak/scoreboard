@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { Button } from "antd";
+import { Button, Flex, Popconfirm } from "antd";
 import {
   useGetBouts,
   useMutateCreateBout,
@@ -15,6 +15,7 @@ import {
   useMutateImportOfficials,
   useMutateUpdateOfficial,
 } from "../api/officials";
+import { useGetAllBoutScores } from "../api/score";
 import { BoutsIndex } from "../components/bouts";
 import { CardSummary } from "../components/cards/summery";
 import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
@@ -23,14 +24,29 @@ import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
 type CardActionProps = {
+  status?: string;
   start: () => void;
+  end: () => void;
 };
 
 const CardActions = (props: CardActionProps) => {
   return (
-    <div>
-      <Button onClick={props.start}>Start</Button>
-    </div>
+    <Flex gap="small">
+      {props.status === "upcoming" && (
+        <Button onClick={props.start}>Start</Button>
+      )}
+      {props.status === "in_progress" && (
+        <Popconfirm
+          title="End this card?"
+          description="This will mark the card as completed."
+          onConfirm={props.end}
+          okText="End Card"
+          cancelText="Cancel"
+        >
+          <Button danger>End Card</Button>
+        </Popconfirm>
+      )}
+    </Flex>
   );
 };
 
@@ -49,6 +65,11 @@ export const CardPage = () => {
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
+  const allBoutScores = useGetAllBoutScores({
+    token,
+    cardId,
+    boutIds: bouts.data?.map((b) => b.id) ?? [],
+  });
 
   const addOfficial = useMutateCreateOfficial({ token, cardId });
   const updateOfficial = useMutateUpdateOfficial({ token, cardId });
@@ -56,10 +77,11 @@ export const CardPage = () => {
   const updateCardStatus = useMutateUpdateCardStatus({ token });
 
   const start = () => {
-    updateCardStatus.mutate({
-      id: { cardId },
-      status: "in_progress",
-    });
+    updateCardStatus.mutate({ id: { cardId }, status: "in_progress" });
+  };
+
+  const end = () => {
+    updateCardStatus.mutate({ id: { cardId }, status: "completed" });
   };
 
   return (
@@ -78,11 +100,14 @@ export const CardPage = () => {
         </>
       }
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={<CardActions start={start} />}
+      action={<CardActions status={card.data?.status} start={start} end={end} />}
     >
       <BoutsIndex
         loading={bouts.isLoading}
+        card={card.data}
         bouts={bouts.data}
+        officials={officials.data}
+        allBoutScores={allBoutScores.data}
         onAddBout={(values) => {
           addBout.mutate(values);
         }}
