@@ -496,8 +496,6 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 				boutStatus = entities.BoutStatusWaitingForScores
 			case roundEntities.RoundStatusScoreComplete:
 				boutStatus = entities.BoutStatusScoreComplete
-			case roundEntities.RoundStatusComplete:
-				boutStatus = entities.BoutStatusRest
 			}
 		}
 	}

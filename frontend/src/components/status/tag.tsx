@@ -46,11 +46,6 @@ export const StatusTag = ({ text }: { text: string }) => {
     color = "warning";
   }
 
-  if (text === "rest") {
-    message = "Rest";
-    color = "default";
-  }
-
   if (text === "waiting_for_decision") {
     message = "Waiting for decision";
     color = "warning";

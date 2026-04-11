@@ -11,6 +11,7 @@ export type ActionButtonProps = {
 
 export type ActionMenuProps = {
   trigger: ActionButtonProps;
+  menuOpen?: boolean;
   content: {
     title: string | React.ReactNode;
     body: (close: () => void) => React.ReactNode;
@@ -19,7 +20,7 @@ export type ActionMenuProps = {
 };
 
 export const ActionMenu = (props: ActionMenuProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.menuOpen ?? false);
   const close = () => {
     setOpen(false);
   };

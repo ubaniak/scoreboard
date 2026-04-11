@@ -5,9 +5,8 @@ type BoutStatus string
 const (
 	BoutStatusNotStarted        BoutStatus = "not_started"
 	BoutStatusInProgress        BoutStatus = "in_progress"
-	BoutStatusWaitingForScores  BoutStatus = "waiting_for_scores"
-	BoutStatusScoreComplete     BoutStatus = "score_complete"
-	BoutStatusRest              BoutStatus = "rest"
+	BoutStatusWaitingForScores   BoutStatus = "waiting_for_scores"
+	BoutStatusScoreComplete      BoutStatus = "score_complete"
 	BoutStatusWaitingForDecision BoutStatus = "waiting_for_decision"
 	BoutStatusDecisionMade      BoutStatus = "decision_made"
 	BoutStatusCompleted         BoutStatus = "completed"
@@ -91,7 +90,7 @@ func (a AgeCategory) IsValid() bool {
 func (s BoutStatus) IsValid() bool {
 	switch s {
 	case BoutStatusNotStarted, BoutStatusInProgress,
-		BoutStatusWaitingForScores, BoutStatusScoreComplete, BoutStatusRest,
+		BoutStatusWaitingForScores, BoutStatusScoreComplete,
 		BoutStatusWaitingForDecision, BoutStatusDecisionMade,
 		BoutStatusCompleted, BoutStatusCancelled:
 		return true

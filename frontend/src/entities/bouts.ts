@@ -3,7 +3,6 @@ export type BoutStatus =
   | "in_progress"
   | "waiting_for_scores"
   | "score_complete"
-  | "rest"
   | "waiting_for_decision"
   | "decision_made"
   | "completed"

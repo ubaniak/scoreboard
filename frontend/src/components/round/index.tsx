@@ -2,12 +2,11 @@ import {
   CheckOutlined,
   LoadingOutlined,
   LockOutlined,
-  PauseCircleOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import { Button, Col, Row, Space, Steps } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type {
   EndBoutProps,
   MutateEightCountProps,
@@ -15,12 +14,10 @@ import type {
 } from "../../api/bouts";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
-import { useTimer } from "../../providers/timer";
-import { Card } from "../card/card";
-import { Timer } from "../timer/timer";
-import { CornerControls } from "../bout/cornerControls";
 import { ActionMenu } from "../actionMenu/actionMenu";
+import { CornerControls } from "../bout/cornerControls";
 import { EndBout } from "../bouts/end";
+import { Card } from "../card/card";
 
 export type RoundIndexProps = {
   round?: RoundDetails;
@@ -61,14 +58,21 @@ const calculateSteps = (rounds: RoundDetails[]) => {
 };
 
 export const RoundIndex = (props: RoundIndexProps) => {
-  const timer = useTimer();
   const currentRound = props.round?.roundNumber || 1;
   const [selectedRound, setSelectedRound] = useState(currentRound - 1);
 
-  useEffect(() => {
-    timer.controls.setup(props.length);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.length, currentRound]);
+  const isEndBoutState = () => {
+    if (props.round?.roundNumber === 3) {
+      if (props.round.status === "complete") {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const advanceRoundState = () => {
+    props.controls.onNextRoundState();
+  };
 
   const steps = calculateSteps(props.rounds || []);
   return (
@@ -86,24 +90,21 @@ export const RoundIndex = (props: RoundIndexProps) => {
     >
       {props.round && (
         <Row justify="center" style={{ margin: "12px 0 8px" }}>
-          <span style={{ fontWeight: 600, fontSize: 16 }}>{props.round.status.replace(/_/g, " ")}</span>
+          <span style={{ fontWeight: 600, fontSize: 16 }}>
+            {props.round.status.replace(/_/g, " ")}
+          </span>
         </Row>
       )}
       <Row justify="center" style={{ margin: "12px 0 16px" }}>
         {props.rounds && (
           <Space>
-            <Button onClick={props.controls.onNextRoundState}>
-              Advance Round State
-            </Button>
+            <Button onClick={advanceRoundState}>Advance Round State</Button>
             <ActionMenu
+              menuOpen={isEndBoutState()}
               width={1200}
               trigger={{
                 override: (onOpen) => (
-                  <Button
-                    danger
-                    icon={<StopOutlined />}
-                    onClick={onOpen}
-                  >
+                  <Button danger icon={<StopOutlined />} onClick={onOpen}>
                     End Bout
                   </Button>
                 ),
@@ -125,35 +126,6 @@ export const RoundIndex = (props: RoundIndexProps) => {
           </Space>
         )}
       </Row>
-      <Card>
-        <Row justify="center" style={{ margin: "12px 0 16px" }}>
-          <Timer />
-        </Row>
-        <Row justify="center">
-          <Space size={12}>
-            <Button
-              type="primary"
-              icon={<PlayCircleOutlined />}
-              disabled={timer.isRunning}
-              onClick={() => {
-                timer.controls.ringBell();
-                timer.controls.play();
-              }}
-            >
-              Start
-            </Button>
-
-            <Button
-              icon={timer.isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-              onClick={timer.isRunning ? timer.controls.pause : timer.controls.play}
-            >
-              {timer.isRunning ? "Pause" : "Resume"}
-            </Button>
-
-            <Button onClick={timer.controls.reset}>Reset</Button>
-          </Space>
-        </Row>
-      </Card>
       {props.rounds && (
         <Row gutter={[16, 16]}>
           <Col xs={24} md={12}>
