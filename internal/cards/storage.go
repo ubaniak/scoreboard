@@ -14,6 +14,7 @@ type Storage interface {
 	Update(id uint, toUpdate *entities.UpdateCard) error
 	Get(id uint) (*entities.Card, error)
 	Current() (*entities.Card, error)
+	SetImageUrl(id uint, url string) error
 }
 
 func NewCardStorage(db *gorm.DB) (Storage, error) {

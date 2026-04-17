@@ -22,11 +22,15 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 }
 
 func (s *Sqlite) Create(c *entities.Card) error {
-
+	numJudges := c.NumberOfJudges
+	if numJudges == 0 {
+		numJudges = 5
+	}
 	card := &Card{
-		Name:   c.Name,
-		Date:   c.Date,
-		Status: string(c.Status),
+		Name:           c.Name,
+		Date:           c.Date,
+		Status:         string(c.Status),
+		NumberOfJudges: numJudges,
 	}
 
 	if err := s.db.Create(card).Error; err != nil {
@@ -44,11 +48,17 @@ func (s *Sqlite) List() ([]entities.Card, error) {
 
 	var result []entities.Card
 	for _, c := range cards {
+		numJudges := c.NumberOfJudges
+		if numJudges == 0 {
+			numJudges = 5
+		}
 		result = append(result, entities.Card{
-			ID:     c.ID,
-			Name:   c.Name,
-			Date:   c.Date,
-			Status: entities.CardStatus(c.Status),
+			ID:             c.ID,
+			Name:           c.Name,
+			Date:           c.Date,
+			Status:         entities.CardStatus(c.Status),
+			NumberOfJudges: numJudges,
+			ImageUrl:       c.ImageUrl,
 		})
 	}
 	return result, nil
@@ -63,11 +73,17 @@ func (s *Sqlite) Current() (*entities.Card, error) {
 		return nil, err
 	}
 
+	numJudges := card.NumberOfJudges
+	if numJudges == 0 {
+		numJudges = 5
+	}
 	var result = &entities.Card{
-		ID:     card.ID,
-		Name:   card.Name,
-		Date:   card.Date,
-		Status: entities.CardStatus(card.Status),
+		ID:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         entities.CardStatus(card.Status),
+		NumberOfJudges: numJudges,
+		ImageUrl:       card.ImageUrl,
 	}
 	return result, nil
 }
@@ -77,13 +93,23 @@ func (s *Sqlite) Get(id uint) (*entities.Card, error) {
 	if err := s.db.First(&card, id).Error; err != nil {
 		return nil, err
 	}
+	numJudges := card.NumberOfJudges
+	if numJudges == 0 {
+		numJudges = 5
+	}
 	var result = &entities.Card{
-		ID:     card.ID,
-		Name:   card.Name,
-		Date:   card.Date,
-		Status: entities.CardStatus(card.Status),
+		ID:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         entities.CardStatus(card.Status),
+		NumberOfJudges: numJudges,
+		ImageUrl:       card.ImageUrl,
 	}
 	return result, nil
+}
+
+func (s *Sqlite) SetImageUrl(id uint, url string) error {
+	return s.db.Model(&Card{}).Where("id = ?", id).Update("image_url", url).Error
 }
 
 func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateCard) error {
@@ -104,7 +130,11 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateCard) error {
 		card.Status = *toUpdate.Status
 	}
 
-	if err := s.db.Save(card).Error; err != nil {
+	if toUpdate.NumberOfJudges != nil {
+		card.NumberOfJudges = *toUpdate.NumberOfJudges
+	}
+
+	if err := s.db.Save(&card).Error; err != nil {
 		return err
 	}
 	return nil

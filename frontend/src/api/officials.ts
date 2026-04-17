@@ -4,6 +4,23 @@ import { baseUrl } from "./constants";
 import type { Official } from "../entities/cards";
 import { fetchClient } from "./fetchClient";
 
+export const useMutateDeleteOfficial = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (officialId: string) =>
+      fetchClient(`${baseUrl}/api/cards/${props.cardId}/officials/${officialId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
+    },
+  });
+};
+
 const keys = {
   all: (token: string) => ["officials", token] as const,
   list: (token: string, cardId: string) => [...keys.all(token), cardId, "list"] as const,

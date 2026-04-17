@@ -37,15 +37,17 @@ func GloveSize(weightClass int, ageCat entities.AgeCategory, gender entities.Gen
 }
 
 type CreateRequest struct {
-	BoutNumber  int    `json:"boutNumber"`
-	RedCorner   string `json:"redCorner"`
-	BlueCorner  string `json:"blueCorner"`
-	WeightClass int    `json:"weightClass"`
-	AgeCategory string `json:"ageCategory"`
-	Experience  string `json:"experience"`
-	Gender      string `json:"gender"`
-	Referee     string `json:"referee"`
-	BoutType    string `json:"boutType"`
+	BoutNumber    int    `json:"boutNumber"`
+	RedCorner     string `json:"redCorner"`
+	BlueCorner    string `json:"blueCorner"`
+	WeightClass   int    `json:"weightClass"`
+	AgeCategory   string `json:"ageCategory"`
+	Experience    string `json:"experience"`
+	Gender        string `json:"gender"`
+	Referee       string `json:"referee"`
+	BoutType      string `json:"boutType"`
+	RedAthleteID  *uint  `json:"redAthleteId"`
+	BlueAthleteID *uint  `json:"blueAthleteId"`
 }
 
 func (r *CreateRequest) Validate() error {
@@ -88,6 +90,8 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 		Gender:             gender,
 		Referee:            req.Referee,
 		BoutType:           entities.BoutType(req.BoutType),
+		RedAthleteID:       req.RedAthleteID,
+		BlueAthleteID:      req.BlueAthleteID,
 	}
 }
 
@@ -112,6 +116,8 @@ type GetBoutResponse struct {
 	Comments           []string           `json:"comments"`
 	Referee            string             `json:"referee"`
 	BoutType           string             `json:"boutType"`
+	RedAthleteID       *uint              `json:"redAthleteId,omitempty"`
+	BlueAthleteID      *uint              `json:"blueAthleteId,omitempty"`
 }
 
 func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
@@ -143,22 +149,28 @@ func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.Roun
 		Comments:           comments,
 		Referee:            entity.Referee,
 		BoutType:           string(entity.BoutType),
+		RedAthleteID:       entity.RedAthleteID,
+		BlueAthleteID:      entity.BlueAthleteID,
 	}
 }
 
 type UpdateRequest struct {
-	BoutNumber     *int     `json:"boutNumber"`
-	RedCorner      *string  `json:"redCorner"`
-	BlueCorner     *string  `json:"blueCorner"`
-	Gender         *string  `json:"gender"`
-	WeightClass    *int     `json:"weightClass"`
-	GloveSize      *string  `json:"gloveSize"`
-	RoundLength    *float64 `json:"roundLength"`
-	AgeCategory    *string  `json:"ageCategory"`
-	Experience     *string  `json:"experience"`
-	NumberOfJudges *int     `json:"numberOfJudges"`
-	Referee        *string  `json:"referee"`
-	BoutType       *string  `json:"boutType"`
+	BoutNumber      *int    `json:"boutNumber"`
+	RedCorner       *string `json:"redCorner"`
+	BlueCorner      *string `json:"blueCorner"`
+	Gender          *string `json:"gender"`
+	WeightClass     *int    `json:"weightClass"`
+	GloveSize       *string `json:"gloveSize"`
+	RoundLength     *float64 `json:"roundLength"`
+	AgeCategory     *string `json:"ageCategory"`
+	Experience      *string `json:"experience"`
+	NumberOfJudges  *int    `json:"numberOfJudges"`
+	Referee         *string `json:"referee"`
+	BoutType        *string `json:"boutType"`
+	RedAthleteID    *uint   `json:"redAthleteId"`
+	BlueAthleteID   *uint   `json:"blueAthleteId"`
+	ClearRedAthlete  bool    `json:"clearRedAthlete"`
+	ClearBlueAthlete bool    `json:"clearBlueAthlete"`
 }
 
 func (r *UpdateRequest) Validate() error {
@@ -205,7 +217,7 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 		boutType = (*entities.BoutType)(req.BoutType)
 	}
 
-	return &entities.UpdateBout{
+	update := &entities.UpdateBout{
 		BoutNumber:     req.BoutNumber,
 		RedCorner:      req.RedCorner,
 		BlueCorner:     req.BlueCorner,
@@ -220,4 +232,17 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 		BoutType:       boutType,
 	}
 
+	if req.ClearRedAthlete {
+		update.RedAthleteID = new(*uint) // &nil — clears
+	} else if req.RedAthleteID != nil {
+		update.RedAthleteID = &req.RedAthleteID
+	}
+
+	if req.ClearBlueAthlete {
+		update.BlueAthleteID = new(*uint) // &nil — clears
+	} else if req.BlueAthleteID != nil {
+		update.BlueAthleteID = &req.BlueAthleteID
+	}
+
+	return update
 }

@@ -1,37 +1,41 @@
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { baseUrl } from "../api/constants";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { Button, Space } from "antd";
+import { useEffect, useState } from "react";
 import {
   useGetBoutById,
+  useGetBouts,
   useGetFouls,
   useGetRound,
   useMutateCompleteBout,
   useMutateDeleteBout,
   useMutateEightCount,
-  useMutateEndBout,
   useMutateHandleFoul,
+  useMutateMakeDecision,
   useMutateNextRoundState,
+  useMutateShowDecision,
   useMutateUpdateBout,
   useMutateUpdateBoutStatus,
-  type EndBoutProps,
+  type MakeDecisionProps,
 } from "../api/bouts";
 import { useGetCardById } from "../api/cards";
+import { baseUrl } from "../api/constants";
+import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { isApisLoading } from "../api/handlers";
 import { useGetOfficials } from "../api/officials";
+import { useGetScores } from "../api/score";
 import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { BoutIndex } from "../components/bout";
 import { ExportBout } from "../components/bout/export";
 import { EditBout } from "../components/bouts/edit";
 import { CardSummary } from "../components/cards/summery";
+import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { ApiLoading } from "../components/loading/Apiloading";
 import type { Bout, Card, Official } from "../entities/cards";
 import type { ScoresByRound } from "../entities/scores";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-import { useGetScores } from "../api/score";
-import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
-import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
 
 const PageActions = ({
   bout,
@@ -99,8 +103,21 @@ export const BoutPage = () => {
     return () => es.close();
   }, [queryClient]);
 
+  const navigate = useNavigate();
   const card = useGetCardById({ token, cardId });
   const bout = useGetBoutById({ token, cardId, boutId });
+  const bouts = useGetBouts({ token, cardId });
+
+  const boutList = bouts.data ?? [];
+  const currentIndex = boutList.findIndex((b) => b.id === boutId);
+  const prevBout =
+    currentIndex > 0
+      ? boutList[currentIndex - 1]
+      : boutList[boutList.length - 1];
+  const nextBout =
+    currentIndex >= 0 && currentIndex < boutList.length - 1
+      ? boutList[currentIndex + 1]
+      : boutList[0];
   const fouls = useGetFouls({ token, cardId });
 
   const judgeDevices = useJudgeDevices({ token });
@@ -134,7 +151,13 @@ export const BoutPage = () => {
     cardId,
   });
 
-  const endBout = useMutateEndBout({
+  const makeDecision = useMutateMakeDecision({
+    token,
+    boutId,
+    cardId,
+  });
+
+  const showDecision = useMutateShowDecision({
     token,
     boutId,
     cardId,
@@ -155,16 +178,20 @@ export const BoutPage = () => {
   };
 
   const onSetReferee = (name: string) => {
-    updateBout.mutate({ toUpdate: { referee: name }, boutInfo: { boutId: boutId! } });
-  };
-
-  const onEndBout = (value: EndBoutProps) => {
-    endBout.mutate(value);
+    updateBout.mutate({
+      toUpdate: { referee: name },
+      boutInfo: { boutId: boutId! },
+    });
   };
 
   const isLoading = isApisLoading({ card, bout, fouls });
 
-  const nextRoundState = useMutateNextRoundState({ token, cardId, boutId, roundNumber });
+  const nextRoundState = useMutateNextRoundState({
+    token,
+    cardId,
+    boutId,
+    roundNumber,
+  });
 
   const onNextRoundState = async () => {
     const curr = await nextRoundState.mutateAsync();
@@ -175,12 +202,41 @@ export const BoutPage = () => {
 
   return (
     <PageLayout
-      action={<PageActions bout={bout.data!} card={card.data!} scores={scores.data ?? {}} officials={officials.data ?? []} cardId={cardId!} token={token} />}
+      action={
+        <Space>
+          <Button
+            icon={<LeftOutlined />}
+            onClick={() =>
+              prevBout &&
+              navigate({ to: `/card/${cardId}/bout/${prevBout.id}` })
+            }
+          >
+            Bout {prevBout?.boutNumber}
+          </Button>
+          <Button
+            icon={<RightOutlined />}
+            onClick={() =>
+              nextBout &&
+              navigate({ to: `/card/${cardId}/bout/${nextBout.id}` })
+            }
+          >
+            Bout {nextBout?.boutNumber}
+          </Button>
+          <PageActions
+            bout={bout.data!}
+            card={card.data!}
+            scores={scores.data ?? {}}
+            officials={officials.data ?? []}
+            cardId={cardId!}
+            token={token}
+          />
+        </Space>
+      }
       title="Bout details"
       subTitle={
         <>
           <CardSummary card={card.data!} />
-          <JudgeConnectionQuickLook
+          <DeviceQuickLook
             requiredJudges={bout.data?.numberOfJudges ?? 5}
             devices={judgeDevices.data || []}
             onRefreshCode={(values) => {
@@ -206,12 +262,18 @@ export const BoutPage = () => {
         controls={{
           onNextRoundState,
           setRound,
-          handleFoul: (value) => { handleFoul.mutate(value); },
-          handleEightCount: (value) => { handleEightCount.mutate(value); },
+          handleFoul: (value) => {
+            handleFoul.mutate(value);
+          },
+          handleEightCount: (value) => {
+            handleEightCount.mutate(value);
+          },
           onStartBout,
-          onEndBout,
           onSetReferee,
+          onMakeDecision: (props: MakeDecisionProps) =>
+            makeDecision.mutate(props),
           onCompleteBout: () => completeBout.mutate(),
+          onShowDecision: () => showDecision.mutate(),
         }}
       />
     </PageLayout>

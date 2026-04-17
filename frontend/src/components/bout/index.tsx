@@ -1,17 +1,16 @@
 import { Button, Flex, Select } from "antd";
 import type {
-  EndBoutProps,
+  MakeDecisionProps,
   MutateEightCountProps,
   MutateHandleFoulProps,
 } from "../../api/bouts";
-import type { Bout, RoundDetails } from "../../entities/cards";
-import type { Official } from "../../entities/cards";
+import type { Bout, Official, RoundDetails } from "../../entities/cards";
+import { BLUE, RED } from "../../entities/corner";
 import type { ScoresByRound } from "../../entities/scores";
 import { Card } from "../card/card";
 import { RoundIndex } from "../round";
 import { Scores } from "../score/scores";
 import { Show } from "../show/show";
-import { CornerInfo } from "./cornerInfo";
 import { DescribeBout } from "./describe";
 
 export type Controls = {
@@ -20,7 +19,8 @@ export type Controls = {
   handleFoul: (props: MutateHandleFoulProps) => void;
   handleEightCount: (props: MutateEightCountProps) => void;
   onStartBout: () => void;
-  onEndBout: (props: EndBoutProps) => void;
+  onMakeDecision: (props: MakeDecisionProps) => void;
+  onShowDecision: () => void;
   onSetReferee: (name: string) => void;
   onCompleteBout: () => void;
 };
@@ -35,17 +35,71 @@ export type BoutIndexProps = {
   officials?: Official[];
   controls: Controls;
 };
+
 export const BoutIndex = (props: BoutIndexProps) => {
   if (props.isLoading && props.loadingComponent) {
     return <>{props.loadingComponent}</>;
   }
 
   const isReady = props.bout?.status !== "not_started";
+  const isFinished =
+    props.bout?.status === "completed" || props.bout?.status === "cancelled";
+
   return (
     <>
-      <DescribeBout bout={props.bout} />
+      {/* Names card — always first */}
+      {props.bout && (
+        <Card>
+          <div style={{ display: "flex", gap: 16 }}>
+            <div
+              style={{
+                flex: 1,
+                borderLeft: `4px solid ${RED}`,
+                paddingLeft: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  opacity: 0.5,
+                  textTransform: "uppercase",
+                  letterSpacing: 2,
+                  marginBottom: 4,
+                }}
+              >
+                Red Corner
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>
+                {props.bout.redCorner || "—"}
+              </div>
+            </div>
+            <div
+              style={{
+                flex: 1,
+                borderLeft: `4px solid ${BLUE}`,
+                paddingLeft: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  opacity: 0.5,
+                  textTransform: "uppercase",
+                  letterSpacing: 2,
+                  marginBottom: 4,
+                }}
+              >
+                Blue Corner
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>
+                {props.bout.blueCorner || "—"}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
-      <CornerInfo bout={props.bout} />
+      <DescribeBout bout={props.bout} />
 
       <Show show={!isReady}>
         <Card>
@@ -55,20 +109,14 @@ export const BoutIndex = (props: BoutIndexProps) => {
                 style={{ width: 240 }}
                 placeholder="Select referee..."
                 value={props.bout?.referee || undefined}
-                options={(props.officials ?? []).map((o) => ({ value: o.name, label: o.name }))}
+                options={(props.officials ?? []).map((o) => ({
+                  value: o.name,
+                  label: o.name,
+                }))}
                 onChange={(name) => props.controls.onSetReferee(name)}
                 allowClear
               />
             )}
-            {props.bout?.boutType === "scored" && (() => {
-              const round1Scores = props.scores?.[1] ?? [];
-              const allReady = round1Scores.length > 0 && round1Scores.every(s => s.status && s.status !== "not_started");
-              return !allReady ? (
-                <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>
-                  Waiting for all judges to check in…
-                </span>
-              ) : null;
-            })()}
             <Button onClick={() => props.controls.onStartBout()}>
               Start Bout
             </Button>
@@ -76,17 +124,7 @@ export const BoutIndex = (props: BoutIndexProps) => {
         </Card>
       </Show>
 
-      <Show show={props.bout?.status === "decision_made"}>
-        <Card>
-          <Flex align="center" justify="center">
-            <Button type="primary" onClick={() => props.controls.onCompleteBout()}>
-              Complete Bout
-            </Button>
-          </Flex>
-        </Card>
-      </Show>
-
-      <Show show={isReady}>
+      <Show show={isReady && !isFinished}>
         <RoundIndex
           controls={props.controls}
           round={props.round}
@@ -94,12 +132,20 @@ export const BoutIndex = (props: BoutIndexProps) => {
           rounds={props.bout?.rounds}
           scores={props.scores}
           length={props.bout?.roundLength || 0}
+          boutStatus={props.bout?.status}
           handleFoul={props.controls.handleFoul}
           handleEightCount={props.controls.handleEightCount}
           onChange={props.controls.setRound}
         />
       </Show>
-      <Scores scores={props.scores ?? {}} rounds={props.bout?.rounds} />
+
+      <Show show={isReady}>
+        <Scores
+          scores={props.scores ?? {}}
+          rounds={props.bout?.rounds}
+          boutStatus={props.bout?.status}
+        />
+      </Show>
     </>
   );
 };

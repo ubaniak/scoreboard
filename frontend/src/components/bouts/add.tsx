@@ -9,13 +9,20 @@ import {
   type FormProps,
 } from "antd";
 import type { CreateBoutProps } from "../../api/bouts";
+import type { Athlete } from "../../api/athletes";
 
 export type AddBoutProps = {
   onClose: () => void;
   onSubmit: (values: CreateBoutProps) => void;
+  athletes?: Athlete[];
 };
 
 export const AddBout = (props: AddBoutProps) => {
+  const athleteOptions = (props.athletes ?? []).map((a) => ({
+    value: a.id,
+    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
+  }));
+
   const onFinish: FormProps<CreateBoutProps>["onFinish"] = async (values) => {
     props.onSubmit(values);
     props.onClose();
@@ -52,8 +59,14 @@ export const AddBout = (props: AddBoutProps) => {
       <Form.Item<CreateBoutProps> label="Bout Number" name="boutNumber">
         <InputNumber />
       </Form.Item>
+      <Form.Item<CreateBoutProps> label="Red Athlete" name="redAthleteId">
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
+      </Form.Item>
       <Form.Item<CreateBoutProps> label="Red" name="redCorner">
         <Input />
+      </Form.Item>
+      <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId">
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Blue" name="blueCorner">
         <Input />

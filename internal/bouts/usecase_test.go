@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("UseCase", func() {
 	Describe("End", func() {
-		type endBoutEntry struct {
+		type makeDecisionEntry struct {
 			cardId   uint
 			boutId   uint
 			winner   string
@@ -21,7 +21,7 @@ var _ = Describe("UseCase", func() {
 		}
 
 		DescribeTable("happy path",
-			func(entry endBoutEntry) {
+			func(entry makeDecisionEntry) {
 				ctrl := gomock.NewController(GinkgoT())
 
 				storage := mocks.NewMockStorage(ctrl)
@@ -42,21 +42,21 @@ var _ = Describe("UseCase", func() {
 				}
 
 				uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
-				err := uc.End(entry.cardId, entry.boutId, entry.winner, entry.decision, entry.comment)
+				err := uc.MakeDecision(entry.cardId, entry.boutId, entry.winner, entry.decision, entry.comment)
 
 				Expect(err).ToNot(HaveOccurred())
 			},
 			Entry("red wins by unanimous decision",
-				endBoutEntry{cardId: 1, boutId: 1, winner: "red", decision: "ud", comment: ""},
+				makeDecisionEntry{cardId: 1, boutId: 1, winner: "red", decision: "ud", comment: ""},
 			),
 			Entry("blue wins by split decision with a comment",
-				endBoutEntry{cardId: 1, boutId: 2, winner: "blue", decision: "sd", comment: "great fight"},
+				makeDecisionEntry{cardId: 1, boutId: 2, winner: "blue", decision: "sd", comment: "great fight"},
 			),
 			Entry("bout cancelled with no winner",
-				endBoutEntry{cardId: 2, boutId: 3, winner: "na", decision: "c", comment: ""},
+				makeDecisionEntry{cardId: 2, boutId: 3, winner: "na", decision: "c", comment: ""},
 			),
 			Entry("referee stop contest with comment",
-				endBoutEntry{cardId: 3, boutId: 4, winner: "red", decision: "rsc", comment: "corner stopped the bout"},
+				makeDecisionEntry{cardId: 3, boutId: 4, winner: "red", decision: "rsc", comment: "corner stopped the bout"},
 			),
 		)
 	})

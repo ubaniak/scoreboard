@@ -40,6 +40,8 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		NumberOfJudges:     bout.NumberOfJudges,
 		Referee:            bout.Referee,
 		BoutType:           string(bout.BoutType),
+		RedAthleteID:       bout.RedAthleteID,
+		BlueAthleteID:      bout.BlueAthleteID,
 	}
 }
 
@@ -64,6 +66,8 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		NumberOfJudges:     bout.NumberOfJudges,
 		Referee:            bout.Referee,
 		BoutType:           entities.BoutType(bout.BoutType),
+		RedAthleteID:       bout.RedAthleteID,
+		BlueAthleteID:      bout.BlueAthleteID,
 	}
 }
 
@@ -100,10 +104,17 @@ func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 func (s *Sqlite) Current(cardId uint) (*entities.Bout, error) {
 	var bout Bout
 	excluded := []string{
-		string(entities.BoutStatusCompleted),
 		string(entities.BoutStatusCancelled),
 	}
-	if err := s.db.Where("card_id = ? AND status NOT IN ?", cardId, excluded).First(&bout).Error; err != nil {
+	// Priority: active (0) > recently completed with decision (1) > not_started (2).
+	// Completed bouts use -id so the most recently ended one surfaces first.
+	orderExpr := "CASE " +
+		"WHEN status IN ('in_progress','waiting_for_scores','score_complete','waiting_for_decision','decision_made') THEN 0 " +
+		"WHEN status = 'completed' AND winner != '' THEN 1 " +
+		"WHEN status = 'not_started' THEN 2 " +
+		"ELSE 3 END ASC, " +
+		"CASE WHEN status = 'completed' THEN -id ELSE id END ASC"
+	if err := s.db.Where("card_id = ? AND status NOT IN ?", cardId, excluded).Order(orderExpr).First(&bout).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, sberrs.ErrRecordNotFound
 		}
@@ -181,6 +192,14 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.BoutType != nil {
 		bout.BoutType = string(*toUpdate.BoutType)
+	}
+
+	if toUpdate.RedAthleteID != nil {
+		bout.RedAthleteID = *toUpdate.RedAthleteID
+	}
+
+	if toUpdate.BlueAthleteID != nil {
+		bout.BlueAthleteID = *toUpdate.BlueAthleteID
 	}
 
 	if err := s.db.Save(bout).Error; err != nil {

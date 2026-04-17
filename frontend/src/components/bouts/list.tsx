@@ -2,6 +2,7 @@ import { EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { Button, Table, Tag, type TableProps } from "antd";
 import type { UpdateBoutProps } from "../../api/bouts";
+import type { Athlete } from "../../api/athletes";
 import type { Bout, Official } from "../../entities/cards";
 import { StatusTag } from "../status/tag";
 import { EditBout } from "./edit";
@@ -12,6 +13,7 @@ export type ListBoutsProps = {
   bouts?: Bout[];
   loading?: boolean;
   officials?: Official[];
+  athletes?: Athlete[];
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
@@ -127,6 +129,7 @@ export const ListBouts = (props: ListBoutsProps) => {
                 <EditBout
                   bout={record as Bout}
                   officials={props.officials}
+                  athletes={props.athletes}
                   onClose={close}
                   onSubmit={(toUpdate) =>
                     props.onEditBout({

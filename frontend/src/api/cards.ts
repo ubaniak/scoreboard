@@ -95,6 +95,60 @@ export const useMutateUpdateCards = (r: TokenBase) => {
   });
 };
 
+export const useMutateUpdateCardJudges = (r: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, numberOfJudges }: { id: CardRequestType; numberOfJudges: number }) => {
+      return fetchClient(`${baseUrl}/api/cards/${id.cardId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${r.token}`,
+        },
+        body: JSON.stringify({ numberOfJudges }),
+      });
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: keys.get(r.token, id.cardId) });
+    },
+  });
+};
+
+export const useMutateDeleteCard = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (cardId: string) =>
+      fetchClient(`${baseUrl}/api/cards/${cardId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
+export const useMutateUploadCardImage = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => {
+      const form = new FormData();
+      form.append("image", file);
+      return fetchClient(`${baseUrl}/api/cards/${id}/image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${props.token}` },
+        body: form,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
 export const useMutateUpdateCardStatus = (r: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({

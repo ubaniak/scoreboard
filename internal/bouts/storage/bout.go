@@ -22,4 +22,6 @@ type Bout struct {
 	NumberOfJudges     int
 	Referee            string
 	BoutType           string
+	RedAthleteID       *uint
+	BlueAthleteID      *uint
 }

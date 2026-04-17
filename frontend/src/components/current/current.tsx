@@ -7,7 +7,15 @@ export type ShowCurrentProps = {
 export const ShowCurrent = (props: ShowCurrentProps) => {
   const { current } = props;
 
-  if (!current?.bout) {
+  const boutActive = current?.bout?.status === "in_progress" ||
+    current?.bout?.status === "waiting_for_scores" ||
+    current?.bout?.status === "score_complete" ||
+    current?.bout?.status === "waiting_for_decision" ||
+    current?.bout?.status === "decision_made" ||
+    current?.bout?.status === "completed";
+
+  if (!boutActive) {
+    const next = current?.nextBout;
     return (
       <div
         style={{
@@ -15,11 +23,43 @@ export const ShowCurrent = (props: ShowCurrentProps) => {
           inset: 0,
           background: "#0b0f1a",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          gap: 32,
+          color: "white",
         }}
       >
-        <span style={{ color: "white", fontSize: 24 }}>Scoreboard</span>
+        {current?.card?.name && (
+          <div style={{ fontSize: 13, letterSpacing: 4, opacity: 0.5, textTransform: "uppercase" }}>
+            {current.card.name}
+          </div>
+        )}
+        {next ? (
+          <>
+            <div style={{ fontSize: 13, letterSpacing: 4, opacity: 0.5, textTransform: "uppercase" }}>
+              Up Next — Bout {next.boutNumber}
+            </div>
+            <div style={{ display: "flex", gap: 64, alignItems: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 11, letterSpacing: 3, opacity: 0.45, textTransform: "uppercase", marginBottom: 8 }}>Red Corner</div>
+                <div style={{ fontSize: 40, fontWeight: 800, color: "#fca5a5" }}>{next.redCorner || "—"}</div>
+              </div>
+              <div style={{ fontSize: 28, opacity: 0.3, fontWeight: 900 }}>VS</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 11, letterSpacing: 3, opacity: 0.45, textTransform: "uppercase", marginBottom: 8 }}>Blue Corner</div>
+                <div style={{ fontSize: 40, fontWeight: 800, color: "#93c5fd" }}>{next.blueCorner || "—"}</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 24, opacity: 0.45, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>
+              {next.weightClass > 0 && <span>{next.weightClass} lbs</span>}
+              {next.ageCategory && <span>{next.ageCategory}</span>}
+              {next.experience && <span style={{ textTransform: "capitalize" }}>{next.experience}</span>}
+            </div>
+          </>
+        ) : (
+          <span style={{ fontSize: 24, opacity: 0.4 }}>Scoreboard</span>
+        )}
       </div>
     );
   }
@@ -49,15 +89,55 @@ export const ShowCurrent = (props: ShowCurrentProps) => {
           gap: 32,
         }}
       >
+        {/* Decision banner — only shown when winner is set */}
+        {current?.bout?.winner && (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 13, letterSpacing: 6, opacity: 0.5, textTransform: "uppercase", color: "white", marginBottom: 8 }}>
+              Decision
+            </div>
+            <div
+              style={{
+                fontSize: 56,
+                fontWeight: 900,
+                color: current.bout.winner === "red" ? "#fca5a5" : current.bout.winner === "blue" ? "#93c5fd" : "white",
+                lineHeight: 1.1,
+              }}
+            >
+              {current.bout.winner === "red"
+                ? current.bout.redCorner
+                : current.bout.winner === "blue"
+                ? current.bout.blueCorner
+                : "Draw"}
+            </div>
+            {current.bout.decision && (
+              <div style={{ fontSize: 14, letterSpacing: 3, opacity: 0.6, textTransform: "uppercase", color: "white", marginTop: 8 }}>
+                {current.bout.decision}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Athlete names */}
-        <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ textAlign: "center", flex: 1 }}>
             <div style={{ fontSize: 12, letterSpacing: 4, opacity: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
               Red Corner
             </div>
+            {current?.bout?.redAthleteImageUrl && (
+              <img
+                src={current.bout.redAthleteImageUrl}
+                alt={current.bout.redCorner}
+                style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "3px solid #fca5a5", marginBottom: 12 }}
+              />
+            )}
             <div style={{ fontSize: 44, fontWeight: 800, color: "#fca5a5" }}>
               {current?.bout?.redCorner ?? "—"}
             </div>
+            {current?.bout?.redClubName && (
+              <div style={{ fontSize: 13, letterSpacing: 2, opacity: 0.55, textTransform: "uppercase", marginTop: 6 }}>
+                {current.bout.redClubName}
+              </div>
+            )}
           </div>
 
           <div style={{ textAlign: "center", padding: "0 32px" }}>
@@ -78,9 +158,21 @@ export const ShowCurrent = (props: ShowCurrentProps) => {
             <div style={{ fontSize: 12, letterSpacing: 4, opacity: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
               Blue Corner
             </div>
+            {current?.bout?.blueAthleteImageUrl && (
+              <img
+                src={current.bout.blueAthleteImageUrl}
+                alt={current.bout.blueCorner}
+                style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "3px solid #93c5fd", marginBottom: 12 }}
+              />
+            )}
             <div style={{ fontSize: 44, fontWeight: 800, color: "#93c5fd" }}>
               {current?.bout?.blueCorner ?? "—"}
             </div>
+            {current?.bout?.blueClubName && (
+              <div style={{ fontSize: 13, letterSpacing: 2, opacity: 0.55, textTransform: "uppercase", marginTop: 6 }}>
+                {current.bout.blueClubName}
+              </div>
+            )}
           </div>
         </div>
 

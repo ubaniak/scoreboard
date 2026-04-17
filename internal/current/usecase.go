@@ -15,14 +15,21 @@ type UseCase interface {
 	Current() (*entities.Current, error)
 }
 
-type usecase struct {
-	cards  cards.UseCase
-	bouts  bouts.UseCase
-	scores scores.UseCase
+// AthleteQuerier is a narrow interface to look up athlete info without
+// importing the full athletes package (avoids circular dependencies).
+type AthleteQuerier interface {
+	GetAthleteInfo(athleteID uint) (clubName, imageUrl string)
 }
 
-func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase) UseCase {
-	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase}
+type usecase struct {
+	cards    cards.UseCase
+	bouts    bouts.UseCase
+	scores   scores.UseCase
+	athletes AthleteQuerier
+}
+
+func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier) UseCase {
+	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier}
 }
 
 func (u *usecase) Current() (*entities.Current, error) {
@@ -44,37 +51,84 @@ func (u *usecase) Current() (*entities.Current, error) {
 	bout, err := u.bouts.Current(card.ID)
 	if err != nil {
 		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			// No active bout — find the next not_started one
+			all, listErr := u.bouts.List(card.ID)
+			if listErr == nil {
+				for _, b := range all {
+					if string(b.Status) == "not_started" {
+						current.NextBout = &entities.CurrentBout{
+							ID:          b.ID,
+							Number:      b.BoutNumber,
+							BoutType:    string(b.BoutType),
+							RedCorner:   b.RedCorner,
+							BlueCorner:  b.BlueCorner,
+							Gender:      string(b.Gender),
+							WeightClass: b.WeightClass,
+							GloveSize:   string(b.GloveSize),
+							RoundLength: int(b.RoundLength),
+							AgeCategory: string(b.AgeCategory),
+							Experience:  string(b.Experience),
+							Status:      string(b.Status),
+						}
+						break
+					}
+				}
+			}
 			return &current, err
 		}
 		return nil, err
 	}
 
-	current.Bout = &entities.CurrentBout{
-		ID:          bout.ID,
-		Number:      bout.BoutNumber,
-		BoutType:    string(bout.BoutType),
-		RedCorner:   bout.RedCorner,
-		BlueCorner:  bout.BlueCorner,
-		Gender:      string(bout.Gender),
-		WeightClass: bout.WeightClass,
-		GloveSize:   string(bout.GloveSize),
-		RoundLength: int(bout.RoundLength),
-		AgeCategory: string(bout.AgeCategory),
-		Experience:  string(bout.Experience),
-		Status:      string(bout.Status),
+	var redClub, blueClub, redImage, blueImage string
+	if u.athletes != nil {
+		if bout.RedAthleteID != nil {
+			redClub, redImage = u.athletes.GetAthleteInfo(*bout.RedAthleteID)
+		}
+		if bout.BlueAthleteID != nil {
+			blueClub, blueImage = u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
+		}
 	}
+
+	current.Bout = &entities.CurrentBout{
+		ID:                  bout.ID,
+		Number:              bout.BoutNumber,
+		BoutType:            string(bout.BoutType),
+		RedCorner:           bout.RedCorner,
+		BlueCorner:          bout.BlueCorner,
+		Gender:              string(bout.Gender),
+		WeightClass:         bout.WeightClass,
+		GloveSize:           string(bout.GloveSize),
+		RoundLength:         int(bout.RoundLength),
+		AgeCategory:         string(bout.AgeCategory),
+		Experience:          string(bout.Experience),
+		Status:              string(bout.Status),
+		Decision:            bout.Decision,
+		Winner:              bout.Winner,
+		RedClubName:         redClub,
+		BlueClubName:        blueClub,
+		RedAthleteImageUrl:  redImage,
+		BlueAthleteImageUrl: blueImage,
+	}
+
+	boutDecided := current.Bout.Status == "decision_made" || current.Bout.Status == "completed"
 
 	round, err := u.bouts.CurrentRound(bout.ID)
 	if err != nil {
 		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			return &current, err
+			if !boutDecided {
+				return &current, err
+			}
+			// No active round but bout is decided — fall through to fetch scores
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
-	current.Round = &entities.CurrentRound{
-		Number: round.RoundNumber,
-		Status: string(round.Status),
+	if round != nil {
+		current.Round = &entities.CurrentRound{
+			Number: round.RoundNumber,
+			Status: string(round.Status),
+		}
 	}
 
 	scores, err := u.scores.List(card.ID, bout.ID)
@@ -84,7 +138,7 @@ func (u *usecase) Current() (*entities.Current, error) {
 		}
 		return nil, err
 	}
-	if len(scores) > 0 && ShouldShowScores(round) {
+	if len(scores) > 0 && (boutDecided || (round != nil && ShouldShowScores(round))) {
 		current.Scores = make(map[int][]entities.CurrentScore)
 		for _, s := range scores {
 			current.Scores[s.RoundNumber] = append(current.Scores[s.RoundNumber], entities.CurrentScore{

@@ -1,6 +1,6 @@
 import { Button, Drawer } from "antd";
 import type { ButtonShape } from "antd/es/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type ActionButtonProps = {
   shape?: ButtonShape;
@@ -21,6 +21,13 @@ export type ActionMenuProps = {
 
 export const ActionMenu = (props: ActionMenuProps) => {
   const [open, setOpen] = useState(props.menuOpen ?? false);
+
+  useEffect(() => {
+    if (props.menuOpen) {
+      setOpen(true);
+    }
+  }, [props.menuOpen]);
+
   const close = () => {
     setOpen(false);
   };

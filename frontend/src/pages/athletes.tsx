@@ -1,0 +1,159 @@
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, DatePicker, Form, Input, Popconfirm, Select, Space, Table, type TableProps } from "antd";
+import dayjs from "dayjs";
+import {
+  type Athlete,
+  useMutateCreateAthlete,
+  useMutateDeleteAthlete,
+  useMutateUpdateAthlete,
+  useListAthletes,
+} from "../api/athletes";
+import { useListClubs } from "../api/clubs";
+import { ActionMenu } from "../components/actionMenu/actionMenu";
+import { TableLayout } from "../layouts/table";
+import { PageLayout } from "../layouts/page";
+import { useProfile } from "../providers/login";
+
+type ClubOption = { value: number; label: string };
+
+const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; clubId?: number }) => void }) => {
+  const [form] = Form.useForm();
+  return (
+    <Form form={form} layout="vertical" onFinish={(v) => {
+      onSubmit({ ...v, dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : "" });
+      onClose();
+    }}>
+      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item label="Date of Birth" name="dateOfBirth">
+        <DatePicker style={{ width: "100%" }} />
+      </Form.Item>
+      <Form.Item label="Club" name="clubId">
+        <Select options={clubs} allowClear placeholder="Select club..." />
+      </Form.Item>
+      <Space>
+        <Button type="text" onClick={onClose}>Cancel</Button>
+        <Button type="primary" htmlType="submit">Submit</Button>
+      </Space>
+    </Form>
+  );
+};
+
+const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; clubId?: number; clearClub?: boolean }) => void }) => {
+  const [form] = Form.useForm();
+  return (
+    <Form
+      form={form}
+      layout="vertical"
+      initialValues={{
+        ...athlete,
+        dateOfBirth: athlete.dateOfBirth ? dayjs(athlete.dateOfBirth) : undefined,
+      }}
+      onFinish={(v) => {
+        const clearClub = v.clubId === undefined || v.clubId === null;
+        onSubmit({
+          name: v.name,
+          dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : undefined,
+          clubId: clearClub ? undefined : v.clubId,
+          clearClub,
+        });
+        onClose();
+      }}
+    >
+      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item label="Date of Birth" name="dateOfBirth">
+        <DatePicker style={{ width: "100%" }} />
+      </Form.Item>
+      <Form.Item label="Club" name="clubId">
+        <Select options={clubs} allowClear placeholder="Select club..." />
+      </Form.Item>
+      <Space>
+        <Button type="text" onClick={onClose}>Cancel</Button>
+        <Button type="primary" htmlType="submit">Submit</Button>
+      </Space>
+    </Form>
+  );
+};
+
+export const AthletesPage = () => {
+  const { token } = useProfile();
+  const athletes = useListAthletes({ token });
+  const clubs = useListClubs({ token });
+  const createAthlete = useMutateCreateAthlete({ token });
+  const updateAthlete = useMutateUpdateAthlete({ token });
+  const deleteAthlete = useMutateDeleteAthlete({ token });
+
+  const clubOptions: ClubOption[] = (clubs.data ?? []).map((c) => ({ value: c.id, label: c.name }));
+
+  const columns: TableProps<Athlete>["columns"] = [
+    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Date of Birth", dataIndex: "dateOfBirth", key: "dateOfBirth" },
+    { title: "Club", dataIndex: "clubName", key: "clubName" },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space>
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            content={{
+              title: "Edit Athlete",
+              body: (close) => (
+                <EditAthlete
+                  athlete={record}
+                  clubs={clubOptions}
+                  onClose={close}
+                  onSubmit={(vals) => updateAthlete.mutate({ id: record.id, toUpdate: vals })}
+                />
+              ),
+            }}
+          />
+          <Popconfirm
+            title="Delete this athlete?"
+            onConfirm={() => deleteAthlete.mutate(record.id)}
+            okText="Delete"
+            cancelText="Cancel"
+          >
+            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <PageLayout
+      title="Athletes"
+      breadCrumbs={[{ title: <a href="/">home</a> }, { title: "athletes" }]}
+    >
+      <TableLayout
+        title="Athletes"
+        actions={
+          <ActionMenu
+            trigger={{ text: "add" }}
+            content={{
+              title: "Add Athlete",
+              body: (close) => (
+                <AddAthlete
+                  clubs={clubOptions}
+                  onClose={close}
+                  onSubmit={(vals) => createAthlete.mutate(vals)}
+                />
+              ),
+            }}
+          />
+        }
+      >
+        <Table
+          rowKey="id"
+          dataSource={athletes.data ?? []}
+          columns={columns}
+          loading={athletes.isLoading}
+        />
+      </TableLayout>
+    </PageLayout>
+  );
+};

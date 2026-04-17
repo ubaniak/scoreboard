@@ -3,14 +3,15 @@ package entities
 type BoutStatus string
 
 const (
-	BoutStatusNotStarted        BoutStatus = "not_started"
-	BoutStatusInProgress        BoutStatus = "in_progress"
+	BoutStatusNotStarted         BoutStatus = "not_started"
+	BoutStatusInProgress         BoutStatus = "in_progress"
 	BoutStatusWaitingForScores   BoutStatus = "waiting_for_scores"
 	BoutStatusScoreComplete      BoutStatus = "score_complete"
 	BoutStatusWaitingForDecision BoutStatus = "waiting_for_decision"
-	BoutStatusDecisionMade      BoutStatus = "decision_made"
-	BoutStatusCompleted         BoutStatus = "completed"
-	BoutStatusCancelled         BoutStatus = "cancelled"
+	BoutStatusDecisionMade       BoutStatus = "decision_made"
+	BoutStatusShowDecision       BoutStatus = "show_decision"
+	BoutStatusCompleted          BoutStatus = "completed"
+	BoutStatusCancelled          BoutStatus = "cancelled"
 )
 
 type BoutType string
@@ -118,6 +119,8 @@ type Bout struct {
 	NumberOfJudges     int
 	Referee            string
 	BoutType           BoutType
+	RedAthleteID       *uint
+	BlueAthleteID      *uint
 }
 
 type UpdateBout struct {
@@ -135,4 +138,6 @@ type UpdateBout struct {
 	NumberOfJudges *int
 	Referee        *string
 	BoutType       *BoutType
+	RedAthleteID   **uint
+	BlueAthleteID  **uint
 }

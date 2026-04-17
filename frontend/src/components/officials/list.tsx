@@ -1,5 +1,5 @@
-import { EditOutlined } from "@ant-design/icons";
-import { Table, type TableProps } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Popconfirm, Space, Table, type TableProps } from "antd";
 import type { Official } from "../../entities/cards";
 import { EditOfficial } from "./edit";
 import type { UpdateOfficialProps } from "../../api/officials";
@@ -12,6 +12,7 @@ export type ListOfficialsProps = {
     toUpdate: UpdateOfficialProps;
     officialId: string;
   }) => void;
+  onDeleteOfficial?: (officialId: string) => void;
 };
 
 export const ListOfficials = (props: ListOfficialsProps) => {
@@ -26,21 +27,31 @@ export const ListOfficials = (props: ListOfficialsProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined /> }}
-            content={{
-              title: "hi",
-              body: (close) => (
-                <EditOfficial
-                  onClose={close}
-                  onSubmit={(vals) => {
-                    props.onEditOfficial(vals);
-                  }}
-                  official={record as Official}
-                />
-              ),
-            }}
-          />
+          <Space>
+            <ActionMenu
+              trigger={{ shape: "circle", icon: <EditOutlined /> }}
+              content={{
+                title: "Edit Official",
+                body: (close) => (
+                  <EditOfficial
+                    onClose={close}
+                    onSubmit={(vals) => props.onEditOfficial(vals)}
+                    official={record as Official}
+                  />
+                ),
+              }}
+            />
+            {props.onDeleteOfficial && (
+              <Popconfirm
+                title="Delete this official?"
+                onConfirm={() => props.onDeleteOfficial!(record.id)}
+                okText="Delete"
+                cancelText="Cancel"
+              >
+                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+              </Popconfirm>
+            )}
+          </Space>
         );
       },
     },

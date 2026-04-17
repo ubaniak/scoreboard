@@ -1,4 +1,5 @@
 import type { CreateBoutProps, UpdateBoutProps } from "../../api/bouts";
+import type { Athlete } from "../../api/athletes";
 import type { BoutRequestType } from "../../api/entities";
 import type { Bout, Card, Official } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
@@ -13,6 +14,7 @@ export type BoutsIndexParams = {
   card?: Card;
   bouts?: Bout[];
   officials?: Official[];
+  athletes?: Athlete[];
   allBoutScores?: Record<string, ScoresByRound>;
   loading?: boolean;
   onAddBout: (values: CreateBoutProps) => void;
@@ -63,6 +65,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 <>
                   <AddBout
                     onClose={close}
+                    athletes={props.athletes}
                     onSubmit={(values: CreateBoutProps) => {
                       props.onAddBout(values);
                     }}
@@ -78,6 +81,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
         bouts={props.bouts}
         loading={props.loading}
         officials={props.officials}
+        athletes={props.athletes}
         onEditBout={(values) => props.onEditBout(values)}
         onDeleteBout={props.onDeleteBout}
       />

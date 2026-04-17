@@ -26,9 +26,11 @@ import (
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
+	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards"
+	"github.com/ubaniak/scoreboard/internal/clubs"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
 	"github.com/ubaniak/scoreboard/internal/devices"
@@ -129,6 +131,29 @@ func main() {
 	}
 	roundUseCase := round.NewUseCase(roundStorage)
 
+	// -- cards
+	cardStorage, err := cards.NewCardStorage(db)
+	if err != nil {
+		panic(err)
+	}
+	cardUseCase := cards.NewUseCase(cardStorage)
+
+	// -- clubs
+	clubStorage, err := clubs.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	clubUseCase := clubs.NewUseCase(clubStorage)
+	clubApp := clubs.NewApp(clubUseCase)
+
+	// -- athletes
+	athleteStorage, err := athletes.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	athleteUseCase := athletes.NewUseCase(athleteStorage)
+	athleteApp := athletes.NewApp(athleteUseCase)
+
 	// -- bouts
 
 	boutStorage, err := bouts.NewSqlite(db)
@@ -139,18 +164,12 @@ func main() {
 	broadcaster := events.NewBroadcaster()
 
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
-	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster)
+	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase})
 
-	// -- cards
-	cardStorage, err := cards.NewCardStorage(db)
-	if err != nil {
-		panic(err)
-	}
-	cardUseCase := cards.NewUseCase(cardStorage)
 	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase)
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, &athleteClubQuerier{athleteUseCase})
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
@@ -158,6 +177,8 @@ func main() {
 	apiRegister.Add(loginApp)
 	apiRegister.Add(cardApp)
 	apiRegister.Add(deviceApp)
+	apiRegister.Add(clubApp)
+	apiRegister.Add(athleteApp)
 
 	apiRegister.Register(rb)
 
@@ -277,6 +298,9 @@ func startServer(r *mux.Router, allowedOrigins []string) *http.Server {
 		http.FileServer(http.FS(staticFS)).ServeHTTP(w, r)
 	}
 
+	// Serve uploaded images from disk
+	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
+
 	// Use the custom handler for all non-API paths
 	r.PathPrefix("/").Handler(http.HandlerFunc(spaHandler))
 
@@ -302,6 +326,30 @@ func startServer(r *mux.Router, allowedOrigins []string) *http.Server {
 	}
 
 	return srv
+}
+
+type cardJudgeQuerier struct {
+	uc cards.UseCase
+}
+
+func (q *cardJudgeQuerier) GetNumberOfJudges(cardId uint) (int, error) {
+	card, err := q.uc.Get(cardId)
+	if err != nil {
+		return 5, err
+	}
+	return card.NumberOfJudges, nil
+}
+
+type athleteClubQuerier struct {
+	uc athletes.UseCase
+}
+
+func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, imageUrl string) {
+	a, err := q.uc.Get(athleteID)
+	if err != nil || a == nil {
+		return "", ""
+	}
+	return a.ClubName, a.ImageUrl
 }
 
 func getLocalIP() string {

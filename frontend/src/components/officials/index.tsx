@@ -17,6 +17,7 @@ export type OfficialIndexProps = {
     officialId: string;
   }) => void;
   onCreateOfficial: (values: CreateOfficialProps) => void;
+  onDeleteOfficial?: (officialId: string) => void;
   onImport: (file: File) => void;
 };
 
@@ -58,6 +59,7 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
         officials={props.officials}
         loading={props.loading}
         onEditOfficial={(vals) => props.onEditOfficial(vals)}
+        onDeleteOfficial={props.onDeleteOfficial}
       />
     </TableLayout>
   );

@@ -53,6 +53,7 @@ func (p *HTTPProvider[T]) sendError(toSend error) {
 func (p *HTTPProvider[T]) Present() {
 	statusCode := http.StatusOK
 	if p.err != nil {
+		statusCode = http.StatusBadRequest
 		if p.statusCode != nil {
 			statusCode = *p.statusCode
 		}

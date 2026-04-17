@@ -63,6 +63,8 @@ export type CreateBoutProps = {
   experience: string;
   referee: string;
   boutType: string;
+  redAthleteId?: number;
+  blueAthleteId?: number;
 };
 
 export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
@@ -84,20 +86,20 @@ export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
   });
 };
 
-export type EndBoutProps = {
+export type MakeDecisionProps = {
   winner: string;
   decision: string;
   comment: string;
 };
 
-export const useMutateEndBout = (
+export const useMutateMakeDecision = (
   props: TokenBase & CardRequestType & BoutRequestType,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: EndBoutProps) => {
+    mutationFn: (body: MakeDecisionProps) => {
       return fetchClient(
-        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/end`,
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/decision/make`,
         {
           method: "POST",
           headers: {
@@ -210,7 +212,35 @@ export const useMutateCompleteBout = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
-      queryClient.invalidateQueries({ queryKey: keys.get(props.token, props.boutId) });
+      queryClient.invalidateQueries({
+        queryKey: keys.get(props.token, props.boutId),
+      });
+    },
+  });
+};
+
+export const useMutateShowDecision = (
+  props: TokenBase & CardRequestType & BoutRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/decision/show`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({
+        queryKey: keys.get(props.token, props.boutId),
+      });
     },
   });
 };

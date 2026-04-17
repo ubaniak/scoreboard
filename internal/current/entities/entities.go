@@ -6,18 +6,24 @@ type CurrentCardResponse struct {
 }
 
 type CurrentBoutResponse struct {
-	ID          uint   `json:"id"`
-	BoutNumber  int    `json:"boutNumber"`
-	BoutType    string `json:"boutType"`
-	RedCorner   string `json:"redCorner"`
-	BlueCorner  string `json:"blueCorner"`
-	Gender      string `json:"gender"`
-	WeightClass int    `json:"weightClass"`
-	GloveSize   string `json:"gloveSize"`
-	RoundLength int    `json:"roundLength"`
-	AgeCategory string `json:"ageCategory"`
-	Experience  string `json:"experience"`
-	Status      string `json:"status"`
+	ID                   uint   `json:"id"`
+	BoutNumber           int    `json:"boutNumber"`
+	BoutType             string `json:"boutType"`
+	RedCorner            string `json:"redCorner"`
+	BlueCorner           string `json:"blueCorner"`
+	Gender               string `json:"gender"`
+	WeightClass          int    `json:"weightClass"`
+	GloveSize            string `json:"gloveSize"`
+	RoundLength          int    `json:"roundLength"`
+	AgeCategory          string `json:"ageCategory"`
+	Experience           string `json:"experience"`
+	Status               string `json:"status"`
+	Decision             string `json:"decision,omitempty"`
+	Winner               string `json:"winner,omitempty"`
+	RedClubName          string `json:"redClubName,omitempty"`
+	BlueClubName         string `json:"blueClubName,omitempty"`
+	RedAthleteImageUrl   string `json:"redAthleteImageUrl,omitempty"`
+	BlueAthleteImageUrl  string `json:"blueAthleteImageUrl,omitempty"`
 }
 
 type CurrentScoreResponse struct {
@@ -31,10 +37,11 @@ type CurrentRoundResponse struct {
 }
 
 type CurrentResponse struct {
-	Card   *CurrentCardResponse              `json:"card,omitempty"`
-	Bout   *CurrentBoutResponse              `json:"bout,omitempty"`
-	Round  *CurrentRoundResponse             `json:"round,omitempty"`
-	Scores map[int][]CurrentScoreResponse    `json:"scores,omitempty"`
+	Card     *CurrentCardResponse           `json:"card,omitempty"`
+	Bout     *CurrentBoutResponse           `json:"bout,omitempty"`
+	NextBout *CurrentBoutResponse           `json:"nextBout,omitempty"`
+	Round    *CurrentRoundResponse          `json:"round,omitempty"`
+	Scores   map[int][]CurrentScoreResponse `json:"scores,omitempty"`
 }
 
 type CurrentCard struct {
@@ -43,18 +50,24 @@ type CurrentCard struct {
 }
 
 type CurrentBout struct {
-	ID          uint
-	Number      int
-	BoutType    string
-	RedCorner   string
-	BlueCorner  string
-	Gender      string
-	WeightClass int
-	GloveSize   string
-	RoundLength int
-	AgeCategory string
-	Experience  string
-	Status      string
+	ID                  uint
+	Number              int
+	BoutType            string
+	RedCorner           string
+	BlueCorner          string
+	Gender              string
+	WeightClass         int
+	GloveSize           string
+	RoundLength         int
+	AgeCategory         string
+	Experience          string
+	Status              string
+	Decision            string
+	Winner              string
+	RedClubName         string
+	BlueClubName        string
+	RedAthleteImageUrl  string
+	BlueAthleteImageUrl string
 }
 
 type CurrentScore struct {
@@ -68,8 +81,9 @@ type CurrentRound struct {
 }
 
 type Current struct {
-	Card   *CurrentCard
-	Bout   *CurrentBout
-	Round  *CurrentRound
-	Scores map[int][]CurrentScore
+	Card     *CurrentCard
+	Bout     *CurrentBout
+	NextBout *CurrentBout
+	Round    *CurrentRound
+	Scores   map[int][]CurrentScore
 }

@@ -22,15 +22,21 @@ import (
 	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
 )
 
+// CardQuerier allows bouts to look up card-level settings without importing the cards package.
+type CardQuerier interface {
+	GetNumberOfJudges(cardId uint) (int, error)
+}
+
 type App struct {
 	useCase      UseCase
 	roundUseCase round.UseCase
 	scoreUseCase scores.UseCase
 	broadcaster  *events.Broadcaster
+	cardQuerier  CardQuerier
 }
 
-func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster) *App {
-	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster}
+func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster, cardQuerier CardQuerier) *App {
+	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster, cardQuerier: cardQuerier}
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -42,7 +48,8 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("bouts.get", "/{cardId}/bouts/{id}", "GET", a.Get, rbac.Admin)
 	rb.AddRoute("bouts.update", "/{cardId}/bouts/{id}", "PUT", a.Update, rbac.Admin)
 	rb.AddRoute("bouts.delete", "/{cardId}/bouts/{id}", "DELETE", a.Delete, rbac.Admin)
-	rb.AddRoute("bouts.end", "/{cardId}/bouts/{id}/end", "POST", a.End, rbac.Admin)
+	rb.AddRoute("bouts.make_decision", "/{cardId}/bouts/{id}/decision/make", "POST", a.MakeDecision, rbac.Admin)
+	rb.AddRoute("bouts.show_decision", "/{cardId}/bouts/{id}/decision/show", "POST", a.ShowDecision, rbac.Admin)
 	rb.AddRoute("bouts.complete", "/{cardId}/bouts/{id}/complete", "POST", a.Complete, rbac.Admin)
 
 	rb.AddRoute("bouts.status", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
@@ -83,6 +90,12 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bout := CreateRequestToEntity(cardId, &createReq)
+
+	if h.cardQuerier != nil {
+		if numJudges, qErr := h.cardQuerier.GetNumberOfJudges(cardId); qErr == nil {
+			bout.NumberOfJudges = numJudges
+		}
+	}
 
 	err = h.useCase.Create(cardId, bout)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
@@ -184,13 +197,13 @@ func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
-type EndBoutRequest struct {
+type MakeDecisionRequest struct {
 	Decision string `json:"decision"`
 	Winner   string `json:"winner"`
 	Comment  string `json:"comment"`
 }
 
-func (h *App) End(w http.ResponseWriter, r *http.Request) {
+func (h *App) MakeDecision(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
 	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
@@ -205,14 +218,14 @@ func (h *App) End(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req EndBoutRequest
+	var req MakeDecisionRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	err = h.useCase.End(cardId, id, req.Winner, req.Decision, req.Comment)
+	err = h.useCase.MakeDecision(cardId, id, req.Winner, req.Decision, req.Comment)
 	if err == nil {
 		h.broadcaster.Notify()
 	}
@@ -505,6 +518,28 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 
 	h.broadcaster.Notify()
 	presenter.WithData(currentRound).Present()
+}
+
+func (h *App) ShowDecision(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.ShowDecision(cardId, id)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
+	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
 func (h *App) Complete(w http.ResponseWriter, r *http.Request) {
@@ -814,6 +849,16 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 			BoutType:    boutType,
 			Status:      entities.BoutStatusNotStarted,
 		})
+	}
+
+	if h.cardQuerier != nil {
+		if numJudges, qErr := h.cardQuerier.GetNumberOfJudges(cardId); qErr == nil {
+			for _, b := range bouts {
+				if b.BoutType == entities.BoutTypeScored {
+					b.NumberOfJudges = numJudges
+				}
+			}
+		}
 	}
 
 	err = h.useCase.CreateBulk(cardId, bouts)

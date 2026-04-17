@@ -3,7 +3,7 @@ import {
   SafetyCertificateOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
-import { Divider, Space, Tag, Typography } from "antd";
+import { Divider, Space, Tag } from "antd";
 import { BLUE, RED, type Corner } from "../../entities/corner";
 import { Card } from "../card/card";
 import { Control } from "./control";
@@ -14,7 +14,6 @@ import type {
 } from "../../api/bouts";
 import { HandleEightCounts } from "../fouls/eightcounts";
 
-const { Text } = Typography;
 
 export type CornerPanelProps = {
   corner: Corner;
@@ -38,12 +37,9 @@ export const CornerControls = (props: CornerPanelProps) => {
         }}
       />
       <Space orientation="vertical" size={6} style={{ width: "100%" }}>
-        <Space align="center" wrap>
-          <Tag color={props.corner} style={{ fontWeight: 800, marginRight: 0 }}>
-            {props.corner.toUpperCase()}
-          </Tag>
-          <Text type="secondary">Corner inputs</Text>
-        </Space>
+        <Tag color={props.corner} style={{ fontWeight: 800 }}>
+          {props.corner.toUpperCase()}
+        </Tag>
 
         <Divider style={{ margin: "12px 0" }} />
         <Control

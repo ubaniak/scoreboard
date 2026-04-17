@@ -10,6 +10,7 @@ const { Text } = Typography;
 export type ScoresProps = {
   scores: ScoresByRound;
   rounds?: RoundDetails[];
+  boutStatus?: string;
 };
 
 const ROUNDS = [1, 2, 3];
@@ -17,16 +18,16 @@ const ROUNDS = [1, 2, 3];
 export const Scores = ({ scores, rounds }: ScoresProps) => {
   return (
     <Card title="Scores">
-      <Flex gap="middle">
-        {ROUNDS.map((round) => {
-          const roundScores = scores[round] ?? [];
-          const roundDetails = rounds?.find((r) => r.roundNumber === round);
-          const redWarnings = roundDetails?.red.warnings.length ?? 0;
-          const blueWarnings = roundDetails?.blue.warnings.length ?? 0;
-          const redTotal = roundScores.reduce((sum, s) => sum + s.red, 0) - redWarnings;
-          const blueTotal = roundScores.reduce((sum, s) => sum + s.blue, 0) - blueWarnings;
-          return (
-            <Flex key={round} style={{ flex: 1 }}>
+    <Flex gap="middle">
+      {ROUNDS.map((round) => {
+        const roundScores = scores[round] ?? [];
+        const roundDetails = rounds?.find((r) => r.roundNumber === round);
+        const redWarnings = roundDetails?.red.warnings.length ?? 0;
+        const blueWarnings = roundDetails?.blue.warnings.length ?? 0;
+        const redTotal = roundScores.reduce((sum, s) => sum + s.red, 0) - redWarnings;
+        const blueTotal = roundScores.reduce((sum, s) => sum + s.blue, 0) - blueWarnings;
+        return (
+          <Flex key={round} style={{ flex: 1 }}>
             <Card title={`Round ${round}`}>
               {roundScores.map((score, j) => (
                 <div key={score.judgeRole}>
@@ -64,10 +65,10 @@ export const Scores = ({ scores, rounds }: ScoresProps) => {
                 </>
               )}
             </Card>
-            </Flex>
-          );
-        })}
-      </Flex>
+          </Flex>
+        );
+      })}
+    </Flex>
     </Card>
   );
 };

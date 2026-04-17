@@ -3,7 +3,11 @@ package cards
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 
@@ -38,6 +42,7 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("update.cards", "/{id}", "PUT", h.Update, rbac.Admin)
 	sr.AddRoute("delete.cards", "/{id}", "DELETE", h.Delete, rbac.Admin)
 	sr.AddRoute("get.card", "/{id}", "GET", h.Get, rbac.Admin)
+	sr.AddRoute("image.cards", "/{id}/image", "POST", h.UploadImage, rbac.Admin)
 
 	h.officialApp.RegisterRoutes(sr)
 	h.boutsApp.RegisterRoutes(sr)
@@ -62,21 +67,27 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetCardResponse struct {
-	Id     uint   `json:"id"`
-	Name   string `json:"name"`
-	Date   string `json:"date"`
-	Status string `json:"status"`
+	Id             uint   `json:"id"`
+	Name           string `json:"name"`
+	Date           string `json:"date"`
+	Status         string `json:"status"`
+	NumberOfJudges int    `json:"numberOfJudges"`
+	ImageUrl       string `json:"imageUrl,omitempty"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
-	cardResponse := &GetCardResponse{
-		Id:     card.ID,
-		Name:   card.Name,
-		Date:   card.Date,
-		Status: string(card.Status),
+	numJudges := card.NumberOfJudges
+	if numJudges == 0 {
+		numJudges = 5
 	}
-
-	return cardResponse
+	return &GetCardResponse{
+		Id:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         string(card.Status),
+		NumberOfJudges: numJudges,
+		ImageUrl:       card.ImageUrl,
+	}
 }
 
 func (h *App) Current(w http.ResponseWriter, r *http.Request) {
@@ -165,4 +176,45 @@ func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = h.useCase.Delete(id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+func (h *App) UploadImage(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		presenter.WithError(errors.New("failed to parse form")).Present()
+		return
+	}
+	file, header, err := r.FormFile("image")
+	if err != nil {
+		presenter.WithError(errors.New("missing 'image' field")).Present()
+		return
+	}
+	defer file.Close()
+
+	ext := filepath.Ext(header.Filename)
+	dir := "./uploads/cards"
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	dst, err := os.Create(fmt.Sprintf("%s/%d%s", dir, id, ext))
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	defer dst.Close()
+	if _, err := io.Copy(dst, file); err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	url := fmt.Sprintf("/uploads/cards/%d%s", id, ext)
+	presenter.WithError(h.useCase.SetImageUrl(id, url)).Present()
 }

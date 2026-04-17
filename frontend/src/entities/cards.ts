@@ -7,6 +7,8 @@ export type Card = {
   name: string;
   date: string;
   status: CardStatus;
+  numberOfJudges: number;
+  imageUrl?: string;
 };
 
 export type Official = {
@@ -43,6 +45,8 @@ export type Bout = {
   comments: string[];
   referee: string;
   boutType: BoutType;
+  redAthleteId?: number;
+  blueAthleteId?: number;
 };
 
 export type RoundStatus =

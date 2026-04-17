@@ -10,14 +10,17 @@ const (
 )
 
 type Card struct {
-	ID     uint
-	Name   string
-	Date   string
-	Status CardStatus
+	ID             uint
+	Name           string
+	Date           string
+	Status         CardStatus
+	NumberOfJudges int
+	ImageUrl       string
 }
 
 type UpdateCard struct {
-	Name   *string
-	Date   *string
-	Status *string
+	Name           *string
+	Date           *string
+	Status         *string
+	NumberOfJudges *int
 }

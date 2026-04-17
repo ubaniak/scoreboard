@@ -11,11 +11,13 @@ import {
 } from "antd";
 import { useEffect } from "react";
 import type { UpdateBoutProps } from "../../api/bouts";
+import type { Athlete } from "../../api/athletes";
 import type { Bout, Official } from "../../entities/cards";
 
 export type EditBoutProps = {
   bout: Bout;
   officials?: Official[];
+  athletes?: Athlete[];
   onClose: () => void;
   onSubmit: (values: UpdateBoutProps) => void;
   onDelete?: () => void;
@@ -25,6 +27,10 @@ export const EditBout = (props: EditBoutProps) => {
   const officialOptions = (props.officials ?? []).map((o) => ({
     value: o.name,
     label: o.name,
+  }));
+  const athleteOptions = (props.athletes ?? []).map((a) => ({
+    value: a.id,
+    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
   }));
   const [form] = Form.useForm<Bout>();
   const boutType = Form.useWatch("boutType", form);
@@ -64,8 +70,14 @@ export const EditBout = (props: EditBoutProps) => {
       <Form.Item<UpdateBoutProps> label="Bout #" name="boutNumber">
         <InputNumber />
       </Form.Item>
+      <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId">
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
+      </Form.Item>
       <Form.Item<UpdateBoutProps> label="Red" name="redCorner">
         <Input />
+      </Form.Item>
+      <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId">
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Blue" name="blueCorner">
         <Input />

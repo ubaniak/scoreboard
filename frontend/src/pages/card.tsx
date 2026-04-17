@@ -7,18 +7,22 @@ import {
   useMutateImportBouts,
   useMutateUpdateBout,
 } from "../api/bouts";
-import { useGetCardById, useMutateUpdateCardStatus } from "../api/cards";
+import { useListAthletes } from "../api/athletes";
+import { useGetCardById, useMutateUpdateCardJudges, useMutateUpdateCardStatus } from "../api/cards";
 import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import {
   useGetOfficials,
   useMutateCreateOfficial,
+  useMutateDeleteOfficial,
   useMutateImportOfficials,
   useMutateUpdateOfficial,
 } from "../api/officials";
 import { useGetAllBoutScores } from "../api/score";
 import { BoutsIndex } from "../components/bouts";
+import { NextBout } from "../components/bouts/nextBout";
+import { CardControls } from "../components/cards/cardControls";
 import { CardSummary } from "../components/cards/summery";
-import { JudgeConnectionQuickLook } from "../components/devices/JudgeConnectionQuickLook";
+import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { OfficialIndex } from "../components/officials";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
@@ -57,6 +61,7 @@ export const CardPage = () => {
   const bouts = useGetBouts({ token, cardId });
   const officials = useGetOfficials({ token, cardId });
   const card = useGetCardById({ token, cardId });
+  const athletes = useListAthletes({ token });
 
   const judgeDevices = useJudgeDevices({ token });
   const generateCode = useMutationGenerateCode({ token });
@@ -73,8 +78,22 @@ export const CardPage = () => {
 
   const addOfficial = useMutateCreateOfficial({ token, cardId });
   const updateOfficial = useMutateUpdateOfficial({ token, cardId });
+  const deleteOfficial = useMutateDeleteOfficial({ token, cardId });
   const importOfficials = useMutateImportOfficials({ token, cardId });
   const updateCardStatus = useMutateUpdateCardStatus({ token });
+  const updateCardJudges = useMutateUpdateCardJudges({ token });
+
+  const onSetJudges = (count: number) => {
+    updateCardJudges.mutate({ id: { cardId }, numberOfJudges: count });
+    (bouts.data ?? [])
+      .filter((b) => b.boutType === "scored")
+      .forEach((b) => {
+        updateBout.mutate({
+          toUpdate: { numberOfJudges: count },
+          boutInfo: { boutId: b.id },
+        });
+      });
+  };
 
   const start = () => {
     updateCardStatus.mutate({ id: { cardId }, status: "in_progress" });
@@ -90,7 +109,7 @@ export const CardPage = () => {
       subTitle={
         <>
           <CardSummary card={card.data} />
-          <JudgeConnectionQuickLook
+          <DeviceQuickLook
             requiredJudges={Math.max(...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]))}
             devices={judgeDevices.data || []}
             onRefreshCode={(values) => {
@@ -102,11 +121,14 @@ export const CardPage = () => {
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
       action={<CardActions status={card.data?.status} start={start} end={end} />}
     >
+      {card.data && <CardControls card={card.data} onSetJudges={onSetJudges} />}
+      <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
       <BoutsIndex
         loading={bouts.isLoading}
         card={card.data}
         bouts={bouts.data}
         officials={officials.data}
+        athletes={athletes.data}
         allBoutScores={allBoutScores.data}
         onAddBout={(values) => {
           addBout.mutate(values);
@@ -126,6 +148,7 @@ export const CardPage = () => {
         onCreateOfficial={(values) => {
           addOfficial.mutate(values);
         }}
+        onDeleteOfficial={(id) => deleteOfficial.mutate(id)}
         onImport={(file) => importOfficials.mutate(file)}
       />
     </PageLayout>

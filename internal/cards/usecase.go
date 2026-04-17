@@ -11,6 +11,7 @@ type UseCase interface {
 	Delete(id uint) error
 	Get(id uint) (*entities.Card, error)
 	Current() (*entities.Card, error)
+	SetImageUrl(id uint, url string) error
 }
 
 type useCase struct {
@@ -48,4 +49,8 @@ func (uc *useCase) Get(id uint) (*entities.Card, error) {
 
 func (uc *useCase) Delete(id uint) error {
 	return uc.storage.Delete(id)
+}
+
+func (uc *useCase) SetImageUrl(id uint, url string) error {
+	return uc.storage.SetImageUrl(id, url)
 }

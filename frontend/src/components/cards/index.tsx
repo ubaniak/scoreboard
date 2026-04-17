@@ -1,6 +1,6 @@
-import { EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "antd";
+import { Button, Popconfirm, Space, Upload } from "antd";
 import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
 import type { CardRequestType } from "../../api/entities";
 import { type Card } from "../../entities/cards";
@@ -19,6 +19,8 @@ export type CardTableProps = {
     id: CardRequestType;
     toUpdate: UpdateCardsProps;
   }) => void;
+  onDeleteCard?: (cardId: string) => void;
+  onUploadCardImage?: (cardId: string, file: File) => void;
 };
 
 interface DataType {
@@ -66,19 +68,36 @@ export const CardIndex = (props: CardTableProps) => {
       key: "action",
       render: (_, record) => {
         return (
-          <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined /> }}
-            content={{
-              title: "Edit Card",
-              body: (close) => (
-                <EditCard
-                  card={record as Card}
-                  onClose={close}
-                  onSubmit={(vals) => props.onUpdateCard(vals)}
-                />
-              ),
-            }}
-          />
+          <Space>
+            {props.onUploadCardImage && (
+              <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => { props.onUploadCardImage!(record.id, file); return false; }}>
+                <Button shape="circle" icon={<PictureOutlined />} size="small" />
+              </Upload>
+            )}
+            <ActionMenu
+              trigger={{ shape: "circle", icon: <EditOutlined /> }}
+              content={{
+                title: "Edit Card",
+                body: (close) => (
+                  <EditCard
+                    card={record as Card}
+                    onClose={close}
+                    onSubmit={(vals) => props.onUpdateCard(vals)}
+                  />
+                ),
+              }}
+            />
+            {props.onDeleteCard && (
+              <Popconfirm
+                title="Delete this card?"
+                onConfirm={() => props.onDeleteCard!(record.id)}
+                okText="Delete"
+                cancelText="Cancel"
+              >
+                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+              </Popconfirm>
+            )}
+          </Space>
         );
       },
     },

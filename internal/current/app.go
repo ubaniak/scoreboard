@@ -45,18 +45,41 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 
 	if current.Bout != nil {
 		response.Bout = &entities.CurrentBoutResponse{
-			ID:          current.Bout.ID,
-			BoutNumber:  current.Bout.Number,
-			BoutType:    current.Bout.BoutType,
-			RedCorner:   current.Bout.RedCorner,
-			BlueCorner:  current.Bout.BlueCorner,
-			Gender:      current.Bout.Gender,
-			WeightClass: current.Bout.WeightClass,
-			GloveSize:   current.Bout.GloveSize,
-			RoundLength: current.Bout.RoundLength,
-			AgeCategory: current.Bout.AgeCategory,
-			Experience:  current.Bout.Experience,
-			Status:      current.Bout.Status,
+			ID:                  current.Bout.ID,
+			BoutNumber:          current.Bout.Number,
+			BoutType:            current.Bout.BoutType,
+			RedCorner:           current.Bout.RedCorner,
+			BlueCorner:          current.Bout.BlueCorner,
+			Gender:              current.Bout.Gender,
+			WeightClass:         current.Bout.WeightClass,
+			GloveSize:           current.Bout.GloveSize,
+			RoundLength:         current.Bout.RoundLength,
+			AgeCategory:         current.Bout.AgeCategory,
+			Experience:          current.Bout.Experience,
+			Status:              current.Bout.Status,
+			Decision:            current.Bout.Decision,
+			Winner:              current.Bout.Winner,
+			RedClubName:         current.Bout.RedClubName,
+			BlueClubName:        current.Bout.BlueClubName,
+			RedAthleteImageUrl:  current.Bout.RedAthleteImageUrl,
+			BlueAthleteImageUrl: current.Bout.BlueAthleteImageUrl,
+		}
+	}
+
+	if current.NextBout != nil {
+		response.NextBout = &entities.CurrentBoutResponse{
+			ID:          current.NextBout.ID,
+			BoutNumber:  current.NextBout.Number,
+			BoutType:    current.NextBout.BoutType,
+			RedCorner:   current.NextBout.RedCorner,
+			BlueCorner:  current.NextBout.BlueCorner,
+			Gender:      current.NextBout.Gender,
+			WeightClass: current.NextBout.WeightClass,
+			GloveSize:   current.NextBout.GloveSize,
+			RoundLength: current.NextBout.RoundLength,
+			AgeCategory: current.NextBout.AgeCategory,
+			Experience:  current.NextBout.Experience,
+			Status:      current.NextBout.Status,
 		}
 	}
 
