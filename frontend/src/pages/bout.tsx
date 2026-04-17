@@ -108,16 +108,29 @@ export const BoutPage = () => {
   const bout = useGetBoutById({ token, cardId, boutId });
   const bouts = useGetBouts({ token, cardId });
 
-  const boutList = bouts.data ?? [];
-  const currentIndex = boutList.findIndex((b) => b.id === boutId);
-  const prevBout =
-    currentIndex > 0
-      ? boutList[currentIndex - 1]
-      : boutList[boutList.length - 1];
-  const nextBout =
-    currentIndex >= 0 && currentIndex < boutList.length - 1
-      ? boutList[currentIndex + 1]
-      : boutList[0];
+  const [prevBout, setPrevBout] = useState<Bout | undefined>(undefined);
+  const [nextBout, setNextBout] = useState<Bout | undefined>(undefined);
+
+  useEffect(() => {
+    const setBouts = async () => {
+      const boutList = bouts.data ?? [];
+      const currentIndex = boutList.findIndex(
+        (b) => b.id.toString() === boutId,
+      );
+      setPrevBout(undefined);
+      setNextBout(undefined);
+      if (currentIndex > 0) {
+        setPrevBout(boutList[currentIndex - 1]);
+      }
+      if (currentIndex < boutList.length - 1) {
+        setNextBout(boutList[currentIndex + 1]);
+      }
+    };
+    if (!bouts.isLoading) {
+      setBouts();
+    }
+  }, [bouts.isLoading, boutId, bouts.data]);
+
   const fouls = useGetFouls({ token, cardId });
 
   const judgeDevices = useJudgeDevices({ token });
@@ -210,11 +223,13 @@ export const BoutPage = () => {
               prevBout &&
               navigate({ to: `/card/${cardId}/bout/${prevBout.id}` })
             }
+            disabled={prevBout === undefined}
           >
             Bout {prevBout?.boutNumber}
           </Button>
           <Button
             icon={<RightOutlined />}
+            disabled={nextBout === undefined}
             onClick={() =>
               nextBout &&
               navigate({ to: `/card/${cardId}/bout/${nextBout.id}` })
