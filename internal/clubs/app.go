@@ -34,6 +34,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("clubs.update", "/{id}", http.MethodPut, a.Update, rbac.Admin)
 	sr.AddRoute("clubs.delete", "/{id}", http.MethodDelete, a.Delete, rbac.Admin)
 	sr.AddRoute("clubs.image", "/{id}/image", http.MethodPost, a.UploadImage, rbac.Admin)
+	sr.AddRoute("clubs.image.delete", "/{id}/image", http.MethodDelete, a.RemoveImage, rbac.Admin)
 }
 
 type ClubResponse struct {
@@ -150,6 +151,17 @@ func (a *App) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	url := fmt.Sprintf("/uploads/clubs/%d%s", id, ext)
 	presenter.WithError(a.useCase.SetImageUrl(id, url)).Present()
+}
+
+func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	presenter.WithError(a.useCase.SetImageUrl(id, "")).Present()
 }
 
 // ImportCSV accepts a multipart form with a "file" CSV field.

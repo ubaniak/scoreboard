@@ -101,10 +101,13 @@ func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 	e := s.ToEntity(bout)
 	return e, nil
 }
+
 func (s *Sqlite) Current(cardId uint) (*entities.Bout, error) {
 	var bout Bout
 	excluded := []string{
 		string(entities.BoutStatusCancelled),
+		string(entities.BoutStatusNotStarted),
+		string(entities.BoutStatusCompleted),
 	}
 	// Priority: active (0) > recently completed with decision (1) > not_started (2).
 	// Completed bouts use -id so the most recently ended one surfaces first.

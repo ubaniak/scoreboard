@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined, InboxOutlined, PictureOutlined } from "@ant-design/icons";
 import { App as AntApp, Avatar, Button, Collapse, DatePicker, Form, Input, Popconfirm, Select, Space, Table, Upload, type TableProps, type UploadFile } from "antd";
+import { ImageUpload } from "../components/image/imageUpload";
 import dayjs from "dayjs";
 import { useState } from "react";
 import {
@@ -9,6 +10,7 @@ import {
   useMutateImportClubs,
   useMutateUpdateClub,
   useMutateUploadClubImage,
+  useMutateRemoveClubImage,
   useListClubs,
 } from "../api/clubs";
 import {
@@ -18,6 +20,7 @@ import {
   useMutateImportAthletes,
   useMutateUpdateAthlete,
   useMutateUploadAthleteImage,
+  useMutateRemoveAthleteImage,
   useListAthletes,
 } from "../api/athletes";
 import {
@@ -26,6 +29,7 @@ import {
   useMutateDeleteCard,
   useMutateUpdateCards,
   useMutateUploadCardImage,
+  useMutateRemoveCardImage,
 } from "../api/cards";
 import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { CardIndex } from "../components/cards";
@@ -168,6 +172,7 @@ export const HomePage = () => {
   const updateCard = useMutateUpdateCards({ token });
   const deleteCard = useMutateDeleteCard({ token });
   const uploadCardImage = useMutateUploadCardImage({ token });
+  const removeCardImage = useMutateRemoveCardImage({ token });
 
   const clubsQuery = useListClubs({ token });
   const createClub = useMutateCreateClub({ token });
@@ -175,6 +180,7 @@ export const HomePage = () => {
   const deleteClub = useMutateDeleteClub({ token });
   const importClubs = useMutateImportClubs({ token });
   const uploadClubImage = useMutateUploadClubImage({ token });
+  const removeClubImage = useMutateRemoveClubImage({ token });
 
   const athletesQuery = useListAthletes({ token });
   const createAthlete = useMutateCreateAthlete({ token });
@@ -182,6 +188,7 @@ export const HomePage = () => {
   const deleteAthlete = useMutateDeleteAthlete({ token });
   const importAthletes = useMutateImportAthletes({ token });
   const uploadAthleteImage = useMutateUploadAthleteImage({ token });
+  const removeAthleteImage = useMutateRemoveAthleteImage({ token });
 
   const clubOptions: ClubOption[] = (clubsQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }));
 
@@ -200,9 +207,10 @@ export const HomePage = () => {
       title: "Action", key: "action",
       render: (_, record) => (
         <Space>
-          <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => { uploadClubImage.mutate({ id: record.id, file }); return false; }}>
-            <Button shape="circle" icon={<PictureOutlined />} size="small" />
-          </Upload>
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+            content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={record.imageUrl} onUpload={(file) => uploadClubImage.mutate({ id: record.id, file })} onRemove={() => removeClubImage.mutate(record.id)} /> }}
+          />
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined /> }}
             content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutate({ id: record.id, toUpdate: vals })} /> }}
@@ -231,9 +239,10 @@ export const HomePage = () => {
       title: "Action", key: "action",
       render: (_, record) => (
         <Space>
-          <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => { uploadAthleteImage.mutate({ id: record.id, file }); return false; }}>
-            <Button shape="circle" icon={<PictureOutlined />} size="small" />
-          </Upload>
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+            content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={record.imageUrl} onUpload={(file) => uploadAthleteImage.mutate({ id: record.id, file })} onRemove={() => removeAthleteImage.mutate(record.id)} /> }}
+          />
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined /> }}
             content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutate({ id: record.id, toUpdate: vals })} /> }}
@@ -255,6 +264,7 @@ export const HomePage = () => {
         onUpdateCard={(values) => updateCard.mutate(values)}
         onDeleteCard={(id) => deleteCard.mutate(id)}
         onUploadCardImage={(id, file) => uploadCardImage.mutate({ id, file })}
+        onRemoveCardImage={(id) => removeCardImage.mutate(id)}
       />
       <Collapse
         style={{ marginTop: 16 }}

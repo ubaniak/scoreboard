@@ -112,6 +112,20 @@ export const useMutateUploadAthleteImage = (props: TokenBase) => {
   });
 };
 
+export const useMutateRemoveAthleteImage = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      fetchClient(`${baseUrl}/api/athletes/${id}/image`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${props.token}` },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
 export const useMutateDeleteAthlete = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({

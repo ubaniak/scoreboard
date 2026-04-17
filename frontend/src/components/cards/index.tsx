@@ -1,6 +1,7 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Popconfirm, Space, Upload } from "antd";
+import { Button, Popconfirm, Space } from "antd";
+import { ImageUpload } from "../image/imageUpload";
 import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
 import type { CardRequestType } from "../../api/entities";
 import { type Card } from "../../entities/cards";
@@ -21,6 +22,7 @@ export type CardTableProps = {
   }) => void;
   onDeleteCard?: (cardId: string) => void;
   onUploadCardImage?: (cardId: string, file: File) => void;
+  onRemoveCardImage?: (cardId: string) => void;
 };
 
 interface DataType {
@@ -70,9 +72,10 @@ export const CardIndex = (props: CardTableProps) => {
         return (
           <Space>
             {props.onUploadCardImage && (
-              <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => { props.onUploadCardImage!(record.id, file); return false; }}>
-                <Button shape="circle" icon={<PictureOutlined />} size="small" />
-              </Upload>
+              <ActionMenu
+                trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+                content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={(record as Card).imageUrl} onUpload={(file) => props.onUploadCardImage!(record.id, file)} onRemove={props.onRemoveCardImage ? () => props.onRemoveCardImage!(record.id) : undefined} /> }}
+              />
             )}
             <ActionMenu
               trigger={{ shape: "circle", icon: <EditOutlined /> }}

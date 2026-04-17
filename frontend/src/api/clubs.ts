@@ -105,6 +105,20 @@ export const useMutateUploadClubImage = (props: TokenBase) => {
   });
 };
 
+export const useMutateRemoveClubImage = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      fetchClient(`${baseUrl}/api/clubs/${id}/image`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${props.token}` },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
 export const useMutateDeleteClub = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({

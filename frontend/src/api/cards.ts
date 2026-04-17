@@ -149,6 +149,20 @@ export const useMutateUploadCardImage = (props: TokenBase) => {
   });
 };
 
+export const useMutateRemoveCardImage = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchClient(`${baseUrl}/api/cards/${id}/image`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${props.token}` },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
 export const useMutateUpdateCardStatus = (r: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({

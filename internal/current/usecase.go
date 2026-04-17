@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ubaniak/scoreboard/internal/bouts"
+	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/cards"
 	"github.com/ubaniak/scoreboard/internal/current/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
@@ -89,7 +90,9 @@ func (u *usecase) Current() (*entities.Current, error) {
 		}
 	}
 
-	current.Bout = &entities.CurrentBout{
+	decisionRevealed := string(bout.Status) == "show_decision" || string(bout.Status) == "completed"
+
+	currentBout := &entities.CurrentBout{
 		ID:                  bout.ID,
 		Number:              bout.BoutNumber,
 		BoutType:            string(bout.BoutType),
@@ -102,15 +105,19 @@ func (u *usecase) Current() (*entities.Current, error) {
 		AgeCategory:         string(bout.AgeCategory),
 		Experience:          string(bout.Experience),
 		Status:              string(bout.Status),
-		Decision:            bout.Decision,
-		Winner:              bout.Winner,
 		RedClubName:         redClub,
 		BlueClubName:        blueClub,
 		RedAthleteImageUrl:  redImage,
 		BlueAthleteImageUrl: blueImage,
 	}
+	if decisionRevealed {
+		currentBout.Decision = bout.Decision
+		currentBout.Winner = bout.Winner
+	}
+	current.Bout = currentBout
 
-	boutDecided := current.Bout.Status == "decision_made" || current.Bout.Status == "completed"
+	boutDecided := current.Bout.Status == "decision_made" || current.Bout.Status == "show_decision" || current.Bout.Status == "completed"
+	scoresAllowed := decisionRevealed
 
 	round, err := u.bouts.CurrentRound(bout.ID)
 	if err != nil {
@@ -138,7 +145,7 @@ func (u *usecase) Current() (*entities.Current, error) {
 		}
 		return nil, err
 	}
-	if len(scores) > 0 && (boutDecided || (round != nil && ShouldShowScores(round))) {
+	if len(scores) > 0 && (scoresAllowed || ShouldShowScores(round, bout)) {
 		current.Scores = make(map[int][]entities.CurrentScore)
 		for _, s := range scores {
 			current.Scores[s.RoundNumber] = append(current.Scores[s.RoundNumber], entities.CurrentScore{
@@ -151,11 +158,15 @@ func (u *usecase) Current() (*entities.Current, error) {
 	return &current, nil
 }
 
-func ShouldShowScores(round *roundEntities.Round) bool {
+func ShouldShowScores(round *roundEntities.Round, bout *boutEntities.Bout) bool {
+	if round == nil {
+		return false
+	}
+
 	if round.RoundNumber != 3 && round.Status == roundEntities.RoundStatusScoreComplete {
 		return true
 	}
-	if round.RoundNumber == 3 && round.Status == roundEntities.RoundStatusComplete {
+	if round.RoundNumber == 3 && bout.Status == boutEntities.BoutStatusShowDecision {
 		return true
 	}
 	return false

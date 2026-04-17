@@ -43,6 +43,7 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("delete.cards", "/{id}", "DELETE", h.Delete, rbac.Admin)
 	sr.AddRoute("get.card", "/{id}", "GET", h.Get, rbac.Admin)
 	sr.AddRoute("image.cards", "/{id}/image", "POST", h.UploadImage, rbac.Admin)
+	sr.AddRoute("image.cards.delete", "/{id}/image", "DELETE", h.RemoveImage, rbac.Admin)
 
 	h.officialApp.RegisterRoutes(sr)
 	h.boutsApp.RegisterRoutes(sr)
@@ -176,6 +177,17 @@ func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = h.useCase.Delete(id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+func (h *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	presenter.WithError(h.useCase.SetImageUrl(id, "")).Present()
 }
 
 func (h *App) UploadImage(w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,7 @@ export type BoutStatus =
   | "score_complete"
   | "waiting_for_decision"
   | "decision_made"
+  | "show_decision"
   | "completed"
   | "cancelled";
 
