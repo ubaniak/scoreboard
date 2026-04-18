@@ -19,15 +19,26 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 }
 
 func (s *Sqlite) Save(cardId uint, official *entities.Official) error {
-	o := &Official{
-		ID:     official.ID,
-		CardID: cardId,
-		Name:   official.Name,
+	if official.ID == 0 {
+		o := &Official{
+			CardID:             cardId,
+			Name:               official.Name,
+			Nationality:        official.Nationality,
+			Gender:             official.Gender,
+			YearOfBirth:        official.YearOfBirth,
+			RegistrationNumber: official.RegistrationNumber,
+		}
+		return s.db.Create(o).Error
 	}
-	if err := s.db.Save(o).Error; err != nil {
-		return err
-	}
-	return nil
+	return s.db.Model(&Official{}).
+		Where("id = ? AND card_id = ?", official.ID, cardId).
+		Updates(map[string]interface{}{
+			"name":                official.Name,
+			"nationality":         official.Nationality,
+			"gender":              official.Gender,
+			"year_of_birth":       official.YearOfBirth,
+			"registration_number": official.RegistrationNumber,
+		}).Error
 }
 
 func (s *Sqlite) Get(cardId uint) ([]entities.Official, error) {
@@ -40,8 +51,12 @@ func (s *Sqlite) Get(cardId uint) ([]entities.Official, error) {
 
 	for _, o := range officials {
 		r := entities.Official{
-			ID:   o.ID,
-			Name: o.Name,
+			ID:                 o.ID,
+			Name:               o.Name,
+			Nationality:        o.Nationality,
+			Gender:             o.Gender,
+			YearOfBirth:        o.YearOfBirth,
+			RegistrationNumber: o.RegistrationNumber,
 		}
 		response = append(response, r)
 	}

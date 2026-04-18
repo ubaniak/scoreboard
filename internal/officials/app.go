@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 
+	"github.com/ubaniak/scoreboard/internal/officials/entities"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -30,7 +31,11 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 }
 
 type CreateOfficialRequest struct {
-	Name string `json:"name"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality"`
+	Gender             string `json:"gender"`
+	YearOfBirth        int    `json:"yearOfBirth"`
+	RegistrationNumber string `json:"registrationNumber"`
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,13 +54,23 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.Create(cardId, createReq.Name)
+	err = h.useCase.Create(cardId, &entities.Official{
+		Name:               createReq.Name,
+		Nationality:        createReq.Nationality,
+		Gender:             createReq.Gender,
+		YearOfBirth:        createReq.YearOfBirth,
+		RegistrationNumber: createReq.RegistrationNumber,
+	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
 type ListOfficialResponse struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality,omitempty"`
+	Gender             string `json:"gender,omitempty"`
+	YearOfBirth        int    `json:"yearOfBirth,omitempty"`
+	RegistrationNumber string `json:"registrationNumber,omitempty"`
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
@@ -75,8 +90,12 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	response := make([]ListOfficialResponse, len(officials))
 	for i, o := range officials {
 		response[i] = ListOfficialResponse{
-			ID:   o.ID,
-			Name: o.Name,
+			ID:                 o.ID,
+			Name:               o.Name,
+			Nationality:        o.Nationality,
+			Gender:             o.Gender,
+			YearOfBirth:        o.YearOfBirth,
+			RegistrationNumber: o.RegistrationNumber,
 		}
 	}
 
@@ -84,8 +103,11 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateOfficialRequest struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality"`
+	Gender             string `json:"gender"`
+	YearOfBirth        int    `json:"yearOfBirth"`
+	RegistrationNumber string `json:"registrationNumber"`
 }
 
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +132,13 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.Update(cardId, id, req.Name)
+	err = h.useCase.Update(cardId, id, &entities.Official{
+		Name:               req.Name,
+		Nationality:        req.Nationality,
+		Gender:             req.Gender,
+		YearOfBirth:        req.YearOfBirth,
+		RegistrationNumber: req.RegistrationNumber,
+	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 

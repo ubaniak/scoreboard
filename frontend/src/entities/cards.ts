@@ -14,6 +14,10 @@ export type Card = {
 export type Official = {
   id: string;
   name: string;
+  nationality?: string;
+  gender?: string;
+  yearOfBirth?: number;
+  registrationNumber?: string;
 };
 
 export type AgeCategory =

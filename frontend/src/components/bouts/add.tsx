@@ -103,6 +103,29 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
+      <Form.Item<CreateBoutProps> label="Round Length" name="roundLength" rules={[{ required: true, message: "Round length is required" }]}>
+        <Segmented
+          size={"large"}
+          shape="round"
+          options={[
+            { value: 1, label: "1 min" },
+            { value: 1.5, label: "1.5 min" },
+            { value: 2, label: "2 min" },
+            { value: 3, label: "3 min" },
+          ]}
+        />
+      </Form.Item>
+      <Form.Item<CreateBoutProps> label="Glove Size" name="gloveSize" rules={[{ required: true, message: "Glove size is required" }]}>
+        <Segmented
+          size={"large"}
+          shape="round"
+          options={[
+            { value: "10oz", label: "10oz" },
+            { value: "12oz", label: "12oz" },
+            { value: "16oz", label: "16oz" },
+          ]}
+        />
+      </Form.Item>
       <Form.Item<CreateBoutProps> label="Referee" name="referee">
         <Input />
       </Form.Item>

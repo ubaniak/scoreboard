@@ -21,6 +21,7 @@ func NewApp(useCase UseCase, broadcaster *events.Broadcaster) *App {
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("current", "/current", http.MethodGet, h.Current)
+	rb.AddRoute("current.list", "/current/list", http.MethodGet, h.List)
 	rb.AddRoute("current.events", "/current/events", http.MethodGet, h.Events)
 }
 
@@ -99,6 +100,50 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 			}
 			response.Scores[roundNum] = mapped
 		}
+	}
+
+	if len(current.Warnings) > 0 {
+		response.Warnings = make(map[int]*entities.CurrentWarningsResponse)
+		for roundNum, w := range current.Warnings {
+			response.Warnings[roundNum] = &entities.CurrentWarningsResponse{Red: w.Red, Blue: w.Blue}
+		}
+	}
+
+	presenter.WithData(response).Present()
+}
+
+func (h *App) List(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[entities.BoutListResponse](r, w)
+	result, err := h.useCase.List()
+	if err != nil {
+		presenter.WithStatusCode(http.StatusInternalServerError).WithError(err).Present()
+		return
+	}
+
+	response := entities.BoutListResponse{
+		Bouts: make([]entities.BoutListItemResponse, 0, len(result.Bouts)),
+	}
+	if result.Card != nil {
+		response.Card = &entities.CurrentCardResponse{
+			ID:   result.Card.ID,
+			Name: result.Card.Name,
+		}
+	}
+	for _, b := range result.Bouts {
+		response.Bouts = append(response.Bouts, entities.BoutListItemResponse{
+			ID:                  b.ID,
+			BoutNumber:          b.Number,
+			BoutType:            b.BoutType,
+			RedCorner:           b.RedCorner,
+			BlueCorner:          b.BlueCorner,
+			Status:              b.Status,
+			Winner:              b.Winner,
+			Decision:            b.Decision,
+			RedClubName:         b.RedClubName,
+			BlueClubName:        b.BlueClubName,
+			RedAthleteImageUrl:  b.RedAthleteImageUrl,
+			BlueAthleteImageUrl: b.BlueAthleteImageUrl,
+		})
 	}
 
 	presenter.WithData(response).Present()

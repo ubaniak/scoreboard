@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Popconfirm, Space, Table, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { useState } from "react";
 import type { Official } from "../../entities/cards";
 import { EditOfficial } from "./edit";
 import type { UpdateOfficialProps } from "../../api/officials";
@@ -16,12 +17,23 @@ export type ListOfficialsProps = {
 };
 
 export const ListOfficials = (props: ListOfficialsProps) => {
+  const [search, setSearch] = useState("");
+
+  const filtered = (props.officials || []).filter((o) => {
+    const q = search.toLowerCase();
+    return (
+      o.name?.toLowerCase().includes(q) ||
+      o.nationality?.toLowerCase().includes(q) ||
+      o.registrationNumber?.toLowerCase().includes(q)
+    );
+  });
+
   const columns: TableProps<Official>["columns"] = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-    },
+    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Nationality", dataIndex: "nationality", key: "nationality" },
+    { title: "Gender", dataIndex: "gender", key: "gender", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
+    { title: "Year of Birth", dataIndex: "yearOfBirth", key: "yearOfBirth", render: (v) => v || null },
+    { title: "Reg. Number", dataIndex: "registrationNumber", key: "registrationNumber" },
     {
       title: "Action",
       key: "action",
@@ -58,10 +70,19 @@ export const ListOfficials = (props: ListOfficialsProps) => {
   ];
 
   return (
-    <Table
-      dataSource={props.officials || []}
-      columns={columns}
-      loading={props.loading}
-    />
+    <>
+      <Input.Search
+        placeholder="Search officials..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ marginBottom: 12 }}
+        allowClear
+      />
+      <Table
+        dataSource={filtered}
+        columns={columns}
+        loading={props.loading}
+      />
+    </>
   );
 };

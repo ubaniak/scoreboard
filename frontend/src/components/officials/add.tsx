@@ -1,4 +1,4 @@
-import { Button, Form, Input, Space, type FormProps } from "antd";
+import { Button, Form, Input, InputNumber, Segmented, Space, type FormProps } from "antd";
 import type { CreateOfficialProps } from "../../api/officials";
 
 export type AddOfficialProps = {
@@ -7,24 +7,38 @@ export type AddOfficialProps = {
 };
 
 export const AddOfficial = (props: AddOfficialProps) => {
-  const onFinish: FormProps<CreateOfficialProps>["onFinish"] = async (
-    values
-  ) => {
+  const onFinish: FormProps<CreateOfficialProps>["onFinish"] = async (values) => {
     props.onSubmit(values);
     props.onClose();
   };
   return (
     <Form
-      labelCol={{ span: 4 }}
-      wrapperCol={{ span: 14 }}
+      labelCol={{ span: 6 }}
+      wrapperCol={{ span: 16 }}
       layout="horizontal"
-      initialValues={{
-        name: "",
-      }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
     >
-      <Form.Item<CreateOfficialProps> label="Name" name="name">
+      <Form.Item<CreateOfficialProps> label="Name" name="name" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Nationality" name="nationality">
+        <Input />
+      </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Gender" name="gender">
+        <Segmented
+          size="large"
+          shape="round"
+          options={[
+            { value: "male", label: "Male" },
+            { value: "female", label: "Female" },
+          ]}
+        />
+      </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Year of Birth" name="yearOfBirth">
+        <InputNumber style={{ width: "100%" }} min={1900} max={new Date().getFullYear()} />
+      </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Reg. Number" name="registrationNumber">
         <Input />
       </Form.Item>
       <Form.Item label={null}>

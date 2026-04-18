@@ -334,167 +334,115 @@ export const ShowCurrent = (props: ShowCurrentProps) => {
           </div>
         </div>
 
-        {/* Round score rows */}
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {roundNumbers.map((roundNum) => {
-            const roundScores = scores![roundNum] ?? [];
-            const redTotal = roundScores.reduce((sum, s) => sum + s.red, 0);
-            const blueTotal = roundScores.reduce((sum, s) => sum + s.blue, 0);
+        {/* Score table — judges as columns, rounds as rows */}
+        {showScores && (() => {
+          const warnings = current?.warnings;
+          const judgeCount = Math.max(...roundNumbers.map((r) => (scores![r] ?? []).length));
+          const judgeIndices = Array.from({ length: judgeCount }, (_, i) => i);
+          const sep = "1px solid rgba(255,255,255,0.15)";
+          const subSep = "1px solid rgba(255,255,255,0.08)";
 
-            return (
-              <div
-                key={roundNum}
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 16,
-                  padding: "24px 32px",
-                  minWidth: 220,
-                  flex: 1,
-                  maxWidth: 320,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    letterSpacing: 4,
-                    opacity: 0.5,
-                    textTransform: "uppercase",
-                    marginBottom: 16,
-                    textAlign: "center",
-                  }}
-                >
-                  Round {roundNum}
-                </div>
+          const scoreVal = (r: number, j: number, corner: "red" | "blue") => {
+            const s = (scores![r] ?? [])[j];
+            return s != null ? s[corner] : "–";
+          };
 
-                {roundScores.map((s, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 0",
-                      borderBottom:
-                        i < roundScores.length - 1
-                          ? "1px solid rgba(255,255,255,0.07)"
-                          : "none",
-                    }}
-                  >
-                    <span style={{ fontSize: 12, opacity: 0.55 }}>
-                      Judge {i + 1}
-                    </span>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 22,
-                          fontWeight: 700,
-                          color: "#fca5a5",
-                          minWidth: 32,
-                          textAlign: "right",
-                          ...(s.red > s.blue && {
-                            background: "rgba(185,28,28,0.35)",
-                            borderRadius: 6,
-                            padding: "2px 8px",
-                          }),
-                        }}
-                      >
-                        {s.red}
-                      </span>
-                      <span style={{ opacity: 0.3, fontSize: 14 }}>–</span>
-                      <span
-                        style={{
-                          fontSize: 22,
-                          fontWeight: 700,
-                          color: "#93c5fd",
-                          minWidth: 32,
-                          textAlign: "left",
-                          ...(s.blue > s.red && {
-                            background: "rgba(29,78,216,0.35)",
-                            borderRadius: 6,
-                            padding: "2px 8px",
-                          }),
-                        }}
-                      >
-                        {s.blue}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+          const totalRedDeductions = roundNumbers.reduce((s, r) => s + (warnings?.[r]?.red ?? 0), 0);
+          const totalBlueDeductions = roundNumbers.reduce((s, r) => s + (warnings?.[r]?.blue ?? 0), 0);
+          const hasDeductions = totalRedDeductions > 0 || totalBlueDeductions > 0;
 
-                {/* Total */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginTop: 12,
-                    paddingTop: 12,
-                    borderTop: "1px solid rgba(255,255,255,0.15)",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      letterSpacing: 2,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Total
-                  </span>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 12 }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 26,
-                        fontWeight: 900,
-                        color: "#fca5a5",
-                        minWidth: 32,
-                        textAlign: "right",
-                        ...(redTotal > blueTotal && {
-                          background: "rgba(185,28,28,0.35)",
-                          borderRadius: 6,
-                          padding: "2px 8px",
-                        }),
-                      }}
-                    >
-                      {redTotal}
-                    </span>
-                    <span style={{ opacity: 0.3, fontSize: 14 }}>–</span>
-                    <span
-                      style={{
-                        fontSize: 26,
-                        fontWeight: 900,
-                        color: "#93c5fd",
-                        minWidth: 32,
-                        textAlign: "left",
-                        ...(blueTotal > redTotal && {
-                          background: "rgba(29,78,216,0.35)",
-                          borderRadius: 6,
-                          padding: "2px 8px",
-                        }),
-                      }}
-                    >
-                      {blueTotal}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div style={{ width: "100%", overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", color: "white" }}>
+                <thead>
+                  {/* Judge headers */}
+                  <tr>
+                    <th style={{ padding: "8px 16px", textAlign: "left", fontSize: 11, letterSpacing: 3, opacity: 0.4, textTransform: "uppercase", fontWeight: 400 }} />
+                    {judgeIndices.map((i) => (
+                      <th key={i} colSpan={2} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, letterSpacing: 3, opacity: 0.5, textTransform: "uppercase", fontWeight: 400, borderBottom: subSep }}>
+                        Judge {i + 1}
+                      </th>
+                    ))}
+                  </tr>
+                  {/* Red / Blue sub-headers */}
+                  <tr>
+                    <th />
+                    {judgeIndices.map((i) => (
+                      <>
+                        <th key={`${i}_red`} style={{ padding: "4px 12px", textAlign: "center", fontSize: 12, color: "#fca5a5", fontWeight: 600, borderBottom: subSep }}>Red</th>
+                        <th key={`${i}_blue`} style={{ padding: "4px 12px", textAlign: "center", fontSize: 12, color: "#93c5fd", fontWeight: 600, borderBottom: subSep }}>Blue</th>
+                      </>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* One row per round */}
+                  {roundNumbers.map((r) => (
+                    <tr key={r}>
+                      <td style={{ padding: "10px 16px", fontSize: 12, opacity: 0.55, letterSpacing: 2, textTransform: "uppercase" }}>
+                        Round {r}
+                      </td>
+                      {judgeIndices.map((i) => (
+                        <>
+                          <td key={`${i}_red`} style={{ padding: "10px 12px", textAlign: "center" }}>
+                            <span style={{ color: "#fca5a5", fontFamily: "monospace", fontWeight: 700, fontSize: 18 }}>{scoreVal(r, i, "red")}</span>
+                          </td>
+                          <td key={`${i}_blue`} style={{ padding: "10px 12px", textAlign: "center" }}>
+                            <span style={{ color: "#93c5fd", fontFamily: "monospace", fontWeight: 700, fontSize: 18 }}>{scoreVal(r, i, "blue")}</span>
+                          </td>
+                        </>
+                      ))}
+                    </tr>
+                  ))}
+                  {/* Deductions row — only shown if any warnings exist */}
+                  {hasDeductions && (
+                    <tr style={{ borderTop: sep }}>
+                      <td style={{ padding: "8px 16px", fontSize: 11, opacity: 0.45, letterSpacing: 2, textTransform: "uppercase" }}>
+                        Deductions
+                      </td>
+                      {judgeIndices.map((i) => (
+                        <>
+                          <td key={`${i}_red`} style={{ padding: "8px 12px", textAlign: "center" }}>
+                            {totalRedDeductions > 0
+                              ? <span style={{ color: "rgba(252,165,165,0.5)", fontFamily: "monospace", fontWeight: 600, fontSize: 14 }}>-{totalRedDeductions}</span>
+                              : <span style={{ opacity: 0.25, fontSize: 14 }}>–</span>
+                            }
+                          </td>
+                          <td key={`${i}_blue`} style={{ padding: "8px 12px", textAlign: "center" }}>
+                            {totalBlueDeductions > 0
+                              ? <span style={{ color: "rgba(147,197,253,0.5)", fontFamily: "monospace", fontWeight: 600, fontSize: 14 }}>-{totalBlueDeductions}</span>
+                              : <span style={{ opacity: 0.25, fontSize: 14 }}>–</span>
+                            }
+                          </td>
+                        </>
+                      ))}
+                    </tr>
+                  )}
+                  {/* Total row */}
+                  <tr style={{ borderTop: sep }}>
+                    <td style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
+                      Total
+                    </td>
+                    {judgeIndices.map((i) => {
+                      const redSum = roundNumbers.reduce((s, r) => s + ((scores![r] ?? [])[i]?.red ?? 0), 0) - totalRedDeductions;
+                      const blueSum = roundNumbers.reduce((s, r) => s + ((scores![r] ?? [])[i]?.blue ?? 0), 0) - totalBlueDeductions;
+                      return (
+                        <>
+                          <td key={`${i}_red`} style={{ padding: "10px 12px", textAlign: "center" }}>
+                            <span style={{ color: "#fca5a5", fontFamily: "monospace", fontWeight: 900, fontSize: 22 }}>{redSum}</span>
+                          </td>
+                          <td key={`${i}_blue`} style={{ padding: "10px 12px", textAlign: "center" }}>
+                            <span style={{ color: "#93c5fd", fontFamily: "monospace", fontWeight: 900, fontSize: 22 }}>{blueSum}</span>
+                          </td>
+                        </>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Red curtain ── */}

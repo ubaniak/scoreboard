@@ -55,6 +55,7 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 			ID:          a.ID,
 			Name:        a.Name,
 			DateOfBirth: a.DateOfBirth,
+			Nationality: a.Nationality,
 			ClubID:      a.ClubID,
 			ImageUrl:    a.ImageUrl,
 		}
@@ -67,7 +68,7 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 }
 
 func (s *Sqlite) Create(athlete *entities.Athlete) error {
-	m := &Athlete{Name: athlete.Name, DateOfBirth: athlete.DateOfBirth, ClubID: athlete.ClubID}
+	m := &Athlete{Name: athlete.Name, DateOfBirth: athlete.DateOfBirth, Nationality: athlete.Nationality, ClubID: athlete.ClubID}
 	return s.db.Create(m).Error
 }
 
@@ -104,6 +105,9 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	}
 	if toUpdate.DateOfBirth != nil {
 		row.DateOfBirth = *toUpdate.DateOfBirth
+	}
+	if toUpdate.Nationality != nil {
+		row.Nationality = *toUpdate.Nationality
 	}
 	if toUpdate.ClubID != nil {
 		row.ClubID = *toUpdate.ClubID

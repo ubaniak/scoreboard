@@ -186,7 +186,7 @@ func main() {
 	athleteIDs := make([]uint, len(seedAthletes))
 	for i, a := range seedAthletes {
 		clubID := clubIDs[a.clubIndex]
-		if err := athleteUseCase.Create(a.name, a.dateOfBirth, &clubID); err != nil {
+		if err := athleteUseCase.Create(a.name, a.dateOfBirth, "", &clubID); err != nil {
 			log.Fatalf("create athlete %s: %v", a.name, err)
 		}
 		allAthletes, err := athleteUseCase.List()

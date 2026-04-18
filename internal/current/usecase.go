@@ -14,6 +14,7 @@ import (
 
 type UseCase interface {
 	Current() (*entities.Current, error)
+	List() (*entities.BoutList, error)
 }
 
 // AthleteQuerier is a narrow interface to look up athlete info without
@@ -22,15 +23,21 @@ type AthleteQuerier interface {
 	GetAthleteInfo(athleteID uint) (clubName, imageUrl string)
 }
 
+// RoundDetailsQuerier fetches foul/warning details for a single round.
+type RoundDetailsQuerier interface {
+	Get(boutId uint, roundNumber int) (*roundEntities.RoundDetails, error)
+}
+
 type usecase struct {
 	cards    cards.UseCase
 	bouts    bouts.UseCase
 	scores   scores.UseCase
 	athletes AthleteQuerier
+	rounds   RoundDetailsQuerier
 }
 
-func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier) UseCase {
-	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier}
+func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier, roundQuerier RoundDetailsQuerier) UseCase {
+	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier, rounds: roundQuerier}
 }
 
 func (u *usecase) Current() (*entities.Current, error) {
@@ -153,9 +160,89 @@ func (u *usecase) Current() (*entities.Current, error) {
 				Blue: s.Blue,
 			})
 		}
+
+		// Fetch warning counts for each round that has scores.
+		if u.rounds != nil {
+			current.Warnings = make(map[int]*entities.CurrentWarnings)
+			for roundNum := range current.Scores {
+				rd, err := u.rounds.Get(bout.ID, roundNum)
+				if err == nil && rd != nil {
+					redWarn := len(rd.Red.Warnings)
+					blueWarn := len(rd.Blue.Warnings)
+					if redWarn > 0 || blueWarn > 0 {
+						current.Warnings[roundNum] = &entities.CurrentWarnings{
+							Red:  redWarn,
+							Blue: blueWarn,
+						}
+					}
+				}
+			}
+			if len(current.Warnings) == 0 {
+				current.Warnings = nil
+			}
+		}
 	}
 
 	return &current, nil
+}
+
+func (u *usecase) List() (*entities.BoutList, error) {
+	card, err := u.cards.Current()
+	if err != nil {
+		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			return &entities.BoutList{}, nil
+		}
+		return nil, err
+	}
+
+	result := &entities.BoutList{
+		Card: &entities.CurrentCard{
+			ID:   card.ID,
+			Name: card.Name,
+		},
+	}
+
+	bouts, err := u.bouts.List(card.ID)
+	if err != nil {
+		if errors.Is(err, sberrs.ErrRecordNotFound) {
+			return result, nil
+		}
+		return nil, err
+	}
+
+	for _, b := range bouts {
+		decisionRevealed := b.Status == boutEntities.BoutStatusShowDecision || b.Status == boutEntities.BoutStatusCompleted
+
+		var redClub, blueClub, redImage, blueImage string
+		if u.athletes != nil {
+			if b.RedAthleteID != nil {
+				redClub, redImage = u.athletes.GetAthleteInfo(*b.RedAthleteID)
+			}
+			if b.BlueAthleteID != nil {
+				blueClub, blueImage = u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+			}
+		}
+
+		item := entities.BoutListItem{
+			ID:                  b.ID,
+			Number:              b.BoutNumber,
+			BoutType:            string(b.BoutType),
+			RedCorner:           b.RedCorner,
+			BlueCorner:          b.BlueCorner,
+			Status:              string(b.Status),
+			RedClubName:         redClub,
+			BlueClubName:        blueClub,
+			RedAthleteImageUrl:  redImage,
+			BlueAthleteImageUrl: blueImage,
+		}
+		if decisionRevealed {
+			item.Winner = b.Winner
+			item.Decision = b.Decision
+		}
+		result.Bouts = append(result.Bouts, item)
+	}
+
+	return result, nil
 }
 
 func ShouldShowScores(round *roundEntities.Round, bout *boutEntities.Bout) bool {

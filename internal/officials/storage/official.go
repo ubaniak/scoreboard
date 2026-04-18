@@ -4,7 +4,11 @@ import "gorm.io/gorm"
 
 type Official struct {
 	gorm.Model
-	ID     uint
-	CardID uint   `gorm:"not null"`
-	Name   string `gorm:"not null"`
+	ID                 uint
+	CardID             uint   `gorm:"not null"`
+	Name               string `gorm:"not null"`
+	Nationality        string
+	Gender             string
+	YearOfBirth        int
+	RegistrationNumber string
 }

@@ -42,6 +42,7 @@ type AthleteResponse struct {
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	DateOfBirth string `json:"dateOfBirth,omitempty"`
+	Nationality string `json:"nationality,omitempty"`
 	ClubID      *uint  `json:"clubId,omitempty"`
 	ClubName    string `json:"clubName,omitempty"`
 	ImageUrl    string `json:"imageUrl,omitempty"`
@@ -52,6 +53,7 @@ func toResponse(a entities.Athlete) AthleteResponse {
 		ID:          a.ID,
 		Name:        a.Name,
 		DateOfBirth: a.DateOfBirth,
+		Nationality: a.Nationality,
 		ClubID:      a.ClubID,
 		ClubName:    a.ClubName,
 		ImageUrl:    a.ImageUrl,
@@ -61,12 +63,14 @@ func toResponse(a entities.Athlete) AthleteResponse {
 type CreateAthleteRequest struct {
 	Name        string `json:"name"`
 	DateOfBirth string `json:"dateOfBirth"`
+	Nationality string `json:"nationality"`
 	ClubID      *uint  `json:"clubId"`
 }
 
 type UpdateAthleteRequest struct {
 	Name        *string `json:"name"`
 	DateOfBirth *string `json:"dateOfBirth"`
+	Nationality *string `json:"nationality"`
 	ClubID      *uint   `json:"clubId"`
 	ClearClub   bool    `json:"clearClub"`
 }
@@ -92,7 +96,7 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.DateOfBirth, req.ClubID)
+	err := a.useCase.Create(req.Name, req.DateOfBirth, req.Nationality, req.ClubID)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -113,6 +117,7 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 	toUpdate := &entities.UpdateAthlete{
 		Name:        req.Name,
 		DateOfBirth: req.DateOfBirth,
+		Nationality: req.Nationality,
 	}
 	if req.ClearClub {
 		toUpdate.ClubID = new(*uint) // &nil — clears the club
@@ -229,6 +234,10 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if i, ok := colIndex["dateOfBirth"]; ok && i < len(row) {
 			dob = row[i]
 		}
+		nationality := ""
+		if i, ok := colIndex["nationality"]; ok && i < len(row) {
+			nationality = row[i]
+		}
 		var clubID *uint
 		if i, ok := colIndex["clubId"]; ok && i < len(row) && row[i] != "" {
 			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
@@ -236,7 +245,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 				clubID = &id
 			}
 		}
-		if err := a.useCase.Create(name, dob, clubID); err != nil {
+		if err := a.useCase.Create(name, dob, nationality, clubID); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

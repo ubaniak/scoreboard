@@ -94,7 +94,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Glove Size" name="gloveSize">
+      <Form.Item<UpdateBoutProps> label="Glove Size" name="gloveSize" rules={[{ required: true, message: "Glove size is required" }]}>
         <Segmented
           size={"large"}
           shape="round"
@@ -125,7 +125,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Round length (min)" name="roundLength">
+      <Form.Item<UpdateBoutProps> label="Round length (min)" name="roundLength" rules={[{ required: true, message: "Round length is required" }]}>
         <Segmented
           size={"large"}
           shape="round"

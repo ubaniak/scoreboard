@@ -115,7 +115,7 @@ const EditClub = ({ club, onClose, onSubmit }: { club: Club; onClose: () => void
 
 type ClubOption = { value: number; label: string };
 
-const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; clubId?: number }) => void }) => {
+const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; nationality: string; clubId?: number }) => void }) => {
   const [form] = Form.useForm();
   return (
     <Form form={form} layout="vertical" onFinish={(v) => {
@@ -123,8 +123,9 @@ const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose
       onClose();
     }}>
       <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth"><DatePicker style={{ width: "100%" }} /></Form.Item>
-      <Form.Item label="Club" name="clubId"><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
+      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
+      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}><Input /></Form.Item>
+      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
       <Space>
         <Button type="text" onClick={onClose}>Cancel</Button>
         <Button type="primary" htmlType="submit">Submit</Button>
@@ -133,7 +134,7 @@ const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose
   );
 };
 
-const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; clubId?: number; clearClub?: boolean }) => void }) => {
+const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; nationality?: string; clubId?: number; clearClub?: boolean }) => void }) => {
   const [form] = Form.useForm();
   return (
     <Form
@@ -145,6 +146,7 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
         onSubmit({
           name: v.name,
           dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : undefined,
+          nationality: v.nationality,
           clubId: clearClub ? undefined : v.clubId,
           clearClub,
         });
@@ -152,8 +154,9 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
       }}
     >
       <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth"><DatePicker style={{ width: "100%" }} /></Form.Item>
-      <Form.Item label="Club" name="clubId"><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
+      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
+      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}><Input /></Form.Item>
+      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
       <Space>
         <Button type="text" onClick={onClose}>Cancel</Button>
         <Button type="primary" htmlType="submit">Submit</Button>
@@ -166,6 +169,8 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
 
 export const HomePage = () => {
   const { token } = useProfile();
+  const [clubSearch, setClubSearch] = useState("");
+  const [athleteSearch, setAthleteSearch] = useState("");
 
   const cards = useListCards({ token });
   const createCard = useMutateCreateCards({ token });
@@ -287,7 +292,10 @@ export const HomePage = () => {
                   </>
                 }
               >
-                <Table rowKey="id" dataSource={clubsQuery.data ?? []} columns={clubColumns} loading={clubsQuery.isLoading} pagination={false} />
+                <>
+                  <Input.Search placeholder="Search clubs..." value={clubSearch} onChange={(e) => setClubSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
+                  <Table rowKey="id" dataSource={(clubsQuery.data ?? []).filter((c) => `${c.name} ${c.location}`.toLowerCase().includes(clubSearch.toLowerCase()))} columns={clubColumns} loading={clubsQuery.isLoading} pagination={false} />
+                </>
               </TableLayout>
             ),
           },
@@ -309,7 +317,10 @@ export const HomePage = () => {
                   </>
                 }
               >
-                <Table rowKey="id" dataSource={athletesQuery.data ?? []} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
+                <>
+                  <Input.Search placeholder="Search athletes..." value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
+                  <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
+                </>
               </TableLayout>
             ),
           },

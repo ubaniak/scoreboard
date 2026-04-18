@@ -147,9 +147,10 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
             size="large"
             type={shown ? "default" : "primary"}
             icon={shown ? <CheckCircleOutlined /> : undefined}
-            onClick={() => {
+            onClick={(e) => {
               setShown(true);
               props.onShowDecision();
+              e.stopPropagation();
             }}
           >
             {shown ? "Showing on Scoreboard" : "Show Decision on Scoreboard"}
@@ -157,7 +158,8 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
           <Button
             size="large"
             danger
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               props.onComplete();
               props.onClose();
             }}

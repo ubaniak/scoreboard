@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, DatePicker, Form, Input, Popconfirm, Select, Space, Table, type TableProps } from "antd";
+import { useState } from "react";
 import dayjs from "dayjs";
 import {
   type Athlete,
@@ -16,7 +17,7 @@ import { useProfile } from "../providers/login";
 
 type ClubOption = { value: number; label: string };
 
-const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; clubId?: number }) => void }) => {
+const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; nationality: string; clubId?: number }) => void }) => {
   const [form] = Form.useForm();
   return (
     <Form form={form} layout="vertical" onFinish={(v) => {
@@ -26,10 +27,13 @@ const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose
       <Form.Item label="Name" name="name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth">
+      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}>
         <DatePicker style={{ width: "100%" }} />
       </Form.Item>
-      <Form.Item label="Club" name="clubId">
+      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
         <Select options={clubs} allowClear placeholder="Select club..." />
       </Form.Item>
       <Space>
@@ -40,7 +44,7 @@ const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose
   );
 };
 
-const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; clubId?: number; clearClub?: boolean }) => void }) => {
+const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; nationality?: string; clubId?: number; clearClub?: boolean }) => void }) => {
   const [form] = Form.useForm();
   return (
     <Form
@@ -55,6 +59,7 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
         onSubmit({
           name: v.name,
           dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : undefined,
+          nationality: v.nationality,
           clubId: clearClub ? undefined : v.clubId,
           clearClub,
         });
@@ -64,10 +69,13 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
       <Form.Item label="Name" name="name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth">
+      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}>
         <DatePicker style={{ width: "100%" }} />
       </Form.Item>
-      <Form.Item label="Club" name="clubId">
+      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
         <Select options={clubs} allowClear placeholder="Select club..." />
       </Form.Item>
       <Space>
@@ -80,6 +88,7 @@ const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; 
 
 export const AthletesPage = () => {
   const { token } = useProfile();
+  const [search, setSearch] = useState("");
   const athletes = useListAthletes({ token });
   const clubs = useListClubs({ token });
   const createAthlete = useMutateCreateAthlete({ token });
@@ -147,12 +156,23 @@ export const AthletesPage = () => {
           />
         }
       >
-        <Table
-          rowKey="id"
-          dataSource={athletes.data ?? []}
-          columns={columns}
-          loading={athletes.isLoading}
-        />
+        <>
+          <Input.Search
+            placeholder="Search athletes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ marginBottom: 12 }}
+            allowClear
+          />
+          <Table
+            rowKey="id"
+            dataSource={(athletes.data ?? []).filter((a) =>
+              `${a.name} ${a.clubName ?? ""}`.toLowerCase().includes(search.toLowerCase())
+            )}
+            columns={columns}
+            loading={athletes.isLoading}
+          />
+        </>
       </TableLayout>
     </PageLayout>
   );

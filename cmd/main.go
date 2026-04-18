@@ -169,7 +169,7 @@ func main() {
 	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, &athleteClubQuerier{athleteUseCase})
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, &athleteClubQuerier{athleteUseCase}, roundUseCase)
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)

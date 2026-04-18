@@ -68,6 +68,7 @@ export const RoundIndex = (props: RoundIndexProps) => {
   const isDecisionPhase =
     props.boutStatus === "waiting_for_decision" ||
     props.boutStatus === "decision_made" ||
+    props.boutStatus === "show_decision" ||
     (isRound3 && props.boutStatus === "score_complete");
 
   const viewingRound = (props.rounds || [])[selectedRound];

@@ -7,6 +7,7 @@ export type Athlete = {
   id: number;
   name: string;
   dateOfBirth: string;
+  nationality?: string;
   clubId?: number;
   clubName?: string;
   imageUrl?: string;
@@ -31,7 +32,7 @@ export const useListAthletes = (props: TokenBase) => {
   });
 };
 
-export type CreateAthleteProps = { name: string; dateOfBirth: string; clubId?: number };
+export type CreateAthleteProps = { name: string; dateOfBirth: string; nationality: string; clubId?: number };
 
 export const useMutateCreateAthlete = (props: TokenBase) => {
   const queryClient = useQueryClient();
@@ -54,6 +55,7 @@ export const useMutateCreateAthlete = (props: TokenBase) => {
 export type UpdateAthleteProps = {
   name?: string;
   dateOfBirth?: string;
+  nationality?: string;
   clubId?: number;
   clearClub?: boolean;
 };

@@ -1,6 +1,7 @@
 import { EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Table, Tag, type TableProps } from "antd";
+import { Button, Input, Table, Tag, type TableProps } from "antd";
+import { useState } from "react";
 import type { UpdateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
 import type { Bout, Official } from "../../entities/cards";
@@ -22,6 +23,17 @@ export type ListBoutsProps = {
 };
 export const ListBouts = (props: ListBoutsProps) => {
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+
+  const filtered = (props.bouts || []).filter((b) => {
+    const q = search.toLowerCase();
+    return (
+      String(b.boutNumber).includes(q) ||
+      b.redCorner?.toLowerCase().includes(q) ||
+      b.blueCorner?.toLowerCase().includes(q) ||
+      b.status?.toLowerCase().includes(q)
+    );
+  });
 
   const columns: TableProps<Bout>["columns"] = [
     {
@@ -152,9 +164,16 @@ export const ListBouts = (props: ListBoutsProps) => {
   ];
   return (
     <>
+      <Input.Search
+        placeholder="Search bouts..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ marginBottom: 12 }}
+        allowClear
+      />
       <Table
         loading={props.loading}
-        dataSource={props.bouts || []}
+        dataSource={filtered}
         columns={columns}
         scroll={{ y: 55 * 5 }}
       />

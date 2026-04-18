@@ -47,6 +47,10 @@ export const useGetOfficials = (props: TokenBase & CardRequestType) => {
 
 export type CreateOfficialProps = {
   name: string;
+  nationality?: string;
+  gender?: string;
+  yearOfBirth?: number;
+  registrationNumber?: string;
 };
 
 export const useMutateCreateOfficial = (props: TokenBase & CardRequestType) => {
@@ -90,6 +94,10 @@ export const useMutateImportOfficials = (props: TokenBase & CardRequestType) => 
 
 export type UpdateOfficialProps = {
   name: string;
+  nationality?: string;
+  gender?: string;
+  yearOfBirth?: number;
+  registrationNumber?: string;
 };
 
 export const useMutateUpdateOfficial = (props: TokenBase & CardRequestType) => {

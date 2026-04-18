@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { useState } from "react";
 import {
   type Club,
   useMutateCreateClub,
@@ -50,6 +51,7 @@ const EditClub = ({ club, onClose, onSubmit }: { club: Club; onClose: () => void
 
 export const ClubsPage = () => {
   const { token } = useProfile();
+  const [search, setSearch] = useState("");
   const clubs = useListClubs({ token });
   const createClub = useMutateCreateClub({ token });
   const updateClub = useMutateUpdateClub({ token });
@@ -111,12 +113,23 @@ export const ClubsPage = () => {
           />
         }
       >
-        <Table
-          rowKey="id"
-          dataSource={clubs.data ?? []}
-          columns={columns}
-          loading={clubs.isLoading}
-        />
+        <>
+          <Input.Search
+            placeholder="Search clubs..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ marginBottom: 12 }}
+            allowClear
+          />
+          <Table
+            rowKey="id"
+            dataSource={(clubs.data ?? []).filter((c) =>
+              `${c.name} ${c.location}`.toLowerCase().includes(search.toLowerCase())
+            )}
+            columns={columns}
+            loading={clubs.isLoading}
+          />
+        </>
       </TableLayout>
     </PageLayout>
   );

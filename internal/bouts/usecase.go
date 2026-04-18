@@ -168,7 +168,7 @@ func (uc *useCase) UpdateStatus(cardId, boutId uint, status entities.BoutStatus)
 	}
 	// On initial start only, advance round 1 to in_progress
 	if status == entities.BoutStatusInProgress && prevStatus == entities.BoutStatusNotStarted {
-		_ = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusInProgress)
+		_ = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusReady)
 	}
 	return nil
 }

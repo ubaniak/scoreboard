@@ -34,4 +34,5 @@ export type Current = {
     status: string;
   };
   scores?: Record<number, { red: number; blue: number }[]>;
+  warnings?: Record<number, { red: number; blue: number }>;
 };
