@@ -10,53 +10,109 @@ type ScheduleRowProps = {
   isNext: boolean;
 };
 
-const UpNextCard = ({ bout: b }: { bout: ScheduleItem }) => (
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "1fr auto 1fr",
-      alignItems: "center",
-      gap: 24,
-      padding: "24px 32px",
-      borderRadius: 12,
-      border: "1px solid rgba(255,255,255,0.18)",
-      background: "rgba(255,255,255,0.06)",
-      maxWidth: 960,
-      margin: "0 auto",
-      width: "100%",
-      boxSizing: "border-box",
-    }}
-  >
-    <div style={{ textAlign: "right" }}>
-      <div style={{ fontSize: 28, fontWeight: 800, color: "#fca5a5", lineHeight: 1.2 }}>{b.redCorner || "—"}</div>
-      {b.redClubName && (
-        <div style={{ fontSize: 12, opacity: 0.45, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>{b.redClubName}</div>
-      )}
-    </div>
+type FeaturedRowProps = {
+  bout: ScheduleItem;
+  size: "sm" | "lg";
+  label?: string;
+};
 
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: 0.5, marginBottom: 8 }}>Up Next · Bout {b.boutNumber}</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-        <div style={{ display: "flex", gap: 12, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", opacity: 0.45 }}>
-          {b.weightClass > 0 && <span>{b.weightClass} kg</span>}
-          {b.gloveSize && <span>{b.gloveSize}</span>}
+const FeaturedRow = ({ bout: b, size, label }: FeaturedRowProps) => {
+  const isDone = b.status === "completed" || b.status === "show_decision";
+  const isLg = size === "lg";
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        gap: isLg ? 24 : 16,
+        padding: isLg ? "22px 32px" : "12px 24px",
+        borderRadius: isLg ? 12 : 8,
+        border: isLg ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.07)",
+        background: isLg ? "rgba(255,255,255,0.06)" : "transparent",
+        opacity: size === "sm" ? 0.55 : 1,
+        maxWidth: 960,
+        margin: "0 auto",
+        width: "100%",
+        boxSizing: "border-box",
+        transition: "opacity 0.3s",
+      }}
+    >
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: isLg ? 26 : 15, fontWeight: isLg ? 800 : 600, color: "#fca5a5", lineHeight: 1.2 }}>
+          {b.redCorner || "—"}
         </div>
-        <div style={{ display: "flex", gap: 12, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", opacity: 0.35 }}>
-          {b.roundLength > 0 && <span>{b.roundLength}min</span>}
-          {b.ageCategory && <span>{b.ageCategory}</span>}
-          {b.experience && <span>{b.experience}</span>}
+        {isLg && b.redClubName && (
+          <div style={{ fontSize: 11, opacity: 0.4, letterSpacing: 1, textTransform: "uppercase", marginTop: 3 }}>{b.redClubName}</div>
+        )}
+      </div>
+
+      <div style={{ textAlign: "center", minWidth: isLg ? 160 : 120 }}>
+        {label && (
+          <div style={{ fontSize: 9, letterSpacing: 3, textTransform: "uppercase", opacity: 0.45, marginBottom: isLg ? 6 : 3 }}>
+            {label} · Bout {b.boutNumber}
+          </div>
+        )}
+        {isDone && b.winner ? (
+          <div style={{ fontSize: isLg ? 13 : 11, letterSpacing: 1, textTransform: "uppercase" }}>
+            <span style={{ color: b.winner === "red" ? "#fca5a5" : b.winner === "blue" ? "#93c5fd" : "white", fontWeight: 700 }}>
+              {b.winner === "red" ? b.redCorner : b.winner === "blue" ? b.blueCorner : "Draw"}
+            </span>
+            {b.decision && (
+              <div style={{ fontSize: 9, opacity: 0.5, marginTop: 2 }}>{b.decision}</div>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 10, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", opacity: 0.4 }}>
+              {b.weightClass > 0 && <span>{b.weightClass} kg</span>}
+              {b.gloveSize && <span>{b.gloveSize}</span>}
+            </div>
+            {isLg && (
+              <div style={{ display: "flex", gap: 10, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", opacity: 0.3 }}>
+                {b.roundLength > 0 && <span>{b.roundLength}min</span>}
+                {b.ageCategory && <span>{b.ageCategory}</span>}
+                {b.experience && <span>{b.experience}</span>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ textAlign: "left" }}>
+        <div style={{ fontSize: isLg ? 26 : 15, fontWeight: isLg ? 800 : 600, color: "#93c5fd", lineHeight: 1.2 }}>
+          {b.blueCorner || "—"}
         </div>
+        {isLg && b.blueClubName && (
+          <div style={{ fontSize: 11, opacity: 0.4, letterSpacing: 1, textTransform: "uppercase", marginTop: 3 }}>{b.blueClubName}</div>
+        )}
       </div>
     </div>
+  );
+};
 
-    <div style={{ textAlign: "left" }}>
-      <div style={{ fontSize: 28, fontWeight: 800, color: "#93c5fd", lineHeight: 1.2 }}>{b.blueCorner || "—"}</div>
-      {b.blueClubName && (
-        <div style={{ fontSize: 12, opacity: 0.45, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>{b.blueClubName}</div>
-      )}
+type FeaturedBoutsProps = {
+  bouts: ScheduleItem[];
+  nextBoutId: string;
+};
+
+const FeaturedBouts = ({ bouts, nextBoutId }: FeaturedBoutsProps) => {
+  const idx = bouts.findIndex((b) => b.id === nextBoutId);
+  if (idx === -1) return null;
+
+  const prev = idx > 0 ? bouts[idx - 1] : undefined;
+  const current = bouts[idx];
+  const next = idx < bouts.length - 1 ? bouts[idx + 1] : undefined;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, marginBottom: 20 }}>
+      {prev && <FeaturedRow bout={prev} size="sm" label="Previous" />}
+      <FeaturedRow bout={current} size="lg" label="Up Next" />
+      {next && <FeaturedRow bout={next} size="sm" label="After" />}
     </div>
-  </div>
-);
+  );
+};
 
 const ScheduleRow = ({ bout: b, isNext }: ScheduleRowProps) => {
   const isDone = b.status === "completed" || b.status === "show_decision";
@@ -134,7 +190,6 @@ type ScheduleViewProps = {
 };
 
 export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps) => {
-  const nextBout = nextBoutId ? bouts.find((b) => b.id === nextBoutId) : undefined;
   const listBouts = bouts;
 
   const needsPaging = listBouts.length > PAGE_SIZE;
@@ -224,11 +279,7 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
         <div style={{ textAlign: "center", fontSize: 24, opacity: 0.4, marginTop: 80 }}>Scoreboard</div>
       ) : (
         <>
-          {nextBout && (
-            <div style={{ flexShrink: 0, marginBottom: 24 }}>
-              <UpNextCard bout={nextBout} />
-            </div>
-          )}
+          {nextBoutId && <FeaturedBouts bouts={bouts} nextBoutId={nextBoutId} />}
 
           {listBouts.length > 0 && (
           <div
@@ -238,6 +289,10 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
               maxWidth: 960,
               margin: "0 auto",
               width: "100%",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 12,
+              padding: "16px",
+              boxSizing: "border-box",
             }}
           >
             {/* Exiting page — slides up and out */}

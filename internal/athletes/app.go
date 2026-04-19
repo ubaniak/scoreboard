@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/athletes/entities"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -162,7 +163,12 @@ func (a *App) UploadImage(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	ext := filepath.Ext(header.Filename)
-	dir := "./uploads/athletes"
+	uploadsDir, err := datadir.UploadsDir()
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	dir := filepath.Join(uploadsDir, "athletes")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		presenter.WithError(err).Present()
 		return

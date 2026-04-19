@@ -6,13 +6,18 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ubaniak/scoreboard/internal/app"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
 func AddApps(router *mux.Router) error {
-	db, err := gorm.Open(sqlite.Open("scoreboard.db"), &gorm.Config{})
+	dbPath, err := datadir.DBPath()
+	if err != nil {
+		return err
+	}
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		return err
 	}

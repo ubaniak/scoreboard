@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/ubaniak/scoreboard/internal/athletes"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/cards"
@@ -122,7 +123,10 @@ var seedAthletes = []struct {
 }
 
 func main() {
-	const dbPath = "scoreboard.db"
+	dbPath, err := datadir.DBPath()
+	if err != nil {
+		log.Fatalf("data dir: %v", err)
+	}
 
 	if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
 		log.Fatalf("remove db: %v", err)

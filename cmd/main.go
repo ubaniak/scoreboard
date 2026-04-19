@@ -25,6 +25,7 @@ import (
 	"github.com/joho/godotenv"
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
 	"github.com/ubaniak/scoreboard/internal/app"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auth"
@@ -56,10 +57,19 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
+	dbPath, err := datadir.DBPath()
+	if err != nil {
+		panic(err)
+	}
+	uploadsDir, err := datadir.UploadsDir()
+	if err != nil {
+		panic(err)
+	}
+
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
-	db, err := gorm.Open(sqlite.Open("scoreboard.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
@@ -192,7 +202,7 @@ func main() {
 		allowedOrigins = strings.Split(origins, ",")
 	}
 
-	srv := startServer(r, allowedOrigins)
+	srv := startServer(r, allowedOrigins, uploadsDir)
 
 	systray.Run(func() {
 		systray.SetTitle(AppTitle)
@@ -225,7 +235,7 @@ func main() {
 	})
 }
 
-func startServer(r *mux.Router, allowedOrigins []string) *http.Server {
+func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string) *http.Server {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -300,7 +310,7 @@ func startServer(r *mux.Router, allowedOrigins []string) *http.Server {
 	}
 
 	// Serve uploaded images from disk
-	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
+	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadsDir))))
 
 	// Use the custom handler for all non-API paths
 	r.PathPrefix("/").Handler(http.HandlerFunc(spaHandler))
