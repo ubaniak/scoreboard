@@ -67,6 +67,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
             scores={props.scores}
             rounds={props.rounds}
             boutStatus="waiting_for_scores"
+            isAdmin
           />
         )}
 
@@ -178,6 +179,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
           scores={props.scores}
           rounds={props.rounds}
           boutStatus="waiting_for_scores"
+          isAdmin
         />
       )}
       <Form

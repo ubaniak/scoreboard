@@ -9,6 +9,7 @@ import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 import {
   useMutateCompleteScoreRound,
+  useMutateOverallWinner,
   useMutateReadyScore,
   useMutateScoreRound,
   type ScoreRoundProps,
@@ -36,12 +37,8 @@ export const JudgePage = () => {
   const officials = useGetOfficials({ token, cardId });
   const ready = useMutateReadyScore({ token, cardId, boutId, roundNumber });
   const score = useMutateScoreRound({ token, cardId, boutId, roundNumber });
-  const completeRound = useMutateCompleteScoreRound({
-    token,
-    cardId,
-    boutId,
-    roundNumber,
-  });
+  const completeRound = useMutateCompleteScoreRound({ token, cardId, boutId, roundNumber });
+  const overallWinner = useMutateOverallWinner({ token, cardId, boutId });
 
   const scoreRound = async (values: ScoreRoundProps) => {
     await score.mutateAsync(values);
@@ -55,6 +52,10 @@ export const JudgePage = () => {
     await ready.mutateAsync(name);
   };
 
+  const pickOverallWinner = async (winner: "red" | "blue") => {
+    await overallWinner.mutateAsync(winner);
+  };
+
   return (
     <PageLayout title="Judge" subTitle={current.data?.card?.name}>
       <JudgeIndex
@@ -65,6 +66,7 @@ export const JudgePage = () => {
           scoreRound,
           complete,
           setReady,
+          pickOverallWinner,
         }}
       />
     </PageLayout>

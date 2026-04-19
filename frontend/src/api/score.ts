@@ -110,6 +110,30 @@ export const useMutateCompleteScoreRound = (
   });
 };
 
+export const useMutateOverallWinner = (
+  props: TokenBase & CardRequestType & BoutRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (winner: "red" | "blue") => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/overall-winner`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+          body: JSON.stringify({ winner }),
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.all(props.token) });
+    },
+  });
+};
+
 export const useGetAllBoutScores = (props: TokenBase & CardRequestType & { boutIds: string[] }) => {
   return useQueries({
     queries: props.boutIds.map((boutId) => ({

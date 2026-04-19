@@ -64,6 +64,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("rounds.score.ready", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/ready", "POST", a.ScoreReady, rbac.JudgeList...)
 	rb.AddRoute("rounds.score", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score", "POST", a.Score, rbac.JudgeList...)
 	rb.AddRoute("rounds.score.complete", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/score/complete", "POST", a.ScoreComplete, rbac.JudgeList...)
+	rb.AddRoute("bouts.overall_winner", "/{cardId}/bouts/{boutId}/overall-winner", "POST", a.PickOverallWinner, rbac.JudgeList...)
 
 	allowedRoles := append([]string{rbac.Admin}, rbac.JudgeList...)
 	rb.AddRoute("scores.list", "/{cardId}/bouts/{boutId}/scores", "GET", a.ListScores, allowedRoles...)
@@ -718,12 +719,13 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 }
 
 type ScoreResponse struct {
-	RoundNumber int     `json:"roundNumber"`
-	JudgeRole   string  `json:"judgeRole"`
-	JudgeName   *string `json:"judgeName,omitempty"`
-	Red         int     `json:"red"`
-	Blue        int     `json:"blue"`
-	Status      *string `json:"status,omitempty"`
+	RoundNumber   int     `json:"roundNumber"`
+	JudgeRole     string  `json:"judgeRole"`
+	JudgeName     *string `json:"judgeName,omitempty"`
+	Red           int     `json:"red"`
+	Blue          int     `json:"blue"`
+	Status        *string `json:"status,omitempty"`
+	OverallWinner *string `json:"overallWinner,omitempty"`
 }
 
 func scoreToResponse(s *scoreEntities.Score, isAdmin bool) ScoreResponse {
@@ -737,6 +739,9 @@ func scoreToResponse(s *scoreEntities.Score, isAdmin bool) ScoreResponse {
 		resp.JudgeName = &s.JudgeName
 		status := string(s.Status)
 		resp.Status = &status
+		if s.OverallWinner != "" {
+			resp.OverallWinner = &s.OverallWinner
+		}
 	}
 	return resp
 }
@@ -863,6 +868,51 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	err = h.useCase.CreateBulk(cardId, bouts)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
+}
+
+type PickOverallWinnerRequest struct {
+	Winner string `json:"winner"`
+}
+
+func (h *App) PickOverallWinner(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	boutId, err := muxutils.ParseVars[uint](vars, "boutId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	role, ok := rbac.GetRoleFromCtx(r.Context())
+	if !ok {
+		presenter.WithError(errors.New("unknown role")).Present()
+		return
+	}
+
+	var req PickOverallWinnerRequest
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if req.Winner != "red" && req.Winner != "blue" {
+		presenter.WithError(errors.New("winner must be 'red' or 'blue'")).Present()
+		return
+	}
+
+	err = h.scoreUseCase.SetOverallWinner(cardId, boutId, role, req.Winner)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	h.broadcaster.Notify()
+	presenter.Present()
 }
 
 func (h *App) ListScores(w http.ResponseWriter, r *http.Request) {

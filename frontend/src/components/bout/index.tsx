@@ -144,6 +144,7 @@ export const BoutIndex = (props: BoutIndexProps) => {
           scores={props.scores ?? {}}
           rounds={props.bout?.rounds}
           boutStatus={props.bout?.status}
+          isAdmin
         />
       </Show>
     </>

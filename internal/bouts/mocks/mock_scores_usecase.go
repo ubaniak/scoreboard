@@ -138,3 +138,17 @@ func (mr *MockScoresUseCaseMockRecorder) Score(cardId, boutId, roundNumber, Judg
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Score", reflect.TypeOf((*MockScoresUseCase)(nil).Score), cardId, boutId, roundNumber, JudgeRole, red, blue)
 }
+
+// SetOverallWinner mocks base method.
+func (m *MockScoresUseCase) SetOverallWinner(cardId, boutId uint, judgeRole, winner string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetOverallWinner", cardId, boutId, judgeRole, winner)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetOverallWinner indicates an expected call of SetOverallWinner.
+func (mr *MockScoresUseCaseMockRecorder) SetOverallWinner(cardId, boutId, judgeRole, winner any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOverallWinner", reflect.TypeOf((*MockScoresUseCase)(nil).SetOverallWinner), cardId, boutId, judgeRole, winner)
+}

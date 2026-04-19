@@ -6,6 +6,7 @@ export type Score = {
   red: number;
   blue: number;
   status?: ScoreStatus;
+  overallWinner?: "red" | "blue";
 };
 
 export type ScoresByRound = Record<number, Score[]>;

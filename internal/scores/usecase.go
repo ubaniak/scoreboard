@@ -13,6 +13,7 @@ type UseCase interface {
 	Score(cardId, boutId uint, roundNumber int, JudgeRole string, red, blue int) error
 	Complete(cardId, boutId uint, roundNumber int, JudgeRole string) error
 	List(cardId, boutId uint) ([]*entities.Score, error)
+	SetOverallWinner(cardId, boutId uint, judgeRole, winner string) error
 }
 
 type usecase struct {
@@ -108,4 +109,8 @@ func (u *usecase) Complete(cardId, boutId uint, roundNumber int, JudgeRole strin
 
 func (u *usecase) List(cardId, boutId uint) ([]*entities.Score, error) {
 	return u.storage.List(cardId, boutId)
+}
+
+func (u *usecase) SetOverallWinner(cardId, boutId uint, judgeRole, winner string) error {
+	return u.storage.SetOverallWinner(cardId, boutId, judgeRole, winner)
 }

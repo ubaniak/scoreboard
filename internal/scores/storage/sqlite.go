@@ -23,14 +23,15 @@ func toStorageModel(e *entities.Score) *Score {
 	}
 
 	return &Score{
-		CardId:      e.CardId,
-		BoutNumber:  e.BoutNumber,
-		RoundNumber: e.RoundNumber,
-		JudgeRole:   e.JudgeRole,
-		JudgeName:   e.JudgeName,
-		Red:         e.Red,
-		Blue:        e.Blue,
-		Status:      string(e.Status),
+		CardId:        e.CardId,
+		BoutNumber:    e.BoutNumber,
+		RoundNumber:   e.RoundNumber,
+		JudgeRole:     e.JudgeRole,
+		JudgeName:     e.JudgeName,
+		Red:           e.Red,
+		Blue:          e.Blue,
+		Status:        string(e.Status),
+		OverallWinner: e.OverallWinner,
 	}
 }
 
@@ -40,15 +41,25 @@ func (s *Score) toEntity() *entities.Score {
 	}
 
 	return &entities.Score{
-		CardId:      s.CardId,
-		BoutNumber:  s.BoutNumber,
-		RoundNumber: s.RoundNumber,
-		JudgeRole:   s.JudgeRole,
-		JudgeName:   s.JudgeName,
-		Red:         s.Red,
-		Blue:        s.Blue,
-		Status:      entities.ScoreStatus(s.Status),
+		CardId:        s.CardId,
+		BoutNumber:    s.BoutNumber,
+		RoundNumber:   s.RoundNumber,
+		JudgeRole:     s.JudgeRole,
+		JudgeName:     s.JudgeName,
+		Red:           s.Red,
+		Blue:          s.Blue,
+		Status:        entities.ScoreStatus(s.Status),
+		OverallWinner: s.OverallWinner,
 	}
+}
+
+func (s *Sqlite) SetOverallWinner(cardId, boutId uint, judgeRole, winner string) error {
+	return s.db.
+		Model(&Score{}).
+		Where("card_id = ? AND bout_number = ? AND round_number = 3 AND judge_role = ?",
+			cardId, boutId, judgeRole).
+		Update("overall_winner", winner).
+		Error
 }
 
 func (s *Sqlite) Create(score *entities.Score) error {
