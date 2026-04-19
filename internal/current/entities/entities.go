@@ -59,6 +59,11 @@ type BoutListItemResponse struct {
 	Status              string `json:"status"`
 	Winner              string `json:"winner,omitempty"`
 	Decision            string `json:"decision,omitempty"`
+	WeightClass         int    `json:"weightClass"`
+	GloveSize           string `json:"gloveSize"`
+	RoundLength         int    `json:"roundLength"`
+	AgeCategory         string `json:"ageCategory"`
+	Experience          string `json:"experience"`
 	RedClubName         string `json:"redClubName,omitempty"`
 	BlueClubName        string `json:"blueClubName,omitempty"`
 	RedAthleteImageUrl  string `json:"redAthleteImageUrl,omitempty"`
@@ -79,6 +84,11 @@ type BoutListItem struct {
 	Status              string
 	Winner              string
 	Decision            string
+	WeightClass         int
+	GloveSize           string
+	RoundLength         int
+	AgeCategory         string
+	Experience          string
 	RedClubName         string
 	BlueClubName        string
 	RedAthleteImageUrl  string

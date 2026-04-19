@@ -1,46 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CardRequestType, TokenBase } from "./entities";
+import type { TokenBase } from "./entities";
 import { baseUrl } from "./constants";
 import type { Official } from "../entities/cards";
 import { fetchClient } from "./fetchClient";
 
-export const useMutateDeleteOfficial = (props: TokenBase & CardRequestType) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (officialId: string) =>
-      fetchClient(`${baseUrl}/api/cards/${props.cardId}/officials/${officialId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${props.token}`,
-        },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
-    },
-  });
-};
-
 const keys = {
   all: (token: string) => ["officials", token] as const,
-  list: (token: string, cardId: string) => [...keys.all(token), cardId, "list"] as const,
-  get: (token: string, id: string) => [...keys.all(token), id] as const,
+  list: (token: string) => [...keys.all(token), "list"] as const,
 };
 
-export const useGetOfficials = (props: TokenBase & CardRequestType) => {
+export const useGetOfficials = (props: TokenBase) => {
   return useQuery({
-    queryKey: keys.list(props.token, props.cardId),
-    enabled: !!props.cardId && !!props.token,
+    queryKey: keys.list(props.token),
+    enabled: !!props.token,
     queryFn: async () => {
-      return fetchClient<Official[]>(
-        `${baseUrl}/api/cards/${props.cardId}/officials`,
-        {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${props.token}`,
-          },
-        }
-      );
+      return fetchClient<Official[]>(`${baseUrl}/api/officials`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
     },
   });
 };
@@ -53,11 +32,11 @@ export type CreateOfficialProps = {
   registrationNumber?: string;
 };
 
-export const useMutateCreateOfficial = (props: TokenBase & CardRequestType) => {
+export const useMutateCreateOfficial = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (toCreate: CreateOfficialProps) => {
-      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/officials`, {
+      return fetchClient(`${baseUrl}/api/officials`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,18 +46,18 @@ export const useMutateCreateOfficial = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
 
-export const useMutateImportOfficials = (props: TokenBase & CardRequestType) => {
+export const useMutateImportOfficials = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (file: File) => {
       const form = new FormData();
       form.append("file", file);
-      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/officials/import`, {
+      return fetchClient(`${baseUrl}/api/officials/import`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${props.token}`,
@@ -87,7 +66,7 @@ export const useMutateImportOfficials = (props: TokenBase & CardRequestType) => 
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };
@@ -100,7 +79,7 @@ export type UpdateOfficialProps = {
   registrationNumber?: string;
 };
 
-export const useMutateUpdateOfficial = (props: TokenBase & CardRequestType) => {
+export const useMutateUpdateOfficial = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -110,20 +89,34 @@ export const useMutateUpdateOfficial = (props: TokenBase & CardRequestType) => {
       toUpdate: UpdateOfficialProps;
       officialId: string;
     }) => {
-      return fetchClient(
-        `${baseUrl}/api/cards/${props.cardId}/officials/${officialId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${props.token}`,
-          },
-          body: JSON.stringify(toUpdate),
-        }
-      );
+      return fetchClient(`${baseUrl}/api/officials/${officialId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: JSON.stringify(toUpdate),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
+export const useMutateDeleteOfficial = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (officialId: string) =>
+      fetchClient(`${baseUrl}/api/officials/${officialId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
     },
   });
 };

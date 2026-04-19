@@ -1,7 +1,9 @@
-import { Button, Drawer } from "antd";
+import { Button } from "antd";
 import { useState } from "react";
 import type { Controls } from ".";
 import type { Current } from "../../entities/current";
+import { CornerHalf } from "./CornerHalf";
+import { MarginDrawer } from "./MarginDrawer";
 
 type Margin = 9 | 8 | 7;
 type Winner = "red" | "blue";
@@ -36,18 +38,11 @@ export const ScoreControls = (props: ScoreControlsProps) => {
     props.controls.scoreRound(scores);
   };
 
-  const handleChangeScore = () => {
-    setSelected(null);
-  };
-
   const redCorner = props.current?.bout?.redCorner ?? "Red";
   const blueCorner = props.current?.bout?.blueCorner ?? "Blue";
 
   const redScore = selected ? (selected.winner === "red" ? 10 : selected.margin) : null;
   const blueScore = selected ? (selected.winner === "blue" ? 10 : selected.margin) : null;
-
-  const redDimmed = !!selected && selected.winner !== "red";
-  const blueDimmed = !!selected && selected.winner !== "blue";
 
   return (
     <>
@@ -62,115 +57,22 @@ export const ScoreControls = (props: ScoreControlsProps) => {
           zIndex: 100,
         }}
       >
-        {/* Red half */}
-        <div
-          onClick={() => handleWinnerTap("red")}
-          style={{
-            flex: 1,
-            background: "#991b1b",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: isLocked ? "default" : "pointer",
-            opacity: redDimmed ? 0.45 : 1,
-            transition: "opacity 0.3s ease",
-            userSelect: "none",
-            WebkitTapHighlightColor: "transparent",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: 4,
-              color: "rgba(255,255,255,0.55)",
-              textTransform: "uppercase",
-              marginBottom: 16,
-            }}
-          >
-            Red Corner
-          </div>
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 800,
-              color: "white",
-              textAlign: "center",
-              padding: "0 24px",
-              lineHeight: 1.2,
-            }}
-          >
-            {redCorner}
-          </div>
-          {redScore !== null && (
-            <div
-              style={{
-                fontSize: 96,
-                fontWeight: 900,
-                color: "white",
-                lineHeight: 1,
-                marginTop: 32,
-              }}
-            >
-              {redScore}
-            </div>
-          )}
-        </div>
-
-        {/* Blue half */}
-        <div
-          onClick={() => handleWinnerTap("blue")}
-          style={{
-            flex: 1,
-            background: "#1d4ed8",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: isLocked ? "default" : "pointer",
-            opacity: blueDimmed ? 0.45 : 1,
-            transition: "opacity 0.3s ease",
-            userSelect: "none",
-            WebkitTapHighlightColor: "transparent",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: 4,
-              color: "rgba(255,255,255,0.55)",
-              textTransform: "uppercase",
-              marginBottom: 16,
-            }}
-          >
-            Blue Corner
-          </div>
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 800,
-              color: "white",
-              textAlign: "center",
-              padding: "0 24px",
-              lineHeight: 1.2,
-            }}
-          >
-            {blueCorner}
-          </div>
-          {blueScore !== null && (
-            <div
-              style={{
-                fontSize: 96,
-                fontWeight: 900,
-                color: "white",
-                lineHeight: 1,
-                marginTop: 32,
-              }}
-            >
-              {blueScore}
-            </div>
-          )}
-        </div>
+        <CornerHalf
+          corner="red"
+          name={redCorner}
+          score={redScore}
+          dimmed={!!selected && selected.winner !== "red"}
+          locked={isLocked}
+          onTap={() => handleWinnerTap("red")}
+        />
+        <CornerHalf
+          corner="blue"
+          name={blueCorner}
+          score={blueScore}
+          dimmed={!!selected && selected.winner !== "blue"}
+          locked={isLocked}
+          onTap={() => handleWinnerTap("blue")}
+        />
 
         {/* Role / name badge */}
         <div
@@ -244,7 +146,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
             </Button>
             {!props.submitted && (
               <span
-                onClick={handleChangeScore}
+                onClick={() => setSelected(null)}
                 style={{
                   fontSize: 11,
                   letterSpacing: 2,
@@ -260,49 +162,13 @@ export const ScoreControls = (props: ScoreControlsProps) => {
         )}
       </div>
 
-      {/* Margin selection drawer */}
-      <Drawer
+      <MarginDrawer
         open={!!pendingWinner}
-        placement="bottom"
+        winner={pendingWinner}
+        winnerName={pendingWinner === "red" ? redCorner : blueCorner}
         onClose={() => setPendingWinner(null)}
-        title={
-          pendingWinner
-            ? `${pendingWinner === "red" ? redCorner : blueCorner} wins`
-            : ""
-        }
-        styles={{
-          wrapper: { height: "auto" },
-          header: {
-            textTransform: "uppercase",
-            letterSpacing: 3,
-            fontSize: 13,
-          },
-          body: { paddingBottom: 32 },
-        }}
-      >
-        <div style={{ display: "flex", gap: 12 }}>
-          {([9, 8, 7] as Margin[]).map((margin) => (
-            <button
-              key={margin}
-              onClick={() => handleMarginSelect(margin)}
-              style={{
-                flex: 1,
-                height: 88,
-                background: pendingWinner === "red" ? "#991b1b" : "#1d4ed8",
-                color: "white",
-                border: "none",
-                borderRadius: 14,
-                fontSize: 28,
-                fontWeight: 800,
-                cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              10-{margin}
-            </button>
-          ))}
-        </div>
-      </Drawer>
+        onSelect={handleMarginSelect}
+      />
     </>
   );
 };

@@ -1,5 +1,4 @@
 import { useParams } from "@tanstack/react-router";
-import { Button, Flex, Popconfirm } from "antd";
 import {
   useGetBouts,
   useMutateCreateBout,
@@ -10,56 +9,23 @@ import {
 import { useListAthletes } from "../api/athletes";
 import { useGetCardById, useMutateUpdateCardJudges, useMutateUpdateCardStatus } from "../api/cards";
 import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
-import {
-  useGetOfficials,
-  useMutateCreateOfficial,
-  useMutateDeleteOfficial,
-  useMutateImportOfficials,
-  useMutateUpdateOfficial,
-} from "../api/officials";
+import { useGetOfficials } from "../api/officials";
 import { useGetAllBoutScores } from "../api/score";
 import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
+import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
-import { OfficialIndex } from "../components/officials";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-
-type CardActionProps = {
-  status?: string;
-  start: () => void;
-  end: () => void;
-};
-
-const CardActions = (props: CardActionProps) => {
-  return (
-    <Flex gap="small">
-      {props.status === "upcoming" && (
-        <Button onClick={props.start}>Start</Button>
-      )}
-      {props.status === "in_progress" && (
-        <Popconfirm
-          title="End this card?"
-          description="This will mark the card as completed."
-          onConfirm={props.end}
-          okText="End Card"
-          cancelText="Cancel"
-        >
-          <Button danger>End Card</Button>
-        </Popconfirm>
-      )}
-    </Flex>
-  );
-};
 
 export const CardPage = () => {
   const { token } = useProfile();
   const { cardId } = useParams({ strict: false });
 
   const bouts = useGetBouts({ token, cardId });
-  const officials = useGetOfficials({ token, cardId });
+  const officials = useGetOfficials({ token });
   const card = useGetCardById({ token, cardId });
   const athletes = useListAthletes({ token });
 
@@ -76,10 +42,6 @@ export const CardPage = () => {
     boutIds: bouts.data?.map((b) => b.id) ?? [],
   });
 
-  const addOfficial = useMutateCreateOfficial({ token, cardId });
-  const updateOfficial = useMutateUpdateOfficial({ token, cardId });
-  const deleteOfficial = useMutateDeleteOfficial({ token, cardId });
-  const importOfficials = useMutateImportOfficials({ token, cardId });
   const updateCardStatus = useMutateUpdateCardStatus({ token });
   const updateCardJudges = useMutateUpdateCardJudges({ token });
 
@@ -119,7 +81,7 @@ export const CardPage = () => {
         </>
       }
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={<CardActions status={card.data?.status} start={start} end={end} />}
+      action={<CardActions status={card.data?.status} onStart={start} onEnd={end} />}
     >
       {card.data && <CardControls card={card.data} onSetJudges={onSetJudges} />}
       <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
@@ -138,18 +100,6 @@ export const CardPage = () => {
         }}
         onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
         onImport={(file) => importBouts.mutateAsync(file)}
-      />
-      <OfficialIndex
-        loading={officials.isLoading}
-        officials={officials.data}
-        onEditOfficial={(values) => {
-          updateOfficial.mutate(values);
-        }}
-        onCreateOfficial={(values) => {
-          addOfficial.mutate(values);
-        }}
-        onDeleteOfficial={(id) => deleteOfficial.mutate(id)}
-        onImport={(file) => importOfficials.mutate(file)}
       />
     </PageLayout>
   );

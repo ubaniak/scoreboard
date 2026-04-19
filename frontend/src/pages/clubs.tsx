@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Form, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Space, Table, type TableProps } from "antd";
 import { useState } from "react";
 import {
   type Club,
@@ -9,45 +9,11 @@ import {
   useListClubs,
 } from "../api/clubs";
 import { ActionMenu } from "../components/actionMenu/actionMenu";
+import { AddClub } from "../components/clubs/AddClub";
+import { EditClub } from "../components/clubs/EditClub";
 import { TableLayout } from "../layouts/table";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-
-const AddClub = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (v: { name: string; location: string }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" onFinish={(v) => { onSubmit(v); onClose(); }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Location" name="location">
-        <Input />
-      </Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-const EditClub = ({ club, onClose, onSubmit }: { club: Club; onClose: () => void; onSubmit: (v: { name?: string; location?: string }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" initialValues={club} onFinish={(v) => { onSubmit(v); onClose(); }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Location" name="location">
-        <Input />
-      </Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
 
 export const ClubsPage = () => {
   const { token } = useProfile();

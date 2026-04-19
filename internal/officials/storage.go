@@ -8,9 +8,9 @@ import (
 )
 
 type Storage interface {
-	Save(cardId uint, official *entities.Official) error
-	Get(cardId uint) ([]entities.Official, error)
-	Delete(cardId, id uint) error
+	Save(official *entities.Official) error
+	Get() ([]entities.Official, error)
+	Delete(id uint) error
 }
 
 func NewSqlite(db *gorm.DB) (Storage, error) {

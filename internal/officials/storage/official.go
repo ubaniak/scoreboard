@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Official struct {
 	gorm.Model
 	ID                 uint
-	CardID             uint   `gorm:"not null"`
+	CardID             uint
 	Name               string `gorm:"not null"`
 	Nationality        string
 	Gender             string

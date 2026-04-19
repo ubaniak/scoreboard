@@ -18,10 +18,9 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 	return &Sqlite{db: db}, nil
 }
 
-func (s *Sqlite) Save(cardId uint, official *entities.Official) error {
+func (s *Sqlite) Save(official *entities.Official) error {
 	if official.ID == 0 {
 		o := &Official{
-			CardID:             cardId,
 			Name:               official.Name,
 			Nationality:        official.Nationality,
 			Gender:             official.Gender,
@@ -31,7 +30,7 @@ func (s *Sqlite) Save(cardId uint, official *entities.Official) error {
 		return s.db.Create(o).Error
 	}
 	return s.db.Model(&Official{}).
-		Where("id = ? AND card_id = ?", official.ID, cardId).
+		Where("id = ?", official.ID).
 		Updates(map[string]interface{}{
 			"name":                official.Name,
 			"nationality":         official.Nationality,
@@ -41,11 +40,10 @@ func (s *Sqlite) Save(cardId uint, official *entities.Official) error {
 		}).Error
 }
 
-func (s *Sqlite) Get(cardId uint) ([]entities.Official, error) {
-
+func (s *Sqlite) Get() ([]entities.Official, error) {
 	var officials []Official
 	var response []entities.Official
-	if err := s.db.Where("card_id = ?", cardId).Find(&officials).Error; err != nil {
+	if err := s.db.Find(&officials).Error; err != nil {
 		return []entities.Official{}, err
 	}
 
@@ -63,8 +61,8 @@ func (s *Sqlite) Get(cardId uint) ([]entities.Official, error) {
 	return response, nil
 }
 
-func (s *Sqlite) Delete(cardId, id uint) error {
-	if err := s.db.Where("card_id = ? AND id = ?", cardId, id).Delete(&Official{}).Error; err != nil {
+func (s *Sqlite) Delete(id uint) error {
+	if err := s.db.Where("id = ?", id).Delete(&Official{}).Error; err != nil {
 		return err
 	}
 

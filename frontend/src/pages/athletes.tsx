@@ -1,7 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, DatePicker, Form, Input, Popconfirm, Select, Space, Table, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Space, Table, type TableProps } from "antd";
 import { useState } from "react";
-import dayjs from "dayjs";
 import {
   type Athlete,
   useMutateCreateAthlete,
@@ -11,80 +10,13 @@ import {
 } from "../api/athletes";
 import { useListClubs } from "../api/clubs";
 import { ActionMenu } from "../components/actionMenu/actionMenu";
+import { AddAthlete } from "../components/athletes/AddAthlete";
+import { EditAthlete } from "../components/athletes/EditAthlete";
 import { TableLayout } from "../layouts/table";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
 type ClubOption = { value: number; label: string };
-
-const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; nationality: string; clubId?: number }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" onFinish={(v) => {
-      onSubmit({ ...v, dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : "" });
-      onClose();
-    }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}>
-        <DatePicker style={{ width: "100%" }} />
-      </Form.Item>
-      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
-        <Select options={clubs} allowClear placeholder="Select club..." />
-      </Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; nationality?: string; clubId?: number; clearClub?: boolean }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form
-      form={form}
-      layout="vertical"
-      initialValues={{
-        ...athlete,
-        dateOfBirth: athlete.dateOfBirth ? dayjs(athlete.dateOfBirth) : undefined,
-      }}
-      onFinish={(v) => {
-        const clearClub = v.clubId === undefined || v.clubId === null;
-        onSubmit({
-          name: v.name,
-          dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : undefined,
-          nationality: v.nationality,
-          clubId: clearClub ? undefined : v.clubId,
-          clearClub,
-        });
-        onClose();
-      }}
-    >
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}>
-        <DatePicker style={{ width: "100%" }} />
-      </Form.Item>
-      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
-        <Select options={clubs} allowClear placeholder="Select club..." />
-      </Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
 
 export const AthletesPage = () => {
   const { token } = useProfile();

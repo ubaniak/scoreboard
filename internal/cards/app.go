@@ -13,8 +13,8 @@ import (
 
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards/entities"
+	"github.com/ubaniak/scoreboard/internal/events"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
-	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
@@ -22,15 +22,15 @@ import (
 
 type App struct {
 	useCase     UseCase
-	officialApp *officials.App
 	boutsApp    *bouts.App
+	broadcaster *events.Broadcaster
 }
 
-func NewApp(useCase UseCase, officialApp *officials.App, boutsApp *bouts.App) *App {
+func NewApp(useCase UseCase, boutsApp *bouts.App, broadcaster *events.Broadcaster) *App {
 	return &App{
 		useCase:     useCase,
-		officialApp: officialApp,
 		boutsApp:    boutsApp,
+		broadcaster: broadcaster,
 	}
 }
 
@@ -45,7 +45,6 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("image.cards", "/{id}/image", "POST", h.UploadImage, rbac.Admin)
 	sr.AddRoute("image.cards.delete", "/{id}/image", "DELETE", h.RemoveImage, rbac.Admin)
 
-	h.officialApp.RegisterRoutes(sr)
 	h.boutsApp.RegisterRoutes(sr)
 }
 
@@ -163,6 +162,9 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	toUpdate := UpdateCardRequestToEntity(req)
 
 	err = h.useCase.Update(id, toUpdate)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 

@@ -21,7 +21,7 @@ func NewApp(useCase UseCase, broadcaster *events.Broadcaster) *App {
 
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("current", "/current", http.MethodGet, h.Current)
-	rb.AddRoute("current.list", "/current/list", http.MethodGet, h.List)
+	rb.AddRoute("current.schedule", "/current/schedule", http.MethodGet, h.Schedule)
 	rb.AddRoute("current.events", "/current/events", http.MethodGet, h.Events)
 }
 
@@ -112,7 +112,7 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 	presenter.WithData(response).Present()
 }
 
-func (h *App) List(w http.ResponseWriter, r *http.Request) {
+func (h *App) Schedule(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[entities.BoutListResponse](r, w)
 	result, err := h.useCase.List()
 	if err != nil {
@@ -139,6 +139,11 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 			Status:              b.Status,
 			Winner:              b.Winner,
 			Decision:            b.Decision,
+			WeightClass:         b.WeightClass,
+			GloveSize:           b.GloveSize,
+			RoundLength:         b.RoundLength,
+			AgeCategory:         b.AgeCategory,
+			Experience:          b.Experience,
 			RedClubName:         b.RedClubName,
 			BlueClubName:        b.BlueClubName,
 			RedAthleteImageUrl:  b.RedAthleteImageUrl,

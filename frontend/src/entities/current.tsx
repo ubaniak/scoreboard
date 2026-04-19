@@ -22,6 +22,34 @@ type BoutInfo = {
   blueAthleteImageUrl?: string;
 };
 
+export type ScheduleItem = {
+  id: string;
+  boutNumber: number;
+  boutType: string;
+  redCorner: string;
+  blueCorner: string;
+  status: string;
+  winner?: string;
+  decision?: string;
+  weightClass: number;
+  gloveSize: string;
+  roundLength: number;
+  ageCategory: string;
+  experience: string;
+  redClubName?: string;
+  blueClubName?: string;
+  redAthleteImageUrl?: string;
+  blueAthleteImageUrl?: string;
+};
+
+export type Schedule = {
+  card?: {
+    id: string;
+    name: string;
+  };
+  bouts: ScheduleItem[];
+};
+
 export type Current = {
   card?: {
     id: string;

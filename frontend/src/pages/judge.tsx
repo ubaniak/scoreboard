@@ -34,7 +34,7 @@ export const JudgePage = () => {
   const boutId = current.data?.bout?.id ?? "";
   const roundNumber = current.data?.round?.roundNumber ?? 0;
 
-  const officials = useGetOfficials({ token, cardId });
+  const officials = useGetOfficials({ token });
   const ready = useMutateReadyScore({ token, cardId, boutId, roundNumber });
   const score = useMutateScoreRound({ token, cardId, boutId, roundNumber });
   const completeRound = useMutateCompleteScoreRound({ token, cardId, boutId, roundNumber });

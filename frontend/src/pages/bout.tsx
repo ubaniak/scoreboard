@@ -9,7 +9,6 @@ import {
   useGetFouls,
   useGetRound,
   useMutateCompleteBout,
-  useMutateDeleteBout,
   useMutateEightCount,
   useMutateHandleFoul,
   useMutateMakeDecision,
@@ -25,70 +24,15 @@ import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { isApisLoading } from "../api/handlers";
 import { useGetOfficials } from "../api/officials";
 import { useGetScores } from "../api/score";
-import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { BoutIndex } from "../components/bout";
-import { ExportBout } from "../components/bout/export";
-import { EditBout } from "../components/bouts/edit";
+import { BoutPageActions } from "../components/bouts/BoutPageActions";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { ApiLoading } from "../components/loading/Apiloading";
-import type { Bout, Card, Official } from "../entities/cards";
-import type { ScoresByRound } from "../entities/scores";
+import type { Bout } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
-const PageActions = ({
-  bout,
-  card,
-  scores,
-  officials,
-  cardId,
-  token,
-}: {
-  bout: Bout;
-  card: Card;
-  scores: ScoresByRound;
-  officials: Official[];
-  cardId: string;
-  token: string;
-}) => {
-  const navigate = useNavigate();
-  const deleteBout = useMutateDeleteBout(cardId, token);
-  const updateBout = useMutateUpdateBout({ token, cardId });
-
-  return (
-    <>
-      <ActionMenu
-        trigger={{ text: "Export" }}
-        content={{
-          title: "Export Bout",
-          body: () => <ExportBout card={card} bout={bout} scores={scores} />,
-        }}
-      />
-      <ActionMenu
-        trigger={{ text: "Edit" }}
-        content={{
-          title: "Edit Bout",
-          body: (close) => (
-            <EditBout
-              bout={bout}
-              officials={officials}
-              onClose={close}
-              onSubmit={(toUpdate) => {
-                updateBout.mutate({ toUpdate, boutInfo: { boutId: bout.id } });
-              }}
-              onDelete={() => {
-                deleteBout.mutate(bout.id, {
-                  onSuccess: () => navigate({ to: `/card/${cardId}` }),
-                });
-              }}
-            />
-          ),
-        }}
-      />
-    </>
-  );
-};
 
 export const BoutPage = () => {
   const { token } = useProfile();
@@ -183,7 +127,7 @@ export const BoutPage = () => {
   });
 
   const scores = useGetScores({ token, cardId, boutId });
-  const officials = useGetOfficials({ token, cardId });
+  const officials = useGetOfficials({ token });
   const updateBout = useMutateUpdateBout({ token, cardId });
 
   const onStartBout = () => {
@@ -237,7 +181,7 @@ export const BoutPage = () => {
           >
             Bout {nextBout?.boutNumber}
           </Button>
-          <PageActions
+          <BoutPageActions
             bout={bout.data!}
             card={card.data!}
             scores={scores.data ?? {}}

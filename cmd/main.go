@@ -166,7 +166,7 @@ func main() {
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
 	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase})
 
-	cardApp := cards.NewApp(cardUseCase, officialApp, boutsApp)
+	cardApp := cards.NewApp(cardUseCase, boutsApp, broadcaster)
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, &athleteClubQuerier{athleteUseCase}, roundUseCase)
@@ -179,6 +179,7 @@ func main() {
 	apiRegister.Add(deviceApp)
 	apiRegister.Add(clubApp)
 	apiRegister.Add(athleteApp)
+	apiRegister.Add(officialApp)
 
 	apiRegister.Register(rb)
 

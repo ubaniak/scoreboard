@@ -18,6 +18,7 @@ import (
 	clubEntities "github.com/ubaniak/scoreboard/internal/clubs/entities"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/officials"
+	officialEntities "github.com/ubaniak/scoreboard/internal/officials/entities"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
@@ -62,11 +63,27 @@ var weightClasses = []int{54, 57, 60, 63, 67, 71, 75, 80, 86, 92}
 
 var genders = []boutEntities.Gender{boutEntities.Male, boutEntities.Female}
 
-var officialNames = []string{
-	"James Doyle", "Robert Hicks", "William Torres", "Michael Flynn", "David Ortega",
-	"Richard Stone", "Charles Webb", "Thomas Nolan", "Christopher Shaw", "Daniel Cruz",
-	"Matthew Bell", "Anthony Page", "Mark Jensen", "Donald Carr", "Steven Malone",
-	"Paul Garrett", "Andrew Tran", "Joshua Lane", "Kenneth Marsh", "Kevin Byrne",
+var seedOfficialData = []officialEntities.Official{
+	{Name: "James Doyle", Nationality: "Canadian", Gender: "male", YearOfBirth: 1972, RegistrationNumber: "CAN-1001"},
+	{Name: "Robert Hicks", Nationality: "Canadian", Gender: "male", YearOfBirth: 1968, RegistrationNumber: "CAN-1002"},
+	{Name: "William Torres", Nationality: "Mexican", Gender: "male", YearOfBirth: 1975, RegistrationNumber: "MEX-2001"},
+	{Name: "Michael Flynn", Nationality: "American", Gender: "male", YearOfBirth: 1980, RegistrationNumber: "USA-3001"},
+	{Name: "David Ortega", Nationality: "Mexican", Gender: "male", YearOfBirth: 1977, RegistrationNumber: "MEX-2002"},
+	{Name: "Richard Stone", Nationality: "Canadian", Gender: "male", YearOfBirth: 1965, RegistrationNumber: "CAN-1003"},
+	{Name: "Charles Webb", Nationality: "American", Gender: "male", YearOfBirth: 1983, RegistrationNumber: "USA-3002"},
+	{Name: "Thomas Nolan", Nationality: "Canadian", Gender: "male", YearOfBirth: 1970, RegistrationNumber: "CAN-1004"},
+	{Name: "Christopher Shaw", Nationality: "American", Gender: "male", YearOfBirth: 1978, RegistrationNumber: "USA-3003"},
+	{Name: "Daniel Cruz", Nationality: "Mexican", Gender: "male", YearOfBirth: 1985, RegistrationNumber: "MEX-2003"},
+	{Name: "Sarah Mitchell", Nationality: "Canadian", Gender: "female", YearOfBirth: 1982, RegistrationNumber: "CAN-1005"},
+	{Name: "Anthony Page", Nationality: "American", Gender: "male", YearOfBirth: 1973, RegistrationNumber: "USA-3004"},
+	{Name: "Laura Jensen", Nationality: "Canadian", Gender: "female", YearOfBirth: 1979, RegistrationNumber: "CAN-1006"},
+	{Name: "Donald Carr", Nationality: "American", Gender: "male", YearOfBirth: 1966, RegistrationNumber: "USA-3005"},
+	{Name: "Steven Malone", Nationality: "Canadian", Gender: "male", YearOfBirth: 1974, RegistrationNumber: "CAN-1007"},
+	{Name: "Paul Garrett", Nationality: "American", Gender: "male", YearOfBirth: 1981, RegistrationNumber: "USA-3006"},
+	{Name: "Andrew Tran", Nationality: "Canadian", Gender: "male", YearOfBirth: 1988, RegistrationNumber: "CAN-1008"},
+	{Name: "Joshua Lane", Nationality: "American", Gender: "male", YearOfBirth: 1976, RegistrationNumber: "USA-3007"},
+	{Name: "Kenneth Marsh", Nationality: "Canadian", Gender: "male", YearOfBirth: 1969, RegistrationNumber: "CAN-1009"},
+	{Name: "Kevin Byrne", Nationality: "Canadian", Gender: "male", YearOfBirth: 1984, RegistrationNumber: "CAN-1010"},
 }
 
 var seedClubs = []clubEntities.Club{
@@ -253,7 +270,12 @@ func main() {
 	}
 
 	// Create 20 officials
-	if err := officialUseCase.CreateBulk(cardID, officialNames); err != nil {
+	seedOfficials := make([]*officialEntities.Official, len(seedOfficialData))
+	for i := range seedOfficialData {
+		o := seedOfficialData[i]
+		seedOfficials[i] = &o
+	}
+	if err := officialUseCase.CreateBulk(seedOfficials); err != nil {
 		log.Fatalf("create officials: %v", err)
 	}
 	fmt.Println("Created 20 officials.")

@@ -1,7 +1,6 @@
-import { DeleteOutlined, EditOutlined, InboxOutlined, PictureOutlined } from "@ant-design/icons";
-import { App as AntApp, Avatar, Button, Collapse, DatePicker, Form, Input, Popconfirm, Select, Space, Table, Upload, type TableProps, type UploadFile } from "antd";
+import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
+import { Avatar, Button, Collapse, Input, Popconfirm, Space, Table, type TableProps } from "antd";
 import { ImageUpload } from "../components/image/imageUpload";
-import dayjs from "dayjs";
 import { useState } from "react";
 import {
   type Club,
@@ -24,6 +23,14 @@ import {
   useListAthletes,
 } from "../api/athletes";
 import {
+  useGetOfficials,
+  useMutateCreateOfficial,
+  useMutateDeleteOfficial,
+  useMutateImportOfficials,
+  useMutateUpdateOfficial,
+} from "../api/officials";
+import { OfficialIndex } from "../components/officials";
+import {
   useListCards,
   useMutateCreateCards,
   useMutateDeleteCard,
@@ -33,144 +40,27 @@ import {
 } from "../api/cards";
 import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { CardIndex } from "../components/cards";
+import { ImportCSV } from "../components/shared/ImportCSV";
+import { AddClub } from "../components/clubs/AddClub";
+import { EditClub } from "../components/clubs/EditClub";
+import { AddAthlete } from "../components/athletes/AddAthlete";
+import { EditAthlete } from "../components/athletes/EditAthlete";
 import { TableLayout } from "../layouts/table";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
-// ----- Shared CSV import component -----
-
-const ImportCSV = ({ onClose, onImport, hint }: { onClose: () => void; onImport: (f: File) => void; hint: string }) => {
-  const { message } = AntApp.useApp();
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [pending, setPending] = useState(false);
-
-  const handleUpload = async () => {
-    const file = fileList[0];
-    if (!file) return;
-    setPending(true);
-    try {
-      onImport(file as unknown as File);
-      message.success(`Imported from ${file.name}`);
-      setFileList([]);
-      onClose();
-    } catch (err) {
-      message.error((err as Error).message || "Import failed");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Space direction="vertical" style={{ width: "100%" }}>
-      <Upload.Dragger
-        accept=".csv"
-        maxCount={1}
-        fileList={fileList}
-        beforeUpload={(file) => { setFileList([file]); return false; }}
-        onRemove={() => setFileList([])}
-      >
-        <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-        <p className="ant-upload-text">Click or drag a CSV file to upload</p>
-        <p className="ant-upload-hint">{hint}</p>
-      </Upload.Dragger>
-      <Space>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="primary" disabled={fileList.length === 0} loading={pending} onClick={handleUpload}>Import</Button>
-      </Space>
-    </Space>
-  );
-};
-
-// ----- Clubs inline components -----
-
-const AddClub = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (v: { name: string; location: string }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" onFinish={(v) => { onSubmit(v); onClose(); }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Location" name="location"><Input /></Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-const EditClub = ({ club, onClose, onSubmit }: { club: Club; onClose: () => void; onSubmit: (v: { name?: string; location?: string }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" initialValues={club} onFinish={(v) => { onSubmit(v); onClose(); }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Location" name="location"><Input /></Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-// ----- Athletes inline components -----
-
 type ClubOption = { value: number; label: string };
-
-const AddAthlete = ({ clubs, onClose, onSubmit }: { clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name: string; dateOfBirth: string; nationality: string; clubId?: number }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form form={form} layout="vertical" onFinish={(v) => {
-      onSubmit({ ...v, dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : "" });
-      onClose();
-    }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
-      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}><Input /></Form.Item>
-      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: { athlete: Athlete; clubs: ClubOption[]; onClose: () => void; onSubmit: (v: { name?: string; dateOfBirth?: string; nationality?: string; clubId?: number; clearClub?: boolean }) => void }) => {
-  const [form] = Form.useForm();
-  return (
-    <Form
-      form={form}
-      layout="vertical"
-      initialValues={{ ...athlete, dateOfBirth: athlete.dateOfBirth ? dayjs(athlete.dateOfBirth) : undefined }}
-      onFinish={(v) => {
-        const clearClub = v.clubId === undefined || v.clubId === null;
-        onSubmit({
-          name: v.name,
-          dateOfBirth: v.dateOfBirth ? dayjs(v.dateOfBirth).format("YYYY-MM-DD") : undefined,
-          nationality: v.nationality,
-          clubId: clearClub ? undefined : v.clubId,
-          clearClub,
-        });
-        onClose();
-      }}
-    >
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
-      <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true, message: "Date of birth is required" }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
-      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}><Input /></Form.Item>
-      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}><Select options={clubs} allowClear placeholder="Select club..." /></Form.Item>
-      <Space>
-        <Button type="text" onClick={onClose}>Cancel</Button>
-        <Button type="primary" htmlType="submit">Submit</Button>
-      </Space>
-    </Form>
-  );
-};
-
-// ----- Home page -----
 
 export const HomePage = () => {
   const { token } = useProfile();
   const [clubSearch, setClubSearch] = useState("");
   const [athleteSearch, setAthleteSearch] = useState("");
+
+  const officialsQuery = useGetOfficials({ token });
+  const createOfficial = useMutateCreateOfficial({ token });
+  const updateOfficial = useMutateUpdateOfficial({ token });
+  const deleteOfficial = useMutateDeleteOfficial({ token });
+  const importOfficials = useMutateImportOfficials({ token });
 
   const cards = useListCards({ token });
   const createCard = useMutateCreateCards({ token });
@@ -322,6 +212,20 @@ export const HomePage = () => {
                   <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
                 </>
               </TableLayout>
+            ),
+          },
+          {
+            key: "officials",
+            label: "Officials",
+            children: (
+              <OfficialIndex
+                loading={officialsQuery.isLoading}
+                officials={officialsQuery.data}
+                onCreateOfficial={(values) => createOfficial.mutate(values)}
+                onEditOfficial={(values) => updateOfficial.mutate(values)}
+                onDeleteOfficial={(id) => deleteOfficial.mutate(id)}
+                onImport={(file) => importOfficials.mutate(file)}
+              />
             ),
           },
         ]}

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/officials/entities"
@@ -22,12 +24,13 @@ func NewApp(useCase UseCase) *App {
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	rb.AddRoute("official.create", "/{cardId}/officials", "POST", a.Create, rbac.Admin)
-	rb.AddRoute("official.import", "/{cardId}/officials/import", "POST", a.ImportCSV, rbac.Admin)
+	sr := rb.AddSubroute("officials")
 	allowedRoles := append([]string{rbac.Admin}, rbac.JudgeList...)
-	rb.AddRoute("official.list", "/{cardId}/officials", "GET", a.List, allowedRoles...)
-	rb.AddRoute("official.update", "/{cardId}/officials/{id}", "PUT", a.Update, rbac.Admin)
-	rb.AddRoute("official.delete", "/{cardId}/officials/{id}", "DELETE", a.Delete, rbac.Admin)
+	sr.AddRoute("official.list", "", "GET", a.List, allowedRoles...)
+	sr.AddRoute("official.create", "", "POST", a.Create, rbac.Admin)
+	sr.AddRoute("official.import", "/import", "POST", a.ImportCSV, rbac.Admin)
+	sr.AddRoute("official.update", "/{id}", "PUT", a.Update, rbac.Admin)
+	sr.AddRoute("official.delete", "/{id}", "DELETE", a.Delete, rbac.Admin)
 }
 
 type CreateOfficialRequest struct {
@@ -40,21 +43,15 @@ type CreateOfficialRequest struct {
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
-	vars := mux.Vars(r)
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 
 	var createReq CreateOfficialRequest
-	err = json.NewDecoder(r.Body).Decode(&createReq)
+	err := json.NewDecoder(r.Body).Decode(&createReq)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	err = h.useCase.Create(cardId, &entities.Official{
+	err = h.useCase.Create(&entities.Official{
 		Name:               createReq.Name,
 		Nationality:        createReq.Nationality,
 		Gender:             createReq.Gender,
@@ -75,14 +72,8 @@ type ListOfficialResponse struct {
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]ListOfficialResponse](r, w)
-	vars := mux.Vars(r)
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 
-	officials, err := h.useCase.Get(cardId)
+	officials, err := h.useCase.Get()
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -113,14 +104,9 @@ type UpdateOfficialRequest struct {
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 
 	var req UpdateOfficialRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -132,7 +118,7 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.useCase.Update(cardId, id, &entities.Official{
+	err = h.useCase.Update(id, &entities.Official{
 		Name:               req.Name,
 		Nationality:        req.Nationality,
 		Gender:             req.Gender,
@@ -145,32 +131,20 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 	vars := mux.Vars(r)
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 	id, err := muxutils.ParseVars[uint](vars, "id")
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
 
-	err = h.useCase.Delete(cardId, id)
+	err = h.useCase.Delete(id)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
 // ImportCSV accepts a multipart form upload with a "file" field containing a CSV.
-// Expected CSV columns (with header row): name
+// Required columns: name. Optional: nationality, gender, yearOfBirth, registrationNumber
 func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
-	vars := mux.Vars(r)
-
-	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
-	if err != nil {
-		presenter.WithError(err).Present()
-		return
-	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		presenter.WithError(errors.New("failed to parse multipart form")).Present()
@@ -207,11 +181,26 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	names := make([]string, 0, len(records)-1)
+	officials := make([]*entities.Official, 0, len(records)-1)
 	for _, row := range records[1:] {
-		names = append(names, row[colIndex["name"]])
+		o := &entities.Official{Name: row[colIndex["name"]]}
+		if i, ok := colIndex["nationality"]; ok && i < len(row) {
+			o.Nationality = row[i]
+		}
+		if i, ok := colIndex["gender"]; ok && i < len(row) {
+			o.Gender = row[i]
+		}
+		if i, ok := colIndex["yearOfBirth"]; ok && i < len(row) && row[i] != "" {
+			if v, parseErr := strconv.Atoi(row[i]); parseErr == nil {
+				o.YearOfBirth = v
+			}
+		}
+		if i, ok := colIndex["registrationNumber"]; ok && i < len(row) {
+			o.RegistrationNumber = row[i]
+		}
+		officials = append(officials, o)
 	}
 
-	err = h.useCase.CreateBulk(cardId, names)
+	err = h.useCase.CreateBulk(officials)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
