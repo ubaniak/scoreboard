@@ -20,6 +20,7 @@ type Card struct {
 	ShowAthleteImages       bool
 	ShowClubImages          bool
 	ShowOfficialAffiliation string
+	ShowAthleteAffiliation  string
 }
 
 type UpdateCard struct {
@@ -31,4 +32,5 @@ type UpdateCard struct {
 	ShowAthleteImages       *bool
 	ShowClubImages          *bool
 	ShowOfficialAffiliation *string
+	ShowAthleteAffiliation  *string
 }

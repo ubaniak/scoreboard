@@ -18,19 +18,22 @@ import (
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	"github.com/ubaniak/scoreboard/internal/reports"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 type App struct {
 	useCase     UseCase
 	boutsApp    *bouts.App
+	reportsApp  *reports.App
 	broadcaster *events.Broadcaster
 }
 
-func NewApp(useCase UseCase, boutsApp *bouts.App, broadcaster *events.Broadcaster) *App {
+func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, broadcaster *events.Broadcaster) *App {
 	return &App{
 		useCase:     useCase,
 		boutsApp:    boutsApp,
+		reportsApp:  reportsApp,
 		broadcaster: broadcaster,
 	}
 }
@@ -47,6 +50,10 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("image.cards.delete", "/{id}/image", "DELETE", h.RemoveImage, rbac.Admin)
 
 	h.boutsApp.RegisterRoutes(sr)
+
+	// Reports live at /api/cards/{id}/reports/...
+	reportsSr := sr.AddSubroute("{id}/reports")
+	h.reportsApp.RegisterRoutes(reportsSr)
 }
 
 type CreateCardRequest struct {
@@ -78,6 +85,7 @@ type GetCardResponse struct {
 	ShowAthleteImages       bool   `json:"showAthleteImages"`
 	ShowClubImages          bool   `json:"showClubImages"`
 	ShowOfficialAffiliation string `json:"showOfficialAffiliation"`
+	ShowAthleteAffiliation  string `json:"showAthleteAffiliation"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
@@ -88,6 +96,10 @@ func mapCardToResponse(card entities.Card) *GetCardResponse {
 	affiliation := card.ShowOfficialAffiliation
 	if affiliation == "" {
 		affiliation = "none"
+	}
+	athleteAffiliation := card.ShowAthleteAffiliation
+	if athleteAffiliation == "" {
+		athleteAffiliation = "club"
 	}
 	return &GetCardResponse{
 		Id:                      card.ID,
@@ -100,6 +112,7 @@ func mapCardToResponse(card entities.Card) *GetCardResponse {
 		ShowAthleteImages:       card.ShowAthleteImages,
 		ShowClubImages:          card.ShowClubImages,
 		ShowOfficialAffiliation: affiliation,
+		ShowAthleteAffiliation:  athleteAffiliation,
 	}
 }
 

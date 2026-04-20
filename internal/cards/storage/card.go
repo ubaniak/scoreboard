@@ -16,4 +16,5 @@ type Card struct {
 	ShowAthleteImages       bool   `gorm:"default:false"`
 	ShowClubImages          bool   `gorm:"default:false"`
 	ShowOfficialAffiliation string `gorm:"default:'none'"`
+	ShowAthleteAffiliation  string `gorm:"default:'club'"`
 }

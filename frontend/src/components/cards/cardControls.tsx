@@ -21,6 +21,7 @@ export const CardControls = ({ card, onSetJudges }: Props) => {
   const [showAthleteImages, setShowAthleteImages] = useState(card?.showAthleteImages ?? false);
   const [showClubImages, setShowClubImages] = useState(card?.showClubImages ?? false);
   const [showOfficialAffiliation, setShowOfficialAffiliation] = useState<"none" | "province" | "nation">(card?.showOfficialAffiliation ?? "none");
+  const [showAthleteAffiliation, setShowAthleteAffiliation] = useState<"club" | "province" | "nation">(card?.showAthleteAffiliation ?? "club");
 
   useEffect(() => {
     setJudgeCount(card?.numberOfJudges ?? 5);
@@ -28,7 +29,8 @@ export const CardControls = ({ card, onSetJudges }: Props) => {
     setShowAthleteImages(card?.showAthleteImages ?? false);
     setShowClubImages(card?.showClubImages ?? false);
     setShowOfficialAffiliation(card?.showOfficialAffiliation ?? "none");
-  }, [card?.numberOfJudges, card?.showCardImage, card?.showAthleteImages, card?.showClubImages, card?.showOfficialAffiliation]);
+    setShowAthleteAffiliation(card?.showAthleteAffiliation ?? "club");
+  }, [card?.numberOfJudges, card?.showCardImage, card?.showAthleteImages, card?.showClubImages, card?.showOfficialAffiliation, card?.showAthleteAffiliation]);
 
   const patchCard = (patch: Record<string, unknown>) => {
     updateCard.mutate({ id: { cardId: String(card.id) }, toUpdate: patch as never });
@@ -86,8 +88,28 @@ export const CardControls = ({ card, onSetJudges }: Props) => {
                 patchCard({ showClubImages: val });
               }}
             />
-            <Text>Show club logos on curtain</Text>
+            <Text>Show affiliation logos on curtain</Text>
           </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>
+            Athlete Affiliation
+          </Text>
+          <Segmented
+            size="large"
+            shape="round"
+            value={showAthleteAffiliation}
+            options={[
+              { value: "club", label: "Club" },
+              { value: "province", label: "Province" },
+              { value: "nation", label: "Nation" },
+            ]}
+            onChange={(value) => {
+              setShowAthleteAffiliation(value as "club" | "province" | "nation");
+              patchCard({ showAthleteAffiliation: value });
+            }}
+          />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

@@ -26,9 +26,9 @@ import (
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
+	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	auditStorage "github.com/ubaniak/scoreboard/internal/auditlogs/storage"
-	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards"
@@ -368,12 +368,12 @@ type athleteClubQuerier struct {
 	uc athletes.UseCase
 }
 
-func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl string) {
+func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl string) {
 	a, err := q.uc.Get(athleteID)
 	if err != nil || a == nil {
-		return "", "", ""
+		return "", "", "", "", "", "", ""
 	}
-	return a.ClubName, a.ImageUrl, a.ClubImageUrl
+	return a.ClubName, a.ImageUrl, a.ClubImageUrl, a.ProvinceName, a.ProvinceImageUrl, a.NationName, a.NationImageUrl
 }
 
 func (q *athleteClubQuerier) GetAthleteName(athleteID uint) string {

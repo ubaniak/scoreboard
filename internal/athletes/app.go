@@ -40,40 +40,56 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 }
 
 type AthleteResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	DateOfBirth string `json:"dateOfBirth,omitempty"`
-	Nationality string `json:"nationality,omitempty"`
-	ClubID      *uint  `json:"clubId,omitempty"`
-	ClubName    string `json:"clubName,omitempty"`
-	ImageUrl    string `json:"imageUrl,omitempty"`
+	ID               uint   `json:"id"`
+	Name             string `json:"name"`
+	DateOfBirth      string `json:"dateOfBirth,omitempty"`
+	Nationality      string `json:"nationality,omitempty"`
+	ClubID           *uint  `json:"clubId,omitempty"`
+	ClubName         string `json:"clubName,omitempty"`
+	ProvinceName     string `json:"provinceName,omitempty"`
+	ProvinceImageUrl string `json:"provinceImageUrl,omitempty"`
+	NationName       string `json:"nationName,omitempty"`
+	NationImageUrl   string `json:"nationImageUrl,omitempty"`
+	ImageUrl         string `json:"imageUrl,omitempty"`
 }
 
 func toResponse(a entities.Athlete) AthleteResponse {
 	return AthleteResponse{
-		ID:          a.ID,
-		Name:        a.Name,
-		DateOfBirth: a.DateOfBirth,
-		Nationality: a.Nationality,
-		ClubID:      a.ClubID,
-		ClubName:    a.ClubName,
-		ImageUrl:    a.ImageUrl,
+		ID:               a.ID,
+		Name:             a.Name,
+		DateOfBirth:      a.DateOfBirth,
+		Nationality:      a.Nationality,
+		ClubID:           a.ClubID,
+		ClubName:         a.ClubName,
+		ProvinceName:     a.ProvinceName,
+		ProvinceImageUrl: a.ProvinceImageUrl,
+		NationName:       a.NationName,
+		NationImageUrl:   a.NationImageUrl,
+		ImageUrl:         a.ImageUrl,
 	}
 }
 
 type CreateAthleteRequest struct {
-	Name        string `json:"name"`
-	DateOfBirth string `json:"dateOfBirth"`
-	Nationality string `json:"nationality"`
-	ClubID      *uint  `json:"clubId"`
+	Name             string `json:"name"`
+	DateOfBirth      string `json:"dateOfBirth"`
+	Nationality      string `json:"nationality"`
+	ClubID           *uint  `json:"clubId"`
+	ProvinceName     string `json:"provinceName,omitempty"`
+	ProvinceImageUrl string `json:"provinceImageUrl,omitempty"`
+	NationName       string `json:"nationName,omitempty"`
+	NationImageUrl   string `json:"nationImageUrl,omitempty"`
 }
 
 type UpdateAthleteRequest struct {
-	Name        *string `json:"name"`
-	DateOfBirth *string `json:"dateOfBirth"`
-	Nationality *string `json:"nationality"`
-	ClubID      *uint   `json:"clubId"`
-	ClearClub   bool    `json:"clearClub"`
+	Name             *string `json:"name"`
+	DateOfBirth      *string `json:"dateOfBirth"`
+	Nationality      *string `json:"nationality"`
+	ClubID           *uint   `json:"clubId"`
+	ClearClub        bool    `json:"clearClub"`
+	ProvinceName     *string `json:"provinceName"`
+	ProvinceImageUrl *string `json:"provinceImageUrl"`
+	NationName       *string `json:"nationName"`
+	NationImageUrl   *string `json:"nationImageUrl"`
 }
 
 func (a *App) List(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +113,7 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.DateOfBirth, req.Nationality, req.ClubID)
+	err := a.useCase.Create(req.Name, req.DateOfBirth, req.Nationality, req.ClubID, req.ProvinceName, req.ProvinceImageUrl, req.NationName, req.NationImageUrl)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -116,9 +132,13 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	toUpdate := &entities.UpdateAthlete{
-		Name:        req.Name,
-		DateOfBirth: req.DateOfBirth,
-		Nationality: req.Nationality,
+		Name:             req.Name,
+		DateOfBirth:      req.DateOfBirth,
+		Nationality:      req.Nationality,
+		ProvinceName:     req.ProvinceName,
+		ProvinceImageUrl: req.ProvinceImageUrl,
+		NationName:       req.NationName,
+		NationImageUrl:   req.NationImageUrl,
 	}
 	if req.ClearClub {
 		toUpdate.ClubID = new(*uint) // &nil — clears the club
@@ -200,7 +220,7 @@ func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
 }
 
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: dateOfBirth, clubId
+// Required columns: name. Optional: dateOfBirth, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -244,6 +264,22 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if i, ok := colIndex["nationality"]; ok && i < len(row) {
 			nationality = row[i]
 		}
+		provinceName := ""
+		if i, ok := colIndex["provinceName"]; ok && i < len(row) {
+			provinceName = row[i]
+		}
+		provinceImageUrl := ""
+		if i, ok := colIndex["provinceImageUrl"]; ok && i < len(row) {
+			provinceImageUrl = row[i]
+		}
+		nationName := ""
+		if i, ok := colIndex["nationName"]; ok && i < len(row) {
+			nationName = row[i]
+		}
+		nationImageUrl := ""
+		if i, ok := colIndex["nationImageUrl"]; ok && i < len(row) {
+			nationImageUrl = row[i]
+		}
 		var clubID *uint
 		if i, ok := colIndex["clubId"]; ok && i < len(row) && row[i] != "" {
 			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
@@ -251,7 +287,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 				clubID = &id
 			}
 		}
-		if err := a.useCase.Create(name, dob, nationality, clubID); err != nil {
+		if err := a.useCase.Create(name, dob, nationality, clubID, provinceName, provinceImageUrl, nationName, nationImageUrl); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

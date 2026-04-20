@@ -63,6 +63,7 @@ func (s *Sqlite) List() ([]entities.Card, error) {
 			ShowAthleteImages:       c.ShowAthleteImages,
 			ShowClubImages:          c.ShowClubImages,
 			ShowOfficialAffiliation: c.ShowOfficialAffiliation,
+			ShowAthleteAffiliation:  c.ShowAthleteAffiliation,
 		})
 	}
 	return result, nil
@@ -92,6 +93,7 @@ func (s *Sqlite) Current() (*entities.Card, error) {
 		ShowAthleteImages:       card.ShowAthleteImages,
 		ShowClubImages:          card.ShowClubImages,
 		ShowOfficialAffiliation: card.ShowOfficialAffiliation,
+		ShowAthleteAffiliation:  card.ShowAthleteAffiliation,
 	}
 	return result, nil
 }
@@ -116,6 +118,7 @@ func (s *Sqlite) Get(id uint) (*entities.Card, error) {
 		ShowAthleteImages:       card.ShowAthleteImages,
 		ShowClubImages:          card.ShowClubImages,
 		ShowOfficialAffiliation: card.ShowOfficialAffiliation,
+		ShowAthleteAffiliation:  card.ShowAthleteAffiliation,
 	}
 	return result, nil
 }
@@ -160,6 +163,9 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateCard) error {
 
 	if toUpdate.ShowOfficialAffiliation != nil {
 		card.ShowOfficialAffiliation = *toUpdate.ShowOfficialAffiliation
+	}
+	if toUpdate.ShowAthleteAffiliation != nil {
+		card.ShowAthleteAffiliation = *toUpdate.ShowAthleteAffiliation
 	}
 
 	if err := s.db.Save(&card).Error; err != nil {

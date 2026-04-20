@@ -8,7 +8,17 @@ type EditAthleteProps = {
   athlete: Athlete;
   clubs: ClubOption[];
   onClose: () => void;
-  onSubmit: (v: { name?: string; dateOfBirth?: string; nationality?: string; clubId?: number; clearClub?: boolean }) => void;
+  onSubmit: (v: {
+    name?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    clubId?: number;
+    clearClub?: boolean;
+    provinceName?: string;
+    provinceImageUrl?: string;
+    nationName?: string;
+    nationImageUrl?: string;
+  }) => void;
 };
 
 export const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: EditAthleteProps) => {
@@ -26,6 +36,10 @@ export const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: EditAthletePr
           nationality: v.nationality,
           clubId: clearClub ? undefined : v.clubId,
           clearClub,
+          provinceName: v.provinceName,
+          provinceImageUrl: v.provinceImageUrl,
+          nationName: v.nationName,
+          nationImageUrl: v.nationImageUrl,
         });
         onClose();
       }}
@@ -38,6 +52,10 @@ export const EditAthlete = ({ athlete, clubs, onClose, onSubmit }: EditAthletePr
       <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
         <Select options={clubs} allowClear placeholder="Select club..." />
       </Form.Item>
+      <Form.Item label="Province" name="provinceName"><Input placeholder="e.g., Ontario" /></Form.Item>
+      <Form.Item label="Province image URL" name="provinceImageUrl"><Input placeholder="e.g., /uploads/provinces/on.png" /></Form.Item>
+      <Form.Item label="Nation" name="nationName"><Input placeholder="e.g., Canada" /></Form.Item>
+      <Form.Item label="Nation image URL" name="nationImageUrl"><Input placeholder="e.g., /uploads/nations/ca.png" /></Form.Item>
       <Space>
         <Button type="text" onClick={onClose}>Cancel</Button>
         <Button type="primary" htmlType="submit">Submit</Button>

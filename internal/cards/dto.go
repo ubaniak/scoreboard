@@ -13,6 +13,7 @@ type UpdateCardRequest struct {
 	ShowAthleteImages       *bool   `json:"showAthleteImages,omitempty"`
 	ShowClubImages          *bool   `json:"showClubImages,omitempty"`
 	ShowOfficialAffiliation *string `json:"showOfficialAffiliation,omitempty"`
+	ShowAthleteAffiliation  *string `json:"showAthleteAffiliation,omitempty"`
 }
 
 func UpdateCardRequestToEntity(r UpdateCardRequest) *entities.UpdateCard {
@@ -25,5 +26,6 @@ func UpdateCardRequestToEntity(r UpdateCardRequest) *entities.UpdateCard {
 		ShowAthleteImages:       r.ShowAthleteImages,
 		ShowClubImages:          r.ShowClubImages,
 		ShowOfficialAffiliation: r.ShowOfficialAffiliation,
+		ShowAthleteAffiliation:  r.ShowAthleteAffiliation,
 	}
 }

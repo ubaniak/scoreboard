@@ -20,7 +20,7 @@ type UseCase interface {
 // AthleteQuerier is a narrow interface to look up athlete info without
 // importing the full athletes package (avoids circular dependencies).
 type AthleteQuerier interface {
-	GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl string)
+	GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl string)
 	GetAthleteName(athleteID uint) string
 }
 
@@ -62,6 +62,10 @@ func (u *usecase) Current() (*entities.Current, error) {
 	if affiliation == "" {
 		affiliation = "none"
 	}
+	athleteAffiliation := card.ShowAthleteAffiliation
+	if athleteAffiliation == "" {
+		athleteAffiliation = "club"
+	}
 	currentCard := &entities.CurrentCard{
 		ID:                      card.ID,
 		Name:                    card.Name,
@@ -87,28 +91,50 @@ func (u *usecase) Current() (*entities.Current, error) {
 			if listErr == nil {
 				for _, b := range all {
 					if string(b.Status) == "not_started" {
-						var nextRed, nextBlue string
+						var nextRed, nextBlue, nextRedAff, nextBlueAff, nextRedAffImg, nextBlueAffImg string
 						if u.athletes != nil {
 							if b.RedAthleteID != nil {
 								nextRed = u.athletes.GetAthleteName(*b.RedAthleteID)
+								clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.RedAthleteID)
+								switch athleteAffiliation {
+								case "province":
+									nextRedAff, nextRedAffImg = provinceName, provinceImageUrl
+								case "nation":
+									nextRedAff, nextRedAffImg = nationName, nationImageUrl
+								default:
+									nextRedAff, nextRedAffImg = clubName, clubImageUrl
+								}
 							}
 							if b.BlueAthleteID != nil {
 								nextBlue = u.athletes.GetAthleteName(*b.BlueAthleteID)
+								clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+								switch athleteAffiliation {
+								case "province":
+									nextBlueAff, nextBlueAffImg = provinceName, provinceImageUrl
+								case "nation":
+									nextBlueAff, nextBlueAffImg = nationName, nationImageUrl
+								default:
+									nextBlueAff, nextBlueAffImg = clubName, clubImageUrl
+								}
 							}
 						}
 						current.NextBout = &entities.CurrentBout{
-							ID:          b.ID,
-							Number:      b.BoutNumber,
-							BoutType:    string(b.BoutType),
-							RedCorner:   nextRed,
-							BlueCorner:  nextBlue,
-							Gender:      string(b.Gender),
-							WeightClass: b.WeightClass,
-							GloveSize:   string(b.GloveSize),
-							RoundLength: int(b.RoundLength),
-							AgeCategory: string(b.AgeCategory),
-							Experience:  string(b.Experience),
-							Status:      string(b.Status),
+							ID:               b.ID,
+							Number:           b.BoutNumber,
+							BoutType:         string(b.BoutType),
+							RedCorner:        nextRed,
+							BlueCorner:       nextBlue,
+							Gender:           string(b.Gender),
+							WeightClass:      b.WeightClass,
+							GloveSize:        string(b.GloveSize),
+							RoundLength:      int(b.RoundLength),
+							AgeCategory:      string(b.AgeCategory),
+							Experience:       string(b.Experience),
+							Status:           string(b.Status),
+							RedClubName:      nextRedAff,
+							BlueClubName:     nextBlueAff,
+							RedClubImageUrl:  nextRedAffImg,
+							BlueClubImageUrl: nextBlueAffImg,
 						}
 						break
 					}
@@ -119,15 +145,33 @@ func (u *usecase) Current() (*entities.Current, error) {
 		return nil, err
 	}
 
-	var redName, blueName, redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
+	var redName, blueName, redAffName, blueAffName, redImage, blueImage, redAffImage, blueAffImage string
 	if u.athletes != nil {
 		if bout.RedAthleteID != nil {
 			redName = u.athletes.GetAthleteName(*bout.RedAthleteID)
-			redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*bout.RedAthleteID)
+			clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*bout.RedAthleteID)
+			redImage = athleteImageUrl
+			switch athleteAffiliation {
+			case "province":
+				redAffName, redAffImage = provinceName, provinceImageUrl
+			case "nation":
+				redAffName, redAffImage = nationName, nationImageUrl
+			default:
+				redAffName, redAffImage = clubName, clubImageUrl
+			}
 		}
 		if bout.BlueAthleteID != nil {
 			blueName = u.athletes.GetAthleteName(*bout.BlueAthleteID)
-			blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
+			clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
+			blueImage = athleteImageUrl
+			switch athleteAffiliation {
+			case "province":
+				blueAffName, blueAffImage = provinceName, provinceImageUrl
+			case "nation":
+				blueAffName, blueAffImage = nationName, nationImageUrl
+			default:
+				blueAffName, blueAffImage = clubName, clubImageUrl
+			}
 		}
 	}
 
@@ -146,12 +190,12 @@ func (u *usecase) Current() (*entities.Current, error) {
 		AgeCategory:         string(bout.AgeCategory),
 		Experience:          string(bout.Experience),
 		Status:              string(bout.Status),
-		RedClubName:         redClub,
-		BlueClubName:        blueClub,
+		RedClubName:         redAffName,
+		BlueClubName:        blueAffName,
 		RedAthleteImageUrl:  redImage,
 		BlueAthleteImageUrl: blueImage,
-		RedClubImageUrl:     redClubImage,
-		BlueClubImageUrl:    blueClubImage,
+		RedClubImageUrl:     redAffImage,
+		BlueClubImageUrl:    blueAffImage,
 	}
 	if decisionRevealed {
 		currentBout.Decision = bout.Decision
@@ -235,6 +279,10 @@ func (u *usecase) List() (*entities.BoutList, error) {
 	if listAffiliation == "" {
 		listAffiliation = "none"
 	}
+	athleteAffiliation := card.ShowAthleteAffiliation
+	if athleteAffiliation == "" {
+		athleteAffiliation = "club"
+	}
 	result := &entities.BoutList{
 		Card: &entities.CurrentCard{
 			ID:                      card.ID,
@@ -262,11 +310,29 @@ func (u *usecase) List() (*entities.BoutList, error) {
 		if u.athletes != nil {
 			if b.RedAthleteID != nil {
 				bRedName = u.athletes.GetAthleteName(*b.RedAthleteID)
-				redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*b.RedAthleteID)
+				clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.RedAthleteID)
+				redImage = athleteImageUrl
+				switch athleteAffiliation {
+				case "province":
+					redClub, redClubImage = provinceName, provinceImageUrl
+				case "nation":
+					redClub, redClubImage = nationName, nationImageUrl
+				default:
+					redClub, redClubImage = clubName, clubImageUrl
+				}
 			}
 			if b.BlueAthleteID != nil {
 				bBlueName = u.athletes.GetAthleteName(*b.BlueAthleteID)
-				blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+				clubName, athleteImageUrl, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+				blueImage = athleteImageUrl
+				switch athleteAffiliation {
+				case "province":
+					blueClub, blueClubImage = provinceName, provinceImageUrl
+				case "nation":
+					blueClub, blueClubImage = nationName, nationImageUrl
+				default:
+					blueClub, blueClubImage = clubName, clubImageUrl
+				}
 			}
 		}
 

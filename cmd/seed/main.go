@@ -17,13 +17,13 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/ubaniak/scoreboard/internal/athletes"
-	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/cards"
 	"github.com/ubaniak/scoreboard/internal/clubs"
 	clubEntities "github.com/ubaniak/scoreboard/internal/clubs/entities"
 	"github.com/ubaniak/scoreboard/internal/comment"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	officialEntities "github.com/ubaniak/scoreboard/internal/officials/entities"
 	"github.com/ubaniak/scoreboard/internal/round"
@@ -278,7 +278,7 @@ func main() {
 	athleteIDs := make([]uint, len(seedAthletes))
 	for i, a := range seedAthletes {
 		clubID := clubIDs[a.clubIndex]
-		if err := athleteUseCase.Create(a.name, a.dateOfBirth, "", &clubID); err != nil {
+		if err := athleteUseCase.Create(a.name, a.dateOfBirth, "", &clubID, "", "", "", ""); err != nil {
 			log.Fatalf("create athlete %s: %v", a.name, err)
 		}
 		allAthletes, err := athleteUseCase.List()

@@ -10,6 +10,10 @@ export type Athlete = {
   nationality?: string;
   clubId?: number;
   clubName?: string;
+  provinceName?: string;
+  provinceImageUrl?: string;
+  nationName?: string;
+  nationImageUrl?: string;
   imageUrl?: string;
 };
 
@@ -32,7 +36,16 @@ export const useListAthletes = (props: TokenBase) => {
   });
 };
 
-export type CreateAthleteProps = { name: string; dateOfBirth: string; nationality: string; clubId?: number };
+export type CreateAthleteProps = {
+  name: string;
+  dateOfBirth: string;
+  nationality: string;
+  clubId?: number;
+  provinceName?: string;
+  provinceImageUrl?: string;
+  nationName?: string;
+  nationImageUrl?: string;
+};
 
 export const useMutateCreateAthlete = (props: TokenBase) => {
   const queryClient = useQueryClient();
@@ -58,6 +71,10 @@ export type UpdateAthleteProps = {
   nationality?: string;
   clubId?: number;
   clearClub?: boolean;
+  provinceName?: string;
+  provinceImageUrl?: string;
+  nationName?: string;
+  nationImageUrl?: string;
 };
 
 export const useMutateUpdateAthlete = (props: TokenBase) => {

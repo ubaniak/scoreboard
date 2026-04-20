@@ -57,12 +57,16 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 	result := make([]entities.Athlete, len(athletes))
 	for i, a := range athletes {
 		e := entities.Athlete{
-			ID:          a.ID,
-			Name:        a.Name,
-			DateOfBirth: a.DateOfBirth,
-			Nationality: a.Nationality,
-			ClubID:      a.ClubID,
-			ImageUrl:    a.ImageUrl,
+			ID:               a.ID,
+			Name:             a.Name,
+			DateOfBirth:      a.DateOfBirth,
+			Nationality:      a.Nationality,
+			ClubID:           a.ClubID,
+			ProvinceName:     a.ProvinceName,
+			ProvinceImageUrl: a.ProvinceImageUrl,
+			NationName:       a.NationName,
+			NationImageUrl:   a.NationImageUrl,
+			ImageUrl:         a.ImageUrl,
 		}
 		if a.ClubID != nil {
 			if info, ok := clubs[*a.ClubID]; ok {
@@ -76,7 +80,16 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 }
 
 func (s *Sqlite) Create(athlete *entities.Athlete) error {
-	m := &Athlete{Name: athlete.Name, DateOfBirth: athlete.DateOfBirth, Nationality: athlete.Nationality, ClubID: athlete.ClubID}
+	m := &Athlete{
+		Name:             athlete.Name,
+		DateOfBirth:      athlete.DateOfBirth,
+		Nationality:      athlete.Nationality,
+		ClubID:           athlete.ClubID,
+		ProvinceName:     athlete.ProvinceName,
+		ProvinceImageUrl: athlete.ProvinceImageUrl,
+		NationName:       athlete.NationName,
+		NationImageUrl:   athlete.NationImageUrl,
+	}
 	return s.db.Create(m).Error
 }
 
@@ -119,6 +132,18 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	}
 	if toUpdate.ClubID != nil {
 		row.ClubID = *toUpdate.ClubID
+	}
+	if toUpdate.ProvinceName != nil {
+		row.ProvinceName = *toUpdate.ProvinceName
+	}
+	if toUpdate.ProvinceImageUrl != nil {
+		row.ProvinceImageUrl = *toUpdate.ProvinceImageUrl
+	}
+	if toUpdate.NationName != nil {
+		row.NationName = *toUpdate.NationName
+	}
+	if toUpdate.NationImageUrl != nil {
+		row.NationImageUrl = *toUpdate.NationImageUrl
 	}
 	return s.db.Save(&row).Error
 }

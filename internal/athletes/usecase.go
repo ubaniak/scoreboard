@@ -3,7 +3,7 @@ package athletes
 import "github.com/ubaniak/scoreboard/internal/athletes/entities"
 
 type UseCase interface {
-	Create(name, dateOfBirth, nationality string, clubID *uint) error
+	Create(name, dateOfBirth, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -19,12 +19,16 @@ func NewUseCase(storage Storage) UseCase {
 	return &useCase{storage: storage}
 }
 
-func (uc *useCase) Create(name, dateOfBirth, nationality string, clubID *uint) error {
+func (uc *useCase) Create(name, dateOfBirth, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error {
 	return uc.storage.Create(&entities.Athlete{
-		Name:        name,
-		DateOfBirth: dateOfBirth,
-		Nationality: nationality,
-		ClubID:      clubID,
+		Name:             name,
+		DateOfBirth:      dateOfBirth,
+		Nationality:      nationality,
+		ClubID:           clubID,
+		ProvinceName:     provinceName,
+		ProvinceImageUrl: provinceImageUrl,
+		NationName:       nationName,
+		NationImageUrl:   nationImageUrl,
 	})
 }
 

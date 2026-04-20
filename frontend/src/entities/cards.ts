@@ -13,6 +13,7 @@ export type Card = {
   showAthleteImages: boolean;
   showClubImages: boolean;
   showOfficialAffiliation: "none" | "province" | "nation";
+  showAthleteAffiliation: "club" | "province" | "nation";
 };
 
 export type Official = {

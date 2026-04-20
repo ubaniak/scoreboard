@@ -6,7 +6,16 @@ type ClubOption = { value: number; label: string };
 type AddAthleteProps = {
   clubs: ClubOption[];
   onClose: () => void;
-  onSubmit: (v: { name: string; dateOfBirth: string; nationality: string; clubId?: number }) => void;
+  onSubmit: (v: {
+    name: string;
+    dateOfBirth: string;
+    nationality: string;
+    clubId?: number;
+    provinceName?: string;
+    provinceImageUrl?: string;
+    nationName?: string;
+    nationImageUrl?: string;
+  }) => void;
 };
 
 export const AddAthlete = ({ clubs, onClose, onSubmit }: AddAthleteProps) => {
@@ -24,6 +33,10 @@ export const AddAthlete = ({ clubs, onClose, onSubmit }: AddAthleteProps) => {
       <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
         <Select options={clubs} allowClear placeholder="Select club..." />
       </Form.Item>
+      <Form.Item label="Province" name="provinceName"><Input placeholder="e.g., Ontario" /></Form.Item>
+      <Form.Item label="Province image URL" name="provinceImageUrl"><Input placeholder="e.g., /uploads/provinces/on.png" /></Form.Item>
+      <Form.Item label="Nation" name="nationName"><Input placeholder="e.g., Canada" /></Form.Item>
+      <Form.Item label="Nation image URL" name="nationImageUrl"><Input placeholder="e.g., /uploads/nations/ca.png" /></Form.Item>
       <Space>
         <Button type="text" onClick={onClose}>Cancel</Button>
         <Button type="primary" htmlType="submit">Submit</Button>
