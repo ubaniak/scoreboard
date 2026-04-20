@@ -1,4 +1,7 @@
 import { useParams } from "@tanstack/react-router";
+import { Tabs } from "antd";
+import { useListAthletes } from "../api/athletes";
+import { useGetAuditLogs } from "../api/auditLogs";
 import {
   useGetBouts,
   useMutateCreateBout,
@@ -6,22 +9,23 @@ import {
   useMutateImportBouts,
   useMutateUpdateBout,
 } from "../api/bouts";
-import { useListAthletes } from "../api/athletes";
-import { useGetCardById, useMutateUpdateCardJudges, useMutateUpdateCardStatus } from "../api/cards";
+import {
+  useGetCardById,
+  useMutateUpdateCardJudges,
+  useMutateUpdateCardStatus,
+} from "../api/cards";
 import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { useGetAllBoutScores } from "../api/score";
-import { useGetAuditLogs } from "../api/auditLogs";
+import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
-import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
-import { Tabs } from "antd";
 
 export const CardPage = () => {
   const { token } = useProfile();
@@ -76,7 +80,9 @@ export const CardPage = () => {
         <>
           <CardSummary card={card.data} />
           <DeviceQuickLook
-            requiredJudges={Math.max(...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]))}
+            requiredJudges={Math.max(
+              ...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]),
+            )}
             devices={judgeDevices.data || []}
             onRefreshCode={(values) => {
               generateCode.mutate(values);
@@ -85,7 +91,9 @@ export const CardPage = () => {
         </>
       }
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={<CardActions status={card.data?.status} onStart={start} onEnd={end} />}
+      action={
+        <CardActions status={card.data?.status} onStart={start} onEnd={end} />
+      }
     >
       <Tabs
         items={[
@@ -94,7 +102,9 @@ export const CardPage = () => {
             label: "Bouts",
             children: (
               <>
-                {card.data && <CardControls card={card.data} onSetJudges={onSetJudges} />}
+                {card.data && (
+                  <CardControls card={card.data} onSetJudges={onSetJudges} />
+                )}
                 <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
                 <BoutsIndex
                   loading={bouts.isLoading}

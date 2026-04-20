@@ -2,7 +2,7 @@ import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Button, Space } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useGetBoutById,
   useGetBouts,
@@ -33,7 +33,6 @@ import type { Bout } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
-
 export const BoutPage = () => {
   const { token } = useProfile();
   const queryClient = useQueryClient();
@@ -52,12 +51,12 @@ export const BoutPage = () => {
   const bout = useGetBoutById({ token, cardId, boutId });
   const bouts = useGetBouts({ token, cardId });
 
+  const boutList = useMemo(() => bouts.data ?? [], [bouts.data]);
   const [prevBout, setPrevBout] = useState<Bout | undefined>(undefined);
   const [nextBout, setNextBout] = useState<Bout | undefined>(undefined);
 
   useEffect(() => {
     const setBouts = async () => {
-      const boutList = bouts.data ?? [];
       const currentIndex = boutList.findIndex(
         (b) => b.id.toString() === boutId,
       );
@@ -73,7 +72,7 @@ export const BoutPage = () => {
     if (!bouts.isLoading) {
       setBouts();
     }
-  }, [bouts.isLoading, boutId, bouts.data]);
+  }, [bouts.isLoading, boutId, boutList]);
 
   const fouls = useGetFouls({ token, cardId });
 
