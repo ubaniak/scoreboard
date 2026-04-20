@@ -16,17 +16,18 @@ import (
 
 	"github.com/getlantern/systray"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/pkg/browser"
 	"github.com/rs/cors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/joho/godotenv"
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
 	"github.com/ubaniak/scoreboard/internal/app"
-	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
+	"github.com/ubaniak/scoreboard/internal/auditlogs"
+	auditStorage "github.com/ubaniak/scoreboard/internal/auditlogs/storage"
 	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
@@ -35,6 +36,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
 	currentEntities "github.com/ubaniak/scoreboard/internal/current/entities"
+	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/events"
 	"github.com/ubaniak/scoreboard/internal/login"
@@ -176,9 +178,17 @@ func main() {
 
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
 	athleteQuerier := &athleteClubQuerier{athleteUseCase}
-	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase}, athleteQuerier)
+	// -- audit logs
+	auditLogStorage, err := auditStorage.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	auditLogUseCase := auditlogs.NewUseCase(auditLogStorage)
+	auditLogApp := auditlogs.NewApp(auditLogUseCase)
 
-	cardApp := cards.NewApp(cardUseCase, boutsApp, broadcaster)
+	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase}, athleteQuerier, auditLogUseCase)
+
+	cardApp := cards.NewApp(cardUseCase, boutsApp, nil, broadcaster)
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
@@ -192,6 +202,7 @@ func main() {
 	apiRegister.Add(clubApp)
 	apiRegister.Add(athleteApp)
 	apiRegister.Add(officialApp)
+	apiRegister.Add(auditLogApp)
 
 	apiRegister.Register(rb)
 

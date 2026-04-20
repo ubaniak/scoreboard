@@ -33,7 +33,7 @@ var _ = Describe("UseCase", func() {
 					Update(entry.cardId, entry.boutId, gomock.Any()).
 					Return(nil)
 				storage.EXPECT().
-					SetStatus(entry.cardId, entry.boutId, entities.BoutStatusCompleted).
+					SetStatus(entry.cardId, entry.boutId, entities.BoutStatusDecisionMade).
 					Return(nil)
 				if entry.comment != "" {
 					comments.EXPECT().

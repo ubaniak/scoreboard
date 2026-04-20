@@ -11,14 +11,17 @@ import { useGetCardById, useMutateUpdateCardJudges, useMutateUpdateCardStatus } 
 import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { useGetAllBoutScores } from "../api/score";
+import { useGetAuditLogs } from "../api/auditLogs";
 import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
+import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
+import { Tabs } from "antd";
 
 export const CardPage = () => {
   const { token } = useProfile();
@@ -28,6 +31,7 @@ export const CardPage = () => {
   const officials = useGetOfficials({ token });
   const card = useGetCardById({ token, cardId });
   const athletes = useListAthletes({ token });
+  const auditLogs = useGetAuditLogs({ token, cardId });
 
   const judgeDevices = useJudgeDevices({ token });
   const generateCode = useMutationGenerateCode({ token });
@@ -83,23 +87,40 @@ export const CardPage = () => {
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
       action={<CardActions status={card.data?.status} onStart={start} onEnd={end} />}
     >
-      {card.data && <CardControls card={card.data} onSetJudges={onSetJudges} />}
-      <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
-      <BoutsIndex
-        loading={bouts.isLoading}
-        card={card.data}
-        bouts={bouts.data}
-        officials={officials.data}
-        athletes={athletes.data}
-        allBoutScores={allBoutScores.data}
-        onAddBout={(values) => {
-          addBout.mutate(values);
-        }}
-        onEditBout={(values) => {
-          updateBout.mutate(values);
-        }}
-        onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
-        onImport={(file) => importBouts.mutateAsync(file)}
+      <Tabs
+        items={[
+          {
+            key: "bouts",
+            label: "Bouts",
+            children: (
+              <>
+                {card.data && <CardControls card={card.data} onSetJudges={onSetJudges} />}
+                <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
+                <BoutsIndex
+                  loading={bouts.isLoading}
+                  card={card.data}
+                  bouts={bouts.data}
+                  officials={officials.data}
+                  athletes={athletes.data}
+                  allBoutScores={allBoutScores.data}
+                  onAddBout={(values) => {
+                    addBout.mutate(values);
+                  }}
+                  onEditBout={(values) => {
+                    updateBout.mutate(values);
+                  }}
+                  onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
+                  onImport={(file) => importBouts.mutateAsync(file)}
+                />
+              </>
+            ),
+          },
+          {
+            key: "audit",
+            label: "Audit log",
+            children: <CardAuditTimeline logs={auditLogs.data ?? []} />,
+          },
+        ]}
       />
     </PageLayout>
   );

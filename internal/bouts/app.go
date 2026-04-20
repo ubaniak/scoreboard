@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/events"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
@@ -39,10 +40,11 @@ type App struct {
 	broadcaster  *events.Broadcaster
 	cardQuerier  CardQuerier
 	athletes     AthleteNameQuerier
+	audit        auditlogs.UseCase
 }
 
-func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster, cardQuerier CardQuerier, athletes AthleteNameQuerier) *App {
-	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster, cardQuerier: cardQuerier, athletes: athletes}
+func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster, cardQuerier CardQuerier, athletes AthleteNameQuerier, audit auditlogs.UseCase) *App {
+	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster, cardQuerier: cardQuerier, athletes: athletes, audit: audit}
 }
 
 func (a *App) resolveNames(bout *entities.Bout) (red, blue string) {
@@ -515,6 +517,18 @@ func (h *App) NextRoundState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.audit != nil {
+		_ = h.audit.Log(r.Context(), auditlogs.LogEntry{
+			CardID:       cardId,
+			BoutID:       &boutId,
+			Action:       "round.advance",
+			HumanSummary: "Advance round state",
+			Metadata: map[string]any{
+				"currentRound": currentRound,
+			},
+		})
+	}
+
 	// Sync bout status based on the round transition
 	var boutStatus entities.BoutStatus
 	if currentRound <= 0 {
@@ -627,6 +641,21 @@ func (h *App) ScoreReady(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.audit != nil {
+		name := req.Name
+		_ = h.audit.Log(r.Context(), auditlogs.LogEntry{
+			CardID:       cardId,
+			BoutID:       &boutId,
+			RoundNumber:  &roundNumber,
+			Action:       "judge.name.set",
+			HumanSummary: "Judge set name",
+			ActorName:    &name,
+			Metadata: map[string]any{
+				"judgeRole": role,
+			},
+		})
+	}
+
 	h.broadcaster.Notify()
 	presenter.Present()
 }
@@ -676,6 +705,21 @@ func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.audit != nil {
+		_ = h.audit.Log(r.Context(), auditlogs.LogEntry{
+			CardID:       cardId,
+			BoutID:       &boutId,
+			RoundNumber:  &roundNumber,
+			Action:       "judge.score.select",
+			HumanSummary: "Judge selected score",
+			Metadata: map[string]any{
+				"judgeRole": role,
+				"red":       req.Red,
+				"blue":      req.Blue,
+			},
+		})
+	}
+
 	h.broadcaster.Notify()
 	presenter.Present()
 }
@@ -711,6 +755,19 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
+	}
+
+	if h.audit != nil {
+		_ = h.audit.Log(r.Context(), auditlogs.LogEntry{
+			CardID:       cardId,
+			BoutID:       &boutId,
+			RoundNumber:  &roundNumber,
+			Action:       "judge.score.submit",
+			HumanSummary: "Judge submitted score",
+			Metadata: map[string]any{
+				"judgeRole": role,
+			},
+		})
 	}
 
 	// Auto-advance round to score_complete when all judges have submitted
@@ -925,6 +982,19 @@ func (h *App) PickOverallWinner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
+	}
+
+	if h.audit != nil {
+		_ = h.audit.Log(r.Context(), auditlogs.LogEntry{
+			CardID:       cardId,
+			BoutID:       &boutId,
+			Action:       "judge.overall_winner.select",
+			HumanSummary: "Judge selected overall winner",
+			Metadata: map[string]any{
+				"judgeRole": role,
+				"winner":    req.Winner,
+			},
+		})
 	}
 
 	h.broadcaster.Notify()
