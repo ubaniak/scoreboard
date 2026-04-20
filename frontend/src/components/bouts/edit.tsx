@@ -6,7 +6,6 @@ import {
   Segmented,
   Select,
   Space,
-  Input,
   type FormProps,
 } from "antd";
 import { useEffect } from "react";
@@ -73,14 +72,8 @@ export const EditBout = (props: EditBoutProps) => {
       <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId">
         <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Red" name="redCorner">
-        <Input />
-      </Form.Item>
       <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId">
         <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
-      </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Blue" name="blueCorner">
-        <Input />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory">
         <Select

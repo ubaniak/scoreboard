@@ -174,12 +174,13 @@ func main() {
 	broadcaster := events.NewBroadcaster()
 
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
-	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase})
+	athleteQuerier := &athleteClubQuerier{athleteUseCase}
+	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase}, athleteQuerier)
 
 	cardApp := cards.NewApp(cardUseCase, boutsApp, broadcaster)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, &athleteClubQuerier{athleteUseCase}, roundUseCase)
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase)
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
@@ -361,6 +362,14 @@ func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, athleteIm
 		return "", "", ""
 	}
 	return a.ClubName, a.ImageUrl, a.ClubImageUrl
+}
+
+func (q *athleteClubQuerier) GetAthleteName(athleteID uint) string {
+	a, err := q.uc.Get(athleteID)
+	if err != nil || a == nil {
+		return ""
+	}
+	return a.Name
 }
 
 func getLocalIP() string {

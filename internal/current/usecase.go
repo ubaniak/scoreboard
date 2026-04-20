@@ -21,6 +21,7 @@ type UseCase interface {
 // importing the full athletes package (avoids circular dependencies).
 type AthleteQuerier interface {
 	GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl string)
+	GetAthleteName(athleteID uint) string
 }
 
 // RoundDetailsQuerier fetches foul/warning details for a single round.
@@ -68,12 +69,21 @@ func (u *usecase) Current() (*entities.Current, error) {
 			if listErr == nil {
 				for _, b := range all {
 					if string(b.Status) == "not_started" {
+						var nextRed, nextBlue string
+						if u.athletes != nil {
+							if b.RedAthleteID != nil {
+								nextRed = u.athletes.GetAthleteName(*b.RedAthleteID)
+							}
+							if b.BlueAthleteID != nil {
+								nextBlue = u.athletes.GetAthleteName(*b.BlueAthleteID)
+							}
+						}
 						current.NextBout = &entities.CurrentBout{
 							ID:          b.ID,
 							Number:      b.BoutNumber,
 							BoutType:    string(b.BoutType),
-							RedCorner:   b.RedCorner,
-							BlueCorner:  b.BlueCorner,
+							RedCorner:   nextRed,
+							BlueCorner:  nextBlue,
 							Gender:      string(b.Gender),
 							WeightClass: b.WeightClass,
 							GloveSize:   string(b.GloveSize),
@@ -91,12 +101,14 @@ func (u *usecase) Current() (*entities.Current, error) {
 		return nil, err
 	}
 
-	var redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
+	var redName, blueName, redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
 	if u.athletes != nil {
 		if bout.RedAthleteID != nil {
+			redName = u.athletes.GetAthleteName(*bout.RedAthleteID)
 			redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*bout.RedAthleteID)
 		}
 		if bout.BlueAthleteID != nil {
+			blueName = u.athletes.GetAthleteName(*bout.BlueAthleteID)
 			blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
 		}
 	}
@@ -107,8 +119,8 @@ func (u *usecase) Current() (*entities.Current, error) {
 		ID:                  bout.ID,
 		Number:              bout.BoutNumber,
 		BoutType:            string(bout.BoutType),
-		RedCorner:           bout.RedCorner,
-		BlueCorner:          bout.BlueCorner,
+		RedCorner:           redName,
+		BlueCorner:          blueName,
 		Gender:              string(bout.Gender),
 		WeightClass:         bout.WeightClass,
 		GloveSize:           string(bout.GloveSize),
@@ -223,12 +235,14 @@ func (u *usecase) List() (*entities.BoutList, error) {
 	for _, b := range bouts {
 		decisionRevealed := b.Status == boutEntities.BoutStatusShowDecision || b.Status == boutEntities.BoutStatusCompleted
 
-		var redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
+		var bRedName, bBlueName, redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
 		if u.athletes != nil {
 			if b.RedAthleteID != nil {
+				bRedName = u.athletes.GetAthleteName(*b.RedAthleteID)
 				redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*b.RedAthleteID)
 			}
 			if b.BlueAthleteID != nil {
+				bBlueName = u.athletes.GetAthleteName(*b.BlueAthleteID)
 				blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*b.BlueAthleteID)
 			}
 		}
@@ -237,8 +251,8 @@ func (u *usecase) List() (*entities.BoutList, error) {
 			ID:                  b.ID,
 			Number:              b.BoutNumber,
 			BoutType:            string(b.BoutType),
-			RedCorner:           b.RedCorner,
-			BlueCorner:          b.BlueCorner,
+			RedCorner:           bRedName,
+			BlueCorner:          bBlueName,
 			Status:              string(b.Status),
 			WeightClass:         b.WeightClass,
 			GloveSize:           string(b.GloveSize),

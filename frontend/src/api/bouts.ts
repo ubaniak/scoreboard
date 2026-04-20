@@ -56,8 +56,6 @@ export const useGetBouts = (props: TokenBase & CardRequestType) => {
 
 export type CreateBoutProps = {
   boutNumber: number;
-  redCorner: string;
-  blueCorner: string;
   ageCategory: string;
   gender: string;
   experience: string;

@@ -27,16 +27,34 @@ type CardQuerier interface {
 	GetNumberOfJudges(cardId uint) (int, error)
 }
 
+// AthleteNameQuerier resolves an athlete name from their ID.
+type AthleteNameQuerier interface {
+	GetAthleteName(athleteID uint) string
+}
+
 type App struct {
 	useCase      UseCase
 	roundUseCase round.UseCase
 	scoreUseCase scores.UseCase
 	broadcaster  *events.Broadcaster
 	cardQuerier  CardQuerier
+	athletes     AthleteNameQuerier
 }
 
-func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster, cardQuerier CardQuerier) *App {
-	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster, cardQuerier: cardQuerier}
+func NewApp(useCase UseCase, roundUseCase round.UseCase, scoreUseCase scores.UseCase, broadcaster *events.Broadcaster, cardQuerier CardQuerier, athletes AthleteNameQuerier) *App {
+	return &App{useCase: useCase, roundUseCase: roundUseCase, scoreUseCase: scoreUseCase, broadcaster: broadcaster, cardQuerier: cardQuerier, athletes: athletes}
+}
+
+func (a *App) resolveNames(bout *entities.Bout) (red, blue string) {
+	if a.athletes != nil {
+		if bout.RedAthleteID != nil {
+			red = a.athletes.GetAthleteName(*bout.RedAthleteID)
+		}
+		if bout.BlueAthleteID != nil {
+			blue = a.athletes.GetAthleteName(*bout.BlueAthleteID)
+		}
+	}
+	return
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -119,7 +137,8 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]GetBoutResponse, len(bouts))
 	for i, b := range bouts {
-		resp[i] = *EntityToGetBoutResponse(b, []*roundEntities.RoundDetails{}, []string{})
+		red, blue := h.resolveNames(b)
+		resp[i] = *EntityToGetBoutResponse(b, red, blue, []*roundEntities.RoundDetails{}, []string{})
 	}
 
 	presenter.WithData(resp).Present()
@@ -144,7 +163,8 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	resp := EntityToGetBoutResponse(b, rounds, comments)
+	red, blue := h.resolveNames(b)
+	resp := EntityToGetBoutResponse(b, red, blue, rounds, comments)
 
 	presenter.WithData(resp).Present()
 }
@@ -791,7 +811,7 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		colIndex[col] = i
 	}
 
-	for _, required := range []string{"red", "blue", "age", "experience"} {
+	for _, required := range []string{"age", "experience"} {
 		if _, ok := colIndex[required]; !ok {
 			presenter.WithError(errors.New("CSV missing required column: " + required)).Present()
 			return
@@ -800,8 +820,6 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	bouts := make([]*entities.Bout, 0, len(records)-1)
 	for i, row := range records[1:] {
-		red := row[colIndex["red"]]
-		blue := row[colIndex["blue"]]
 		ageCategory := entities.AgeCategory(row[colIndex["age"]])
 		experience := entities.Experience(row[colIndex["experience"]])
 
@@ -843,8 +861,6 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		bouts = append(bouts, &entities.Bout{
 			CardID:      cardId,
 			BoutNumber:  i + 1,
-			RedCorner:   red,
-			BlueCorner:  blue,
 			AgeCategory: ageCategory,
 			Experience:  experience,
 			Gender:      gender,

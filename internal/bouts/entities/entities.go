@@ -100,33 +100,27 @@ func (s BoutStatus) IsValid() bool {
 }
 
 type Bout struct {
-	ID                 uint
-	CardID             uint
-	BoutNumber         int
-	RedCorner          string
-	BlueCorner         string
-	Gender             Gender
-	WeightClass        int
-	GloveSize          GloveSize
-	RoundLength        RoundLength
-	AgeCategory        AgeCategory
-	Experience         Experience
-	RedCornerImageUrl  string
-	BlueCornerImageUrl string
-	Status             BoutStatus
-	Decision           string
-	Winner             string
-	NumberOfJudges     int
-	Referee            string
-	BoutType           BoutType
-	RedAthleteID       *uint
-	BlueAthleteID      *uint
+	ID             uint
+	CardID         uint
+	BoutNumber     int
+	Gender         Gender
+	WeightClass    int
+	GloveSize      GloveSize
+	RoundLength    RoundLength
+	AgeCategory    AgeCategory
+	Experience     Experience
+	Status         BoutStatus
+	Decision       string
+	Winner         string
+	NumberOfJudges int
+	Referee        string
+	BoutType       BoutType
+	RedAthleteID   *uint
+	BlueAthleteID  *uint
 }
 
 type UpdateBout struct {
 	BoutNumber     *int
-	RedCorner      *string
-	BlueCorner     *string
 	Gender         *Gender
 	WeightClass    *int
 	GloveSize      *GloveSize

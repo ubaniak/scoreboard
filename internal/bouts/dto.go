@@ -38,8 +38,6 @@ func GloveSize(weightClass int, ageCat entities.AgeCategory, gender entities.Gen
 
 type CreateRequest struct {
 	BoutNumber    int    `json:"boutNumber"`
-	RedCorner     string `json:"redCorner"`
-	BlueCorner    string `json:"blueCorner"`
 	WeightClass   int    `json:"weightClass"`
 	AgeCategory   string `json:"ageCategory"`
 	Experience    string `json:"experience"`
@@ -75,52 +73,46 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 	gloveSize := GloveSize(req.WeightClass, ageCategory, gender)
 
 	return &entities.Bout{
-		CardID:             cardId,
-		BoutNumber:         req.BoutNumber,
-		RedCorner:          req.RedCorner,
-		BlueCorner:         req.BlueCorner,
-		WeightClass:        req.WeightClass,
-		GloveSize:          gloveSize,
-		RoundLength:        roundLength,
-		AgeCategory:        ageCategory,
-		Experience:         experience,
-		RedCornerImageUrl:  "",
-		BlueCornerImageUrl: "",
-		Status:             entities.BoutStatusNotStarted,
-		Gender:             gender,
-		Referee:            req.Referee,
-		BoutType:           entities.BoutType(req.BoutType),
-		RedAthleteID:       req.RedAthleteID,
-		BlueAthleteID:      req.BlueAthleteID,
+		CardID:         cardId,
+		BoutNumber:     req.BoutNumber,
+		WeightClass:    req.WeightClass,
+		GloveSize:      gloveSize,
+		RoundLength:    roundLength,
+		AgeCategory:    ageCategory,
+		Experience:     experience,
+		Status:         entities.BoutStatusNotStarted,
+		Gender:         gender,
+		Referee:        req.Referee,
+		BoutType:       entities.BoutType(req.BoutType),
+		RedAthleteID:   req.RedAthleteID,
+		BlueAthleteID:  req.BlueAthleteID,
 	}
 }
 
 type GetBoutResponse struct {
-	ID                 uint               `json:"id"`
-	BoutNumber         int                `json:"boutNumber"`
-	RedCorner          string             `json:"redCorner"`
-	BlueCorner         string             `json:"blueCorner"`
-	Gender             string             `json:"gender"`
-	WeightClass        int                `json:"weightClass"`
-	GloveSize          string             `json:"gloveSize"`
-	RoundLength        float64            `json:"roundLength"`
-	AgeCategory        string             `json:"ageCategory"`
-	Experience         string             `json:"experience"`
-	RedCornerImageUrl  string             `json:"redCornerImageUrl"`
-	BlueCornerImageUrl string             `json:"blueCornerImageUrl"`
-	Status             string             `json:"status"`
-	Decision           string             `json:"decision"`
-	Rounds             []GetRoundResponse `json:"rounds"`
-	Winner             string             `json:"winner"`
-	NumberOfJudges     int                `json:"numberOfJudges"`
-	Comments           []string           `json:"comments"`
-	Referee            string             `json:"referee"`
-	BoutType           string             `json:"boutType"`
-	RedAthleteID       *uint              `json:"redAthleteId,omitempty"`
-	BlueAthleteID      *uint              `json:"blueAthleteId,omitempty"`
+	ID             uint               `json:"id"`
+	BoutNumber     int                `json:"boutNumber"`
+	RedCorner      string             `json:"redCorner"`
+	BlueCorner     string             `json:"blueCorner"`
+	Gender         string             `json:"gender"`
+	WeightClass    int                `json:"weightClass"`
+	GloveSize      string             `json:"gloveSize"`
+	RoundLength    float64            `json:"roundLength"`
+	AgeCategory    string             `json:"ageCategory"`
+	Experience     string             `json:"experience"`
+	Status         string             `json:"status"`
+	Decision       string             `json:"decision"`
+	Rounds         []GetRoundResponse `json:"rounds"`
+	Winner         string             `json:"winner"`
+	NumberOfJudges int                `json:"numberOfJudges"`
+	Comments       []string           `json:"comments"`
+	Referee        string             `json:"referee"`
+	BoutType       string             `json:"boutType"`
+	RedAthleteID   *uint              `json:"redAthleteId,omitempty"`
+	BlueAthleteID  *uint              `json:"blueAthleteId,omitempty"`
 }
 
-func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
+func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
 	roundResponses := make([]GetRoundResponse, len(rounds))
 	for i, round := range rounds {
 		roundResponses[i] = *EntityToGetRoundResponse(round)
@@ -129,35 +121,31 @@ func EntityToGetBoutResponse(entity *entities.Bout, rounds []*roundEntities.Roun
 		comments = []string{}
 	}
 	return &GetBoutResponse{
-		ID:                 entity.ID,
-		BoutNumber:         entity.BoutNumber,
-		RedCorner:          entity.RedCorner,
-		BlueCorner:         entity.BlueCorner,
-		Gender:             string(entity.Gender),
-		WeightClass:        entity.WeightClass,
-		GloveSize:          string(entity.GloveSize),
-		RoundLength:        float64(entity.RoundLength),
-		AgeCategory:        string(entity.AgeCategory),
-		Experience:         string(entity.Experience),
-		RedCornerImageUrl:  entity.RedCornerImageUrl,
-		BlueCornerImageUrl: entity.BlueCornerImageUrl,
-		Status:             string(entity.Status),
-		Decision:           entity.Decision,
-		Rounds:             roundResponses,
-		Winner:             entity.Winner,
-		NumberOfJudges:     entity.NumberOfJudges,
-		Comments:           comments,
-		Referee:            entity.Referee,
-		BoutType:           string(entity.BoutType),
-		RedAthleteID:       entity.RedAthleteID,
-		BlueAthleteID:      entity.BlueAthleteID,
+		ID:             entity.ID,
+		BoutNumber:     entity.BoutNumber,
+		RedCorner:      redName,
+		BlueCorner:     blueName,
+		Gender:         string(entity.Gender),
+		WeightClass:    entity.WeightClass,
+		GloveSize:      string(entity.GloveSize),
+		RoundLength:    float64(entity.RoundLength),
+		AgeCategory:    string(entity.AgeCategory),
+		Experience:     string(entity.Experience),
+		Status:         string(entity.Status),
+		Decision:       entity.Decision,
+		Rounds:         roundResponses,
+		Winner:         entity.Winner,
+		NumberOfJudges: entity.NumberOfJudges,
+		Comments:       comments,
+		Referee:        entity.Referee,
+		BoutType:       string(entity.BoutType),
+		RedAthleteID:   entity.RedAthleteID,
+		BlueAthleteID:  entity.BlueAthleteID,
 	}
 }
 
 type UpdateRequest struct {
 	BoutNumber      *int    `json:"boutNumber"`
-	RedCorner       *string `json:"redCorner"`
-	BlueCorner      *string `json:"blueCorner"`
 	Gender          *string `json:"gender"`
 	WeightClass     *int    `json:"weightClass"`
 	GloveSize       *string `json:"gloveSize"`
@@ -219,8 +207,6 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 
 	update := &entities.UpdateBout{
 		BoutNumber:     req.BoutNumber,
-		RedCorner:      req.RedCorner,
-		BlueCorner:     req.BlueCorner,
 		Gender:         gender,
 		WeightClass:    req.WeightClass,
 		GloveSize:      gloveSize,

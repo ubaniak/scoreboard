@@ -81,8 +81,6 @@ var _ = Describe("CreateRequestToEntity", func() {
 
 			Expect(result.CardID).To(Equal(entry.cardId))
 			Expect(result.BoutNumber).To(Equal(entry.request.BoutNumber))
-			Expect(result.RedCorner).To(Equal(entry.request.RedCorner))
-			Expect(result.BlueCorner).To(Equal(entry.request.BlueCorner))
 			Expect(result.GloveSize).To(Equal(entry.expectedGlove))
 			Expect(result.RoundLength).To(Equal(entry.expectedRound))
 			Expect(result.Status).To(Equal(entities.BoutStatusNotStarted))
@@ -92,8 +90,6 @@ var _ = Describe("CreateRequestToEntity", func() {
 				cardId: 1,
 				request: bouts.CreateRequest{
 					BoutNumber:  1,
-					RedCorner:   "Alice",
-					BlueCorner:  "Bob",
 					WeightClass: 65,
 					AgeCategory: string(entities.Elite),
 					Experience:  string(entities.Novice),
@@ -109,8 +105,6 @@ var _ = Describe("CreateRequestToEntity", func() {
 				cardId: 2,
 				request: bouts.CreateRequest{
 					BoutNumber:  2,
-					RedCorner:   "Charlie",
-					BlueCorner:  "Dave",
 					WeightClass: 75,
 					AgeCategory: string(entities.Elite),
 					Experience:  string(entities.Open),
@@ -126,8 +120,6 @@ var _ = Describe("CreateRequestToEntity", func() {
 				cardId: 3,
 				request: bouts.CreateRequest{
 					BoutNumber:  3,
-					RedCorner:   "Eve",
-					BlueCorner:  "Faye",
 					WeightClass: 55,
 					AgeCategory: string(entities.JuniorA),
 					Experience:  string(entities.Novice),

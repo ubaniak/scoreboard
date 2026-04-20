@@ -135,7 +135,7 @@ const ScheduleRow = ({ bout: b, isNext, hasImage }: ScheduleRowProps) => {
         background: hasImage
           ? isNext ? "#1e2d4a" : "#131929"
           : isNext ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
-        opacity: isDone ? 0.45 : 1,
+        opacity: 1,
       }}
     >
       <div style={{ fontSize: 13, opacity: 0.4, letterSpacing: 1, textAlign: "center" }}>

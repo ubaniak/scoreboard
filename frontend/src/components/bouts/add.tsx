@@ -1,11 +1,11 @@
 import {
   Button,
   Form,
-  Input,
   InputNumber,
   Segmented,
   Select,
   Space,
+  Input,
   type FormProps,
 } from "antd";
 import type { CreateBoutProps } from "../../api/bouts";
@@ -35,8 +35,6 @@ export const AddBout = (props: AddBoutProps) => {
       layout="horizontal"
       initialValues={{
         boutNumber: 0,
-        redCorner: "",
-        blueCorner: "",
         ageCategory: "",
         gender: "male",
         experience: "novice",
@@ -60,16 +58,22 @@ export const AddBout = (props: AddBoutProps) => {
         <InputNumber />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Red Athlete" name="redAthleteId">
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
-      </Form.Item>
-      <Form.Item<CreateBoutProps> label="Red" name="redCorner">
-        <Input />
+        <Select
+          options={athleteOptions}
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="Select athlete..."
+        />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId">
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
-      </Form.Item>
-      <Form.Item<CreateBoutProps> label="Blue" name="blueCorner">
-        <Input />
+        <Select
+          options={athleteOptions}
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="Select athlete..."
+        />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory">
         <Select
@@ -103,7 +107,11 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Round Length" name="roundLength" rules={[{ required: true, message: "Round length is required" }]}>
+      <Form.Item<CreateBoutProps>
+        label="Round Length"
+        name="roundLength"
+        rules={[{ required: true, message: "Round length is required" }]}
+      >
         <Segmented
           size={"large"}
           shape="round"
@@ -115,7 +123,11 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Glove Size" name="gloveSize" rules={[{ required: true, message: "Glove size is required" }]}>
+      <Form.Item<CreateBoutProps>
+        label="Glove Size"
+        name="gloveSize"
+        rules={[{ required: true, message: "Glove size is required" }]}
+      >
         <Segmented
           size={"large"}
           shape="round"

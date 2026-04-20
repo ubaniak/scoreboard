@@ -30,32 +30,6 @@ import (
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
 
-var redNames = []string{
-	"Liam Carter", "Noah Bennett", "Ethan Collins", "Mason Hughes", "Lucas Mitchell",
-	"Oliver Grant", "James Rivera", "Aiden Brooks", "Logan Foster", "Elijah Reed",
-	"Jackson Perry", "Sebastian Price", "Mateo Hayes", "Henry Russell", "Alexander Ward",
-	"Daniel Cox", "Michael Barnes", "Owen Bell", "Dylan Powell", "Ryan Butler",
-	"Christian Simmons", "Eli Ross", "Aaron Henderson", "Connor Griffin", "Hunter Wood",
-	"Thomas Watson", "Cameron Brooks", "Jordan Gray", "Colton Baker", "Wyatt James",
-	"Dominic Kelly", "Austin Evans", "Brody Sanders", "Nolan Nelson", "Isaiah Cooper",
-	"Jaxon Richardson", "Landon Morris", "Tyler Rogers", "Brandon Jenkins", "Cole Murphy",
-	"Adrian Bailey", "Carson Rivera", "Jeremiah Flores", "Sawyer Fisher", "Tristan Greene",
-	"Chase Howard", "Blake King", "Ryder Scott", "Gavin Long", "Zane Hill",
-}
-
-var blueNames = []string{
-	"Emma Taylor", "Olivia Martinez", "Ava Thompson", "Sophia White", "Isabella Harris",
-	"Mia Clark", "Amelia Lewis", "Harper Robinson", "Evelyn Walker", "Abigail Young",
-	"Emily Allen", "Elizabeth Hall", "Sofia Wright", "Avery King", "Ella Scott",
-	"Grace Turner", "Victoria Baker", "Chloe Nelson", "Penelope Carter", "Riley Mitchell",
-	"Layla Perez", "Lillian Roberts", "Nora Phillips", "Zoey Campbell", "Mila Parker",
-	"Aurora Evans", "Hannah Edwards", "Addison Collins", "Ellie Stewart", "Stella Sanchez",
-	"Leah Morris", "Hazel Rogers", "Audrey Reed", "Scarlett Cook", "Lucy Morgan",
-	"Paisley Bell", "Skylar Murphy", "Eliana Bailey", "Caroline Cooper", "Nova Richardson",
-	"Genesis Cox", "Aaliyah Howard", "Kennedy Ward", "Savannah Torres", "Brooklyn Peterson",
-	"Anna Gray", "Claire Ramirez", "Madelyn James", "Arianna Watson", "Autumn Foster",
-}
-
 var ageCategories = []boutEntities.AgeCategory{
 	boutEntities.Elite, boutEntities.Elite, boutEntities.Elite,
 	boutEntities.Masters, boutEntities.Youth,
@@ -365,8 +339,6 @@ func main() {
 
 		bout := &boutEntities.Bout{
 			BoutNumber:     i,
-			RedCorner:      redNames[(i-1)%len(redNames)],
-			BlueCorner:     blueNames[(i-1)%len(blueNames)],
 			AgeCategory:    age,
 			Experience:     exp,
 			Gender:         gender,

@@ -23,51 +23,43 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 
 func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 	return &Bout{
-		CardID:             cardId,
-		BoutNumber:         bout.BoutNumber,
-		RedCorner:          bout.RedCorner,
-		BlueCorner:         bout.BlueCorner,
-		WeightClass:        bout.WeightClass,
-		GloveSize:          string(bout.GloveSize),
-		RoundLength:        float64(bout.RoundLength),
-		AgeCategory:        string(bout.AgeCategory),
-		Experience:         string(bout.Experience),
-		RedCornerImageUrl:  bout.RedCornerImageUrl,
-		BlueCornerImageUrl: bout.BlueCornerImageUrl,
-		Status:             string(bout.Status),
-		Gender:             string(bout.Gender),
-		Decision:           bout.Decision,
-		NumberOfJudges:     bout.NumberOfJudges,
-		Referee:            bout.Referee,
-		BoutType:           string(bout.BoutType),
-		RedAthleteID:       bout.RedAthleteID,
-		BlueAthleteID:      bout.BlueAthleteID,
+		CardID:         cardId,
+		BoutNumber:     bout.BoutNumber,
+		WeightClass:    bout.WeightClass,
+		GloveSize:      string(bout.GloveSize),
+		RoundLength:    float64(bout.RoundLength),
+		AgeCategory:    string(bout.AgeCategory),
+		Experience:     string(bout.Experience),
+		Status:         string(bout.Status),
+		Gender:         string(bout.Gender),
+		Decision:       bout.Decision,
+		NumberOfJudges: bout.NumberOfJudges,
+		Referee:        bout.Referee,
+		BoutType:       string(bout.BoutType),
+		RedAthleteID:   bout.RedAthleteID,
+		BlueAthleteID:  bout.BlueAthleteID,
 	}
 }
 
 func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 	return &entities.Bout{
-		ID:                 bout.ID,
-		CardID:             bout.CardID,
-		BoutNumber:         bout.BoutNumber,
-		RedCorner:          bout.RedCorner,
-		BlueCorner:         bout.BlueCorner,
-		WeightClass:        bout.WeightClass,
-		Gender:             entities.Gender(bout.Gender),
-		GloveSize:          entities.GloveSize(bout.GloveSize),
-		RoundLength:        entities.RoundLength(bout.RoundLength),
-		AgeCategory:        entities.AgeCategory(bout.AgeCategory),
-		Experience:         entities.Experience(bout.Experience),
-		RedCornerImageUrl:  bout.RedCornerImageUrl,
-		BlueCornerImageUrl: bout.BlueCornerImageUrl,
-		Status:             entities.BoutStatus(bout.Status),
-		Decision:           bout.Decision,
-		Winner:             bout.Winner,
-		NumberOfJudges:     bout.NumberOfJudges,
-		Referee:            bout.Referee,
-		BoutType:           entities.BoutType(bout.BoutType),
-		RedAthleteID:       bout.RedAthleteID,
-		BlueAthleteID:      bout.BlueAthleteID,
+		ID:             bout.ID,
+		CardID:         bout.CardID,
+		BoutNumber:     bout.BoutNumber,
+		WeightClass:    bout.WeightClass,
+		Gender:         entities.Gender(bout.Gender),
+		GloveSize:      entities.GloveSize(bout.GloveSize),
+		RoundLength:    entities.RoundLength(bout.RoundLength),
+		AgeCategory:    entities.AgeCategory(bout.AgeCategory),
+		Experience:     entities.Experience(bout.Experience),
+		Status:         entities.BoutStatus(bout.Status),
+		Decision:       bout.Decision,
+		Winner:         bout.Winner,
+		NumberOfJudges: bout.NumberOfJudges,
+		Referee:        bout.Referee,
+		BoutType:       entities.BoutType(bout.BoutType),
+		RedAthleteID:   bout.RedAthleteID,
+		BlueAthleteID:  bout.BlueAthleteID,
 	}
 }
 
@@ -143,14 +135,6 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.BoutNumber != nil {
 		bout.BoutNumber = *toUpdate.BoutNumber
-	}
-
-	if toUpdate.RedCorner != nil {
-		bout.RedCorner = *toUpdate.RedCorner
-	}
-
-	if toUpdate.BlueCorner != nil {
-		bout.BlueCorner = *toUpdate.BlueCorner
 	}
 
 	if toUpdate.Gender != nil {
