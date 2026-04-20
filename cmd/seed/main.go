@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
+	"math"
 	"math/rand"
 	"os"
+	"path/filepath"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -95,6 +101,15 @@ var seedClubs = []clubEntities.Club{
 	{Name: "Central City Boxing", Location: "Ottawa, ON"},
 }
 
+// Club accent colours (R, G, B)
+var clubColors = [][3]uint8{
+	{185, 28, 28},  // red
+	{29, 78, 216},  // blue
+	{21, 128, 61},  // green
+	{109, 40, 217}, // purple
+	{180, 130, 20}, // gold
+}
+
 var seedAthletes = []struct {
 	name        string
 	dateOfBirth string
@@ -122,10 +137,80 @@ var seedAthletes = []struct {
 	{"Abigail Young", "2000-06-18", 4},
 }
 
+// ── image helpers ─────────────────────────────────────────────────────────────
+
+// circleAvatar creates a size×size PNG: a filled circle of the given colour
+// centred on a dark background.
+func circleAvatar(size int, r, g, b uint8) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, size, size))
+	bg := color.RGBA{R: 15, G: 20, B: 35, A: 255}
+	fg := color.RGBA{R: r, G: g, B: b, A: 255}
+	cx, cy := float64(size)/2, float64(size)/2
+	radius := float64(size)/2 - 4
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			dx := float64(x) - cx
+			dy := float64(y) - cy
+			if math.Sqrt(dx*dx+dy*dy) <= radius {
+				img.Set(x, y, fg)
+			} else {
+				img.Set(x, y, bg)
+			}
+		}
+	}
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
+}
+
+// gradientBanner creates a w×h PNG that fades horizontally from one colour to
+// another, overlaid with a subtle dark vignette so text stays readable.
+func gradientBanner(w, h int, r1, g1, b1, r2, g2, b2 uint8) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	for x := 0; x < w; x++ {
+		t := float64(x) / float64(w-1)
+		r := uint8(float64(r1)*(1-t) + float64(r2)*t)
+		g := uint8(float64(g1)*(1-t) + float64(g2)*t)
+		b := uint8(float64(b1)*(1-t) + float64(b2)*t)
+		for y := 0; y < h; y++ {
+			// vignette: darken edges top/bottom
+			vy := float64(y) / float64(h-1)
+			factor := 1.0 - 0.35*math.Pow(2*vy-1, 2)
+			img.Set(x, y, color.RGBA{
+				R: uint8(float64(r) * factor),
+				G: uint8(float64(g) * factor),
+				B: uint8(float64(b) * factor),
+				A: 255,
+			})
+		}
+	}
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
+}
+
+func saveImage(dir string, id uint, data []byte) (string, error) {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	path := filepath.Join(dir, fmt.Sprintf("%d.png", id))
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+// ── main ──────────────────────────────────────────────────────────────────────
+
 func main() {
 	dbPath, err := datadir.DBPath()
 	if err != nil {
 		log.Fatalf("data dir: %v", err)
+	}
+
+	uploadsDir, err := datadir.UploadsDir()
+	if err != nil {
+		log.Fatalf("uploads dir: %v", err)
 	}
 
 	if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
@@ -189,7 +274,7 @@ func main() {
 	}
 	boutUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
 
-	// Create clubs
+	// ── clubs ────────────────────────────────────────────────────────────────
 	clubIDs := make([]uint, len(seedClubs))
 	for i, c := range seedClubs {
 		if err := clubUseCase.Create(c.Name, c.Location); err != nil {
@@ -199,11 +284,23 @@ func main() {
 		if err != nil {
 			log.Fatalf("list clubs: %v", err)
 		}
-		clubIDs[i] = allClubs[len(allClubs)-1].ID
-	}
-	fmt.Printf("Created %d clubs.\n", len(clubIDs))
+		id := allClubs[len(allClubs)-1].ID
+		clubIDs[i] = id
 
-	// Create athletes
+		// Generate and save club logo
+		col := clubColors[i%len(clubColors)]
+		img := circleAvatar(200, col[0], col[1], col[2])
+		if _, err := saveImage(filepath.Join(uploadsDir, "clubs"), id, img); err != nil {
+			log.Fatalf("save club image %d: %v", id, err)
+		}
+		url := fmt.Sprintf("/uploads/clubs/%d.png", id)
+		if err := clubUseCase.SetImageUrl(id, url); err != nil {
+			log.Fatalf("set club image url %d: %v", id, err)
+		}
+	}
+	fmt.Printf("Created %d clubs with images.\n", len(clubIDs))
+
+	// ── athletes ─────────────────────────────────────────────────────────────
 	athleteIDs := make([]uint, len(seedAthletes))
 	for i, a := range seedAthletes {
 		clubID := clubIDs[a.clubIndex]
@@ -214,11 +311,27 @@ func main() {
 		if err != nil {
 			log.Fatalf("list athletes: %v", err)
 		}
-		athleteIDs[i] = allAthletes[len(allAthletes)-1].ID
-	}
-	fmt.Printf("Created %d athletes.\n", len(athleteIDs))
+		id := allAthletes[len(allAthletes)-1].ID
+		athleteIDs[i] = id
 
-	// Create card
+		// Red corner athletes (0–9) get a warm colour; blue corner (10–19) get cool
+		var img []byte
+		if i < 10 {
+			img = circleAvatar(200, 185, 28, 28) // red
+		} else {
+			img = circleAvatar(200, 29, 78, 216) // blue
+		}
+		if _, err := saveImage(filepath.Join(uploadsDir, "athletes"), id, img); err != nil {
+			log.Fatalf("save athlete image %d: %v", id, err)
+		}
+		url := fmt.Sprintf("/uploads/athletes/%d.png", id)
+		if err := athleteUseCase.SetImageUrl(id, url); err != nil {
+			log.Fatalf("set athlete image url %d: %v", id, err)
+		}
+	}
+	fmt.Printf("Created %d athletes with images.\n", len(athleteIDs))
+
+	// ── card ─────────────────────────────────────────────────────────────────
 	if err := cardUseCase.Create("Fight Night 2026", "2026-04-14"); err != nil {
 		log.Fatalf("create card: %v", err)
 	}
@@ -227,9 +340,18 @@ func main() {
 		log.Fatalf("list cards: %v", err)
 	}
 	cardID := cardList[len(cardList)-1].ID
-	fmt.Printf("Created card id=%d\n", cardID)
 
-	// Create 100 bouts; first 20 are linked to seeded athletes
+	// Dark red → dark navy gradient banner
+	cardImg := gradientBanner(1200, 600, 120, 10, 10, 10, 15, 60)
+	if _, err := saveImage(filepath.Join(uploadsDir, "cards"), cardID, cardImg); err != nil {
+		log.Fatalf("save card image: %v", err)
+	}
+	if err := cardUseCase.SetImageUrl(cardID, fmt.Sprintf("/uploads/cards/%d.png", cardID)); err != nil {
+		log.Fatalf("set card image url: %v", err)
+	}
+	fmt.Printf("Created card id=%d with image.\n", cardID)
+
+	// ── bouts ─────────────────────────────────────────────────────────────────
 	for i := 1; i <= 100; i++ {
 		age := ageCategories[rand.Intn(len(ageCategories))]
 		exp := experiences[rand.Intn(len(experiences))]
@@ -273,7 +395,7 @@ func main() {
 		}
 	}
 
-	// Create 20 officials
+	// ── officials ─────────────────────────────────────────────────────────────
 	seedOfficials := make([]*officialEntities.Official, len(seedOfficialData))
 	for i := range seedOfficialData {
 		o := seedOfficialData[i]

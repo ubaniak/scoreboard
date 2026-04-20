@@ -20,6 +20,8 @@ type BoutInfo = {
   blueClubName?: string;
   redAthleteImageUrl?: string;
   blueAthleteImageUrl?: string;
+  redClubImageUrl?: string;
+  blueClubImageUrl?: string;
 };
 
 export type ScheduleItem = {
@@ -40,12 +42,18 @@ export type ScheduleItem = {
   blueClubName?: string;
   redAthleteImageUrl?: string;
   blueAthleteImageUrl?: string;
+  redClubImageUrl?: string;
+  blueClubImageUrl?: string;
 };
 
 export type Schedule = {
   card?: {
     id: string;
     name: string;
+    imageUrl?: string;
+    showCardImage?: boolean;
+    showAthleteImages?: boolean;
+    showClubImages?: boolean;
   };
   bouts: ScheduleItem[];
 };
@@ -54,6 +62,10 @@ export type Current = {
   card?: {
     id: string;
     name: string;
+    imageUrl?: string;
+    showCardImage?: boolean;
+    showAthleteImages?: boolean;
+    showClubImages?: boolean;
   };
   bout?: BoutInfo;
   nextBout?: BoutInfo;

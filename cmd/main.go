@@ -355,12 +355,12 @@ type athleteClubQuerier struct {
 	uc athletes.UseCase
 }
 
-func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, imageUrl string) {
+func (q *athleteClubQuerier) GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl string) {
 	a, err := q.uc.Get(athleteID)
 	if err != nil || a == nil {
-		return "", ""
+		return "", "", ""
 	}
-	return a.ClubName, a.ImageUrl
+	return a.ClubName, a.ImageUrl, a.ClubImageUrl
 }
 
 func getLocalIP() string {

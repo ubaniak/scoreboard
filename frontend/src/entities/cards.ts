@@ -9,6 +9,9 @@ export type Card = {
   status: CardStatus;
   numberOfJudges: number;
   imageUrl?: string;
+  showCardImage: boolean;
+  showAthleteImages: boolean;
+  showClubImages: boolean;
 };
 
 export type Official = {

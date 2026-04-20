@@ -20,7 +20,7 @@ type UseCase interface {
 // AthleteQuerier is a narrow interface to look up athlete info without
 // importing the full athletes package (avoids circular dependencies).
 type AthleteQuerier interface {
-	GetAthleteInfo(athleteID uint) (clubName, imageUrl string)
+	GetAthleteInfo(athleteID uint) (clubName, athleteImageUrl, clubImageUrl string)
 }
 
 // RoundDetailsQuerier fetches foul/warning details for a single round.
@@ -52,8 +52,12 @@ func (u *usecase) Current() (*entities.Current, error) {
 	}
 
 	current.Card = &entities.CurrentCard{
-		ID:   card.ID,
-		Name: card.Name,
+		ID:                card.ID,
+		Name:              card.Name,
+		ImageUrl:          card.ImageUrl,
+		ShowCardImage:     card.ShowCardImage,
+		ShowAthleteImages: card.ShowAthleteImages,
+		ShowClubImages:    card.ShowClubImages,
 	}
 
 	bout, err := u.bouts.Current(card.ID)
@@ -87,13 +91,13 @@ func (u *usecase) Current() (*entities.Current, error) {
 		return nil, err
 	}
 
-	var redClub, blueClub, redImage, blueImage string
+	var redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
 	if u.athletes != nil {
 		if bout.RedAthleteID != nil {
-			redClub, redImage = u.athletes.GetAthleteInfo(*bout.RedAthleteID)
+			redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*bout.RedAthleteID)
 		}
 		if bout.BlueAthleteID != nil {
-			blueClub, blueImage = u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
+			blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*bout.BlueAthleteID)
 		}
 	}
 
@@ -116,6 +120,8 @@ func (u *usecase) Current() (*entities.Current, error) {
 		BlueClubName:        blueClub,
 		RedAthleteImageUrl:  redImage,
 		BlueAthleteImageUrl: blueImage,
+		RedClubImageUrl:     redClubImage,
+		BlueClubImageUrl:    blueClubImage,
 	}
 	if decisionRevealed {
 		currentBout.Decision = bout.Decision
@@ -197,8 +203,12 @@ func (u *usecase) List() (*entities.BoutList, error) {
 
 	result := &entities.BoutList{
 		Card: &entities.CurrentCard{
-			ID:   card.ID,
-			Name: card.Name,
+			ID:                card.ID,
+			Name:              card.Name,
+			ImageUrl:          card.ImageUrl,
+			ShowCardImage:     card.ShowCardImage,
+			ShowAthleteImages: card.ShowAthleteImages,
+			ShowClubImages:    card.ShowClubImages,
 		},
 	}
 
@@ -213,13 +223,13 @@ func (u *usecase) List() (*entities.BoutList, error) {
 	for _, b := range bouts {
 		decisionRevealed := b.Status == boutEntities.BoutStatusShowDecision || b.Status == boutEntities.BoutStatusCompleted
 
-		var redClub, blueClub, redImage, blueImage string
+		var redClub, blueClub, redImage, blueImage, redClubImage, blueClubImage string
 		if u.athletes != nil {
 			if b.RedAthleteID != nil {
-				redClub, redImage = u.athletes.GetAthleteInfo(*b.RedAthleteID)
+				redClub, redImage, redClubImage = u.athletes.GetAthleteInfo(*b.RedAthleteID)
 			}
 			if b.BlueAthleteID != nil {
-				blueClub, blueImage = u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+				blueClub, blueImage, blueClubImage = u.athletes.GetAthleteInfo(*b.BlueAthleteID)
 			}
 		}
 
@@ -239,6 +249,8 @@ func (u *usecase) List() (*entities.BoutList, error) {
 			BlueClubName:        blueClub,
 			RedAthleteImageUrl:  redImage,
 			BlueAthleteImageUrl: blueImage,
+			RedClubImageUrl:     redClubImage,
+			BlueClubImageUrl:    blueClubImage,
 		}
 		if decisionRevealed {
 			item.Winner = b.Winner

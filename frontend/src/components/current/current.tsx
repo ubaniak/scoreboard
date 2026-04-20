@@ -21,9 +21,11 @@ export const ShowCurrent = ({ current, schedule }: ShowCurrentProps) => {
   const boutActive = ACTIVE_STATUSES.has(current?.bout?.status ?? "");
 
   if (!boutActive) {
+    const scheduleCard = schedule?.card ?? current?.card;
     return (
       <ScheduleView
-        cardName={schedule?.card?.name ?? current?.card?.name}
+        cardName={scheduleCard?.name}
+        cardImageUrl={scheduleCard?.showCardImage ? scheduleCard?.imageUrl : undefined}
         bouts={schedule?.bouts ?? []}
         nextBoutId={current?.nextBout?.id}
       />

@@ -39,8 +39,12 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 	response := entities.CurrentResponse{}
 	if current.Card != nil {
 		response.Card = &entities.CurrentCardResponse{
-			ID:   current.Card.ID,
-			Name: current.Card.Name,
+			ID:                current.Card.ID,
+			Name:              current.Card.Name,
+			ImageUrl:          current.Card.ImageUrl,
+			ShowCardImage:     current.Card.ShowCardImage,
+			ShowAthleteImages: current.Card.ShowAthleteImages,
+			ShowClubImages:    current.Card.ShowClubImages,
 		}
 	}
 
@@ -64,6 +68,8 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 			BlueClubName:        current.Bout.BlueClubName,
 			RedAthleteImageUrl:  current.Bout.RedAthleteImageUrl,
 			BlueAthleteImageUrl: current.Bout.BlueAthleteImageUrl,
+			RedClubImageUrl:     current.Bout.RedClubImageUrl,
+			BlueClubImageUrl:    current.Bout.BlueClubImageUrl,
 		}
 	}
 
@@ -125,8 +131,12 @@ func (h *App) Schedule(w http.ResponseWriter, r *http.Request) {
 	}
 	if result.Card != nil {
 		response.Card = &entities.CurrentCardResponse{
-			ID:   result.Card.ID,
-			Name: result.Card.Name,
+			ID:                result.Card.ID,
+			Name:              result.Card.Name,
+			ImageUrl:          result.Card.ImageUrl,
+			ShowCardImage:     result.Card.ShowCardImage,
+			ShowAthleteImages: result.Card.ShowAthleteImages,
+			ShowClubImages:    result.Card.ShowClubImages,
 		}
 	}
 	for _, b := range result.Bouts {
@@ -148,6 +158,8 @@ func (h *App) Schedule(w http.ResponseWriter, r *http.Request) {
 			BlueClubName:        b.BlueClubName,
 			RedAthleteImageUrl:  b.RedAthleteImageUrl,
 			BlueAthleteImageUrl: b.BlueAthleteImageUrl,
+			RedClubImageUrl:     b.RedClubImageUrl,
+			BlueClubImageUrl:    b.BlueClubImageUrl,
 		})
 	}
 

@@ -1,8 +1,12 @@
 package entities
 
 type CurrentCardResponse struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID                uint   `json:"id"`
+	Name              string `json:"name"`
+	ImageUrl          string `json:"imageUrl,omitempty"`
+	ShowCardImage     bool   `json:"showCardImage"`
+	ShowAthleteImages bool   `json:"showAthleteImages"`
+	ShowClubImages    bool   `json:"showClubImages"`
 }
 
 type CurrentBoutResponse struct {
@@ -24,6 +28,8 @@ type CurrentBoutResponse struct {
 	BlueClubName         string `json:"blueClubName,omitempty"`
 	RedAthleteImageUrl   string `json:"redAthleteImageUrl,omitempty"`
 	BlueAthleteImageUrl  string `json:"blueAthleteImageUrl,omitempty"`
+	RedClubImageUrl      string `json:"redClubImageUrl,omitempty"`
+	BlueClubImageUrl     string `json:"blueClubImageUrl,omitempty"`
 }
 
 type CurrentScoreResponse struct {
@@ -68,6 +74,8 @@ type BoutListItemResponse struct {
 	BlueClubName        string `json:"blueClubName,omitempty"`
 	RedAthleteImageUrl  string `json:"redAthleteImageUrl,omitempty"`
 	BlueAthleteImageUrl string `json:"blueAthleteImageUrl,omitempty"`
+	RedClubImageUrl     string `json:"redClubImageUrl,omitempty"`
+	BlueClubImageUrl    string `json:"blueClubImageUrl,omitempty"`
 }
 
 type BoutListResponse struct {
@@ -93,6 +101,8 @@ type BoutListItem struct {
 	BlueClubName        string
 	RedAthleteImageUrl  string
 	BlueAthleteImageUrl string
+	RedClubImageUrl     string
+	BlueClubImageUrl    string
 }
 
 type BoutList struct {
@@ -101,8 +111,12 @@ type BoutList struct {
 }
 
 type CurrentCard struct {
-	ID   uint
-	Name string
+	ID                uint
+	Name              string
+	ImageUrl          string
+	ShowCardImage     bool
+	ShowAthleteImages bool
+	ShowClubImages    bool
 }
 
 type CurrentBout struct {
@@ -124,6 +138,8 @@ type CurrentBout struct {
 	BlueClubName        string
 	RedAthleteImageUrl  string
 	BlueAthleteImageUrl string
+	RedClubImageUrl     string
+	BlueClubImageUrl    string
 }
 
 type CurrentScore struct {

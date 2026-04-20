@@ -8,15 +8,17 @@ const TRANSITION_MS = 700;
 type ScheduleRowProps = {
   bout: ScheduleItem;
   isNext: boolean;
+  hasImage: boolean;
 };
 
 type FeaturedRowProps = {
   bout: ScheduleItem;
   size: "sm" | "lg";
   label?: string;
+  hasImage: boolean;
 };
 
-const FeaturedRow = ({ bout: b, size, label }: FeaturedRowProps) => {
+const FeaturedRow = ({ bout: b, size, label, hasImage }: FeaturedRowProps) => {
   const isDone = b.status === "completed" || b.status === "show_decision";
   const isLg = size === "lg";
 
@@ -30,7 +32,9 @@ const FeaturedRow = ({ bout: b, size, label }: FeaturedRowProps) => {
         padding: isLg ? "22px 32px" : "12px 24px",
         borderRadius: isLg ? 12 : 8,
         border: isLg ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.07)",
-        background: isLg ? "rgba(255,255,255,0.06)" : "transparent",
+        background: hasImage
+          ? isLg ? "#1a2035" : "#131929"
+          : isLg ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
         opacity: size === "sm" ? 0.55 : 1,
         maxWidth: 960,
         margin: "0 auto",
@@ -95,9 +99,10 @@ const FeaturedRow = ({ bout: b, size, label }: FeaturedRowProps) => {
 type FeaturedBoutsProps = {
   bouts: ScheduleItem[];
   nextBoutId: string;
+  hasImage: boolean;
 };
 
-const FeaturedBouts = ({ bouts, nextBoutId }: FeaturedBoutsProps) => {
+const FeaturedBouts = ({ bouts, nextBoutId, hasImage }: FeaturedBoutsProps) => {
   const idx = bouts.findIndex((b) => b.id === nextBoutId);
   if (idx === -1) return null;
 
@@ -107,14 +112,14 @@ const FeaturedBouts = ({ bouts, nextBoutId }: FeaturedBoutsProps) => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, marginBottom: 20 }}>
-      {prev && <FeaturedRow bout={prev} size="sm" label="Previous" />}
-      <FeaturedRow bout={current} size="lg" label="Up Next" />
-      {next && <FeaturedRow bout={next} size="sm" label="After" />}
+      {prev && <FeaturedRow bout={prev} size="sm" label="Previous" hasImage={hasImage} />}
+      <FeaturedRow bout={current} size="lg" label="Up Next" hasImage={hasImage} />
+      {next && <FeaturedRow bout={next} size="sm" label="After" hasImage={hasImage} />}
     </div>
   );
 };
 
-const ScheduleRow = ({ bout: b, isNext }: ScheduleRowProps) => {
+const ScheduleRow = ({ bout: b, isNext, hasImage }: ScheduleRowProps) => {
   const isDone = b.status === "completed" || b.status === "show_decision";
 
   return (
@@ -127,7 +132,9 @@ const ScheduleRow = ({ bout: b, isNext }: ScheduleRowProps) => {
         padding: "16px 24px",
         borderRadius: 8,
         border: isNext ? "2px solid rgba(255,255,255,0.7)" : "1px solid rgba(255,255,255,0.08)",
-        background: isNext ? "rgba(255,255,255,0.05)" : "transparent",
+        background: hasImage
+          ? isNext ? "#1e2d4a" : "#131929"
+          : isNext ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
         opacity: isDone ? 0.45 : 1,
       }}
     >
@@ -185,11 +192,12 @@ const ScheduleRow = ({ bout: b, isNext }: ScheduleRowProps) => {
 
 type ScheduleViewProps = {
   cardName?: string;
+  cardImageUrl?: string;
   bouts: ScheduleItem[];
   nextBoutId?: string;
 };
 
-export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps) => {
+export const ScheduleView = ({ cardName, cardImageUrl, bouts, nextBoutId }: ScheduleViewProps) => {
   const listBouts = bouts;
 
   const needsPaging = listBouts.length > PAGE_SIZE;
@@ -241,6 +249,11 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
         position: "fixed",
         inset: 0,
         background: "#0b0f1a",
+        ...(cardImageUrl ? {
+          backgroundImage: `url(${cardImageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        } : {}),
         color: "white",
         padding: "48px 64px",
         boxSizing: "border-box",
@@ -248,6 +261,14 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
         flexDirection: "column",
       }}
     >
+      {cardImageUrl && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(11, 15, 26, 0.82)",
+          zIndex: 0,
+        }} />
+      )}
       <style>{`
         @keyframes scheduleSlideOutToTop {
           from { transform: translateY(0); opacity: 1; }
@@ -258,6 +279,8 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
           to   { transform: translateY(0); opacity: 1; }
         }
       `}</style>
+
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
 
       {cardName && (
         <div
@@ -279,7 +302,7 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
         <div style={{ textAlign: "center", fontSize: 24, opacity: 0.4, marginTop: 80 }}>Scoreboard</div>
       ) : (
         <>
-          {nextBoutId && <FeaturedBouts bouts={bouts} nextBoutId={nextBoutId} />}
+          {nextBoutId && <FeaturedBouts bouts={bouts} nextBoutId={nextBoutId} hasImage={!!cardImageUrl} />}
 
           {listBouts.length > 0 && (
           <div
@@ -293,6 +316,7 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
               borderRadius: 12,
               padding: "16px",
               boxSizing: "border-box",
+              background: cardImageUrl ? "#0d1120" : "transparent",
             }}
           >
             {/* Exiting page — slides up and out */}
@@ -310,7 +334,7 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
                 }}
               >
                 {exitingBouts.map((b) => (
-                  <ScheduleRow key={b.id} bout={b} isNext={false} />
+                  <ScheduleRow key={b.id} bout={b} isNext={false} hasImage={!!cardImageUrl} />
                 ))}
               </div>
             )}
@@ -328,7 +352,7 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
               }}
             >
               {currentBouts.map((b) => (
-                <ScheduleRow key={b.id} bout={b} isNext={false} />
+                <ScheduleRow key={b.id} bout={b} isNext={false} hasImage={!!cardImageUrl} />
               ))}
             </div>
           </div>
@@ -352,6 +376,8 @@ export const ScheduleView = ({ cardName, bouts, nextBoutId }: ScheduleViewProps)
           )}
         </>
       )}
+
+      </div>
     </div>
   );
 };

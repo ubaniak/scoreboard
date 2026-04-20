@@ -15,8 +15,9 @@ type Sqlite struct {
 
 // ClubRow is a minimal struct for the club name lookup.
 type ClubRow struct {
-	ID   uint
-	Name string
+	ID       uint
+	Name     string
+	ImageUrl string
 }
 
 func NewSqlite(db *gorm.DB) (*Sqlite, error) {
@@ -35,16 +36,20 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 		}
 	}
 
-	clubNames := map[uint]string{}
+	type clubInfo struct {
+		name     string
+		imageUrl string
+	}
+	clubs := map[uint]clubInfo{}
 	if len(clubIDSet) > 0 {
 		ids := make([]uint, 0, len(clubIDSet))
 		for id := range clubIDSet {
 			ids = append(ids, id)
 		}
 		var rows []ClubRow
-		if err := s.db.Table("clubs").Select("id, name").Where("id IN ? AND deleted_at IS NULL", ids).Find(&rows).Error; err == nil {
+		if err := s.db.Table("clubs").Select("id, name, image_url").Where("id IN ? AND deleted_at IS NULL", ids).Find(&rows).Error; err == nil {
 			for _, r := range rows {
-				clubNames[r.ID] = r.Name
+				clubs[r.ID] = clubInfo{name: r.Name, imageUrl: r.ImageUrl}
 			}
 		}
 	}
@@ -60,7 +65,10 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 			ImageUrl:    a.ImageUrl,
 		}
 		if a.ClubID != nil {
-			e.ClubName = clubNames[*a.ClubID]
+			if info, ok := clubs[*a.ClubID]; ok {
+				e.ClubName = info.name
+				e.ClubImageUrl = info.imageUrl
+			}
 		}
 		result[i] = e
 	}

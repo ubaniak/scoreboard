@@ -13,6 +13,9 @@ export const BoutView = ({ current }: BoutViewProps) => {
   const { bout, round, card, scores, warnings } = current;
   const showScores = !!scores && Object.keys(scores).length > 0;
 
+  const showAthleteImages = card?.showAthleteImages ?? false;
+  const showClubImages = card?.showClubImages ?? false;
+
   return (
     <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: "#0b0f1a" }}>
 
@@ -68,8 +71,20 @@ export const BoutView = ({ current }: BoutViewProps) => {
         {showScores && <ScoreTable scores={scores!} warnings={warnings} />}
       </div>
 
-      <Curtain side="red" name={bout?.redCorner ?? ""} open={showScores} />
-      <Curtain side="blue" name={bout?.blueCorner ?? ""} open={showScores} />
+      <Curtain
+        side="red"
+        name={bout?.redCorner ?? ""}
+        open={showScores}
+        athleteImageUrl={showAthleteImages ? bout?.redAthleteImageUrl : undefined}
+        clubImageUrl={showClubImages ? bout?.redClubImageUrl : undefined}
+      />
+      <Curtain
+        side="blue"
+        name={bout?.blueCorner ?? ""}
+        open={showScores}
+        athleteImageUrl={showAthleteImages ? bout?.blueAthleteImageUrl : undefined}
+        clubImageUrl={showClubImages ? bout?.blueClubImageUrl : undefined}
+      />
 
       {/* Card name — top overlay */}
       {card?.name && (

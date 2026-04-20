@@ -68,12 +68,15 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetCardResponse struct {
-	Id             uint   `json:"id"`
-	Name           string `json:"name"`
-	Date           string `json:"date"`
-	Status         string `json:"status"`
-	NumberOfJudges int    `json:"numberOfJudges"`
-	ImageUrl       string `json:"imageUrl,omitempty"`
+	Id                uint   `json:"id"`
+	Name              string `json:"name"`
+	Date              string `json:"date"`
+	Status            string `json:"status"`
+	NumberOfJudges    int    `json:"numberOfJudges"`
+	ImageUrl          string `json:"imageUrl,omitempty"`
+	ShowCardImage     bool   `json:"showCardImage"`
+	ShowAthleteImages bool   `json:"showAthleteImages"`
+	ShowClubImages    bool   `json:"showClubImages"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
@@ -82,12 +85,15 @@ func mapCardToResponse(card entities.Card) *GetCardResponse {
 		numJudges = 5
 	}
 	return &GetCardResponse{
-		Id:             card.ID,
-		Name:           card.Name,
-		Date:           card.Date,
-		Status:         string(card.Status),
-		NumberOfJudges: numJudges,
-		ImageUrl:       card.ImageUrl,
+		Id:                card.ID,
+		Name:              card.Name,
+		Date:              card.Date,
+		Status:            string(card.Status),
+		NumberOfJudges:    numJudges,
+		ImageUrl:          card.ImageUrl,
+		ShowCardImage:     card.ShowCardImage,
+		ShowAthleteImages: card.ShowAthleteImages,
+		ShowClubImages:    card.ShowClubImages,
 	}
 }
 
