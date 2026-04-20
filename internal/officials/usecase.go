@@ -8,6 +8,7 @@ type UseCase interface {
 	Update(id uint, o *entities.Official) error
 	Get() ([]entities.Official, error)
 	Delete(id uint) error
+	GetAffiliations() ([]entities.Official, error)
 }
 
 type useCase struct {
@@ -42,4 +43,8 @@ func (uc *useCase) Get() ([]entities.Official, error) {
 
 func (uc *useCase) Delete(id uint) error {
 	return uc.storage.Delete(id)
+}
+
+func (uc *useCase) GetAffiliations() ([]entities.Official, error) {
+	return uc.storage.Get()
 }

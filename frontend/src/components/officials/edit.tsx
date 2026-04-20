@@ -27,6 +27,8 @@ export const EditOfficial = (props: EditOfficialProps) => {
         gender: props.official.gender,
         yearOfBirth: props.official.yearOfBirth,
         registrationNumber: props.official.registrationNumber,
+        province: props.official.province,
+        nation: props.official.nation,
       }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
@@ -51,6 +53,12 @@ export const EditOfficial = (props: EditOfficialProps) => {
         <InputNumber style={{ width: "100%" }} min={1900} max={new Date().getFullYear()} />
       </Form.Item>
       <Form.Item<UpdateOfficialProps> label="Reg. Number" name="registrationNumber">
+        <Input />
+      </Form.Item>
+      <Form.Item<UpdateOfficialProps> label="Province" name="province">
+        <Input />
+      </Form.Item>
+      <Form.Item<UpdateOfficialProps> label="Nation" name="nation">
         <Input />
       </Form.Item>
       <Form.Item label={null}>

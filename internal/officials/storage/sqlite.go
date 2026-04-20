@@ -26,6 +26,8 @@ func (s *Sqlite) Save(official *entities.Official) error {
 			Gender:             official.Gender,
 			YearOfBirth:        official.YearOfBirth,
 			RegistrationNumber: official.RegistrationNumber,
+			Province:           official.Province,
+			Nation:             official.Nation,
 		}
 		return s.db.Create(o).Error
 	}
@@ -37,6 +39,8 @@ func (s *Sqlite) Save(official *entities.Official) error {
 			"gender":              official.Gender,
 			"year_of_birth":       official.YearOfBirth,
 			"registration_number": official.RegistrationNumber,
+			"province":            official.Province,
+			"nation":              official.Nation,
 		}).Error
 }
 
@@ -55,6 +59,8 @@ func (s *Sqlite) Get() ([]entities.Official, error) {
 			Gender:             o.Gender,
 			YearOfBirth:        o.YearOfBirth,
 			RegistrationNumber: o.RegistrationNumber,
+			Province:           o.Province,
+			Nation:             o.Nation,
 		}
 		response = append(response, r)
 	}

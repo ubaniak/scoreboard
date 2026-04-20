@@ -30,6 +30,8 @@ export type CreateOfficialProps = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  province?: string;
+  nation?: string;
 };
 
 export const useMutateCreateOfficial = (props: TokenBase) => {
@@ -77,6 +79,8 @@ export type UpdateOfficialProps = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  province?: string;
+  nation?: string;
 };
 
 export const useMutateUpdateOfficial = (props: TokenBase) => {

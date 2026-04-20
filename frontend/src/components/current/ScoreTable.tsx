@@ -1,12 +1,30 @@
+type OfficialAffiliation = {
+  province?: string;
+  nation?: string;
+};
+
 type ScoreTableProps = {
   scores: Record<number, { red: number; blue: number }[]>;
   warnings?: Record<number, { red: number; blue: number }>;
+  showOfficialAffiliation?: "none" | "province" | "nation";
+  officials?: OfficialAffiliation[];
 };
 
-export const ScoreTable = ({ scores, warnings }: ScoreTableProps) => {
+export const ScoreTable = ({ scores, warnings, showOfficialAffiliation = "none", officials = [] }: ScoreTableProps) => {
   const roundNumbers = Object.keys(scores).map(Number).sort((a, b) => a - b);
   const judgeCount = Math.max(...roundNumbers.map((r) => (scores[r] ?? []).length));
   const judgeIndices = Array.from({ length: judgeCount }, (_, i) => i);
+
+  const judgeLabel = (i: number): string => {
+    if (showOfficialAffiliation === "province") {
+      const val = officials[i]?.province;
+      if (val) return val;
+    } else if (showOfficialAffiliation === "nation") {
+      const val = officials[i]?.nation;
+      if (val) return val;
+    }
+    return `Judge ${i + 1}`;
+  };
 
   const sep = "1px solid rgba(255,255,255,0.15)";
   const subSep = "1px solid rgba(255,255,255,0.08)";
@@ -28,7 +46,7 @@ export const ScoreTable = ({ scores, warnings }: ScoreTableProps) => {
             <th style={{ padding: "8px 16px", textAlign: "left", fontSize: 11, letterSpacing: 3, opacity: 0.4, textTransform: "uppercase", fontWeight: 400 }} />
             {judgeIndices.map((i) => (
               <th key={i} colSpan={2} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, letterSpacing: 3, opacity: 0.5, textTransform: "uppercase", fontWeight: 400, borderBottom: subSep }}>
-                Judge {i + 1}
+                {judgeLabel(i)}
               </th>
             ))}
           </tr>

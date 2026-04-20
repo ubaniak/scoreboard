@@ -68,15 +68,16 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetCardResponse struct {
-	Id                uint   `json:"id"`
-	Name              string `json:"name"`
-	Date              string `json:"date"`
-	Status            string `json:"status"`
-	NumberOfJudges    int    `json:"numberOfJudges"`
-	ImageUrl          string `json:"imageUrl,omitempty"`
-	ShowCardImage     bool   `json:"showCardImage"`
-	ShowAthleteImages bool   `json:"showAthleteImages"`
-	ShowClubImages    bool   `json:"showClubImages"`
+	Id                      uint   `json:"id"`
+	Name                    string `json:"name"`
+	Date                    string `json:"date"`
+	Status                  string `json:"status"`
+	NumberOfJudges          int    `json:"numberOfJudges"`
+	ImageUrl                string `json:"imageUrl,omitempty"`
+	ShowCardImage           bool   `json:"showCardImage"`
+	ShowAthleteImages       bool   `json:"showAthleteImages"`
+	ShowClubImages          bool   `json:"showClubImages"`
+	ShowOfficialAffiliation string `json:"showOfficialAffiliation"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
@@ -84,16 +85,21 @@ func mapCardToResponse(card entities.Card) *GetCardResponse {
 	if numJudges == 0 {
 		numJudges = 5
 	}
+	affiliation := card.ShowOfficialAffiliation
+	if affiliation == "" {
+		affiliation = "none"
+	}
 	return &GetCardResponse{
-		Id:                card.ID,
-		Name:              card.Name,
-		Date:              card.Date,
-		Status:            string(card.Status),
-		NumberOfJudges:    numJudges,
-		ImageUrl:          card.ImageUrl,
-		ShowCardImage:     card.ShowCardImage,
-		ShowAthleteImages: card.ShowAthleteImages,
-		ShowClubImages:    card.ShowClubImages,
+		Id:                      card.ID,
+		Name:                    card.Name,
+		Date:                    card.Date,
+		Status:                  string(card.Status),
+		NumberOfJudges:          numJudges,
+		ImageUrl:                card.ImageUrl,
+		ShowCardImage:           card.ShowCardImage,
+		ShowAthleteImages:       card.ShowAthleteImages,
+		ShowClubImages:          card.ShowClubImages,
+		ShowOfficialAffiliation: affiliation,
 	}
 }
 

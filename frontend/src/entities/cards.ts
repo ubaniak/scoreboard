@@ -12,6 +12,7 @@ export type Card = {
   showCardImage: boolean;
   showAthleteImages: boolean;
   showClubImages: boolean;
+  showOfficialAffiliation: "none" | "province" | "nation";
 };
 
 export type Official = {
@@ -21,6 +22,8 @@ export type Official = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  province?: string;
+  nation?: string;
 };
 
 export type AgeCategory =

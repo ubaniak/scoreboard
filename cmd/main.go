@@ -34,6 +34,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/clubs"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
+	currentEntities "github.com/ubaniak/scoreboard/internal/current/entities"
 	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/events"
 	"github.com/ubaniak/scoreboard/internal/login"
@@ -180,7 +181,7 @@ func main() {
 	cardApp := cards.NewApp(cardUseCase, boutsApp, broadcaster)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase)
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
@@ -370,6 +371,25 @@ func (q *athleteClubQuerier) GetAthleteName(athleteID uint) string {
 		return ""
 	}
 	return a.Name
+}
+
+type officialAffiliationQuerier struct {
+	uc officials.UseCase
+}
+
+func (q *officialAffiliationQuerier) GetAffiliations() ([]currentEntities.OfficialAffiliation, error) {
+	list, err := q.uc.GetAffiliations()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]currentEntities.OfficialAffiliation, len(list))
+	for i, o := range list {
+		result[i] = currentEntities.OfficialAffiliation{
+			Province: o.Province,
+			Nation:   o.Nation,
+		}
+	}
+	return result, nil
 }
 
 func getLocalIP() string {

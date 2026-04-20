@@ -41,6 +41,12 @@ export const AddOfficial = (props: AddOfficialProps) => {
       <Form.Item<CreateOfficialProps> label="Reg. Number" name="registrationNumber">
         <Input />
       </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Province" name="province">
+        <Input />
+      </Form.Item>
+      <Form.Item<CreateOfficialProps> label="Nation" name="nation">
+        <Input />
+      </Form.Item>
       <Form.Item label={null}>
         <Space>
           <Button type="text" onClick={props.onClose}>

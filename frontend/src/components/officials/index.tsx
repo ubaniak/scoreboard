@@ -24,7 +24,6 @@ export type OfficialIndexProps = {
 export const OfficialIndex = (props: OfficialIndexProps) => {
   return (
     <TableLayout
-      title="Officials"
       actions={
         <>
           <ActionMenu

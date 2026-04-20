@@ -68,7 +68,14 @@ export const BoutView = ({ current }: BoutViewProps) => {
           />
         </div>
 
-        {showScores && <ScoreTable scores={scores!} warnings={warnings} />}
+        {showScores && (
+          <ScoreTable
+            scores={scores!}
+            warnings={warnings}
+            showOfficialAffiliation={card?.showOfficialAffiliation}
+            officials={card?.officials}
+          />
+        )}
       </div>
 
       <Curtain

@@ -1,12 +1,19 @@
 package entities
 
+type OfficialAffiliationResponse struct {
+	Province string `json:"province,omitempty"`
+	Nation   string `json:"nation,omitempty"`
+}
+
 type CurrentCardResponse struct {
-	ID                uint   `json:"id"`
-	Name              string `json:"name"`
-	ImageUrl          string `json:"imageUrl,omitempty"`
-	ShowCardImage     bool   `json:"showCardImage"`
-	ShowAthleteImages bool   `json:"showAthleteImages"`
-	ShowClubImages    bool   `json:"showClubImages"`
+	ID                      uint                          `json:"id"`
+	Name                    string                        `json:"name"`
+	ImageUrl                string                        `json:"imageUrl,omitempty"`
+	ShowCardImage           bool                          `json:"showCardImage"`
+	ShowAthleteImages       bool                          `json:"showAthleteImages"`
+	ShowClubImages          bool                          `json:"showClubImages"`
+	ShowOfficialAffiliation string                        `json:"showOfficialAffiliation"`
+	Officials               []OfficialAffiliationResponse `json:"officials,omitempty"`
 }
 
 type CurrentBoutResponse struct {
@@ -110,13 +117,20 @@ type BoutList struct {
 	Bouts []BoutListItem
 }
 
+type OfficialAffiliation struct {
+	Province string
+	Nation   string
+}
+
 type CurrentCard struct {
-	ID                uint
-	Name              string
-	ImageUrl          string
-	ShowCardImage     bool
-	ShowAthleteImages bool
-	ShowClubImages    bool
+	ID                      uint
+	Name                    string
+	ImageUrl                string
+	ShowCardImage           bool
+	ShowAthleteImages       bool
+	ShowClubImages          bool
+	ShowOfficialAffiliation string
+	Officials               []OfficialAffiliation
 }
 
 type CurrentBout struct {

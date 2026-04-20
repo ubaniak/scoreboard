@@ -7,4 +7,6 @@ type Official struct {
 	Gender             string
 	YearOfBirth        int
 	RegistrationNumber string
+	Province           string
+	Nation             string
 }

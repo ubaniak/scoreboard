@@ -39,6 +39,8 @@ type CreateOfficialRequest struct {
 	Gender             string `json:"gender"`
 	YearOfBirth        int    `json:"yearOfBirth"`
 	RegistrationNumber string `json:"registrationNumber"`
+	Province           string `json:"province"`
+	Nation             string `json:"nation"`
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +59,8 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 		Gender:             createReq.Gender,
 		YearOfBirth:        createReq.YearOfBirth,
 		RegistrationNumber: createReq.RegistrationNumber,
+		Province:           createReq.Province,
+		Nation:             createReq.Nation,
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
@@ -68,6 +72,8 @@ type ListOfficialResponse struct {
 	Gender             string `json:"gender,omitempty"`
 	YearOfBirth        int    `json:"yearOfBirth,omitempty"`
 	RegistrationNumber string `json:"registrationNumber,omitempty"`
+	Province           string `json:"province,omitempty"`
+	Nation             string `json:"nation,omitempty"`
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +93,8 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 			Gender:             o.Gender,
 			YearOfBirth:        o.YearOfBirth,
 			RegistrationNumber: o.RegistrationNumber,
+			Province:           o.Province,
+			Nation:             o.Nation,
 		}
 	}
 
@@ -99,6 +107,8 @@ type UpdateOfficialRequest struct {
 	Gender             string `json:"gender"`
 	YearOfBirth        int    `json:"yearOfBirth"`
 	RegistrationNumber string `json:"registrationNumber"`
+	Province           string `json:"province"`
+	Nation             string `json:"nation"`
 }
 
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +134,8 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 		Gender:             req.Gender,
 		YearOfBirth:        req.YearOfBirth,
 		RegistrationNumber: req.RegistrationNumber,
+		Province:           req.Province,
+		Nation:             req.Nation,
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
@@ -197,6 +209,12 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		}
 		if i, ok := colIndex["registrationNumber"]; ok && i < len(row) {
 			o.RegistrationNumber = row[i]
+		}
+		if i, ok := colIndex["province"]; ok && i < len(row) {
+			o.Province = row[i]
+		}
+		if i, ok := colIndex["nation"]; ok && i < len(row) {
+			o.Nation = row[i]
 		}
 		officials = append(officials, o)
 	}

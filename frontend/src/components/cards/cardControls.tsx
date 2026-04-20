@@ -20,13 +20,15 @@ export const CardControls = ({ card, onSetJudges }: Props) => {
   const [showCardImage, setShowCardImage] = useState(card?.showCardImage ?? false);
   const [showAthleteImages, setShowAthleteImages] = useState(card?.showAthleteImages ?? false);
   const [showClubImages, setShowClubImages] = useState(card?.showClubImages ?? false);
+  const [showOfficialAffiliation, setShowOfficialAffiliation] = useState<"none" | "province" | "nation">(card?.showOfficialAffiliation ?? "none");
 
   useEffect(() => {
     setJudgeCount(card?.numberOfJudges ?? 5);
     setShowCardImage(card?.showCardImage ?? false);
     setShowAthleteImages(card?.showAthleteImages ?? false);
     setShowClubImages(card?.showClubImages ?? false);
-  }, [card?.numberOfJudges, card?.showCardImage, card?.showAthleteImages, card?.showClubImages]);
+    setShowOfficialAffiliation(card?.showOfficialAffiliation ?? "none");
+  }, [card?.numberOfJudges, card?.showCardImage, card?.showAthleteImages, card?.showClubImages, card?.showOfficialAffiliation]);
 
   const patchCard = (patch: Record<string, unknown>) => {
     updateCard.mutate({ id: { cardId: String(card.id) }, toUpdate: patch as never });
@@ -86,6 +88,26 @@ export const CardControls = ({ card, onSetJudges }: Props) => {
             />
             <Text>Show club logos on curtain</Text>
           </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>
+            Official Affiliation
+          </Text>
+          <Segmented
+            size="large"
+            shape="round"
+            value={showOfficialAffiliation}
+            options={[
+              { value: "none", label: "None" },
+              { value: "province", label: "Province" },
+              { value: "nation", label: "Nation" },
+            ]}
+            onChange={(value) => {
+              setShowOfficialAffiliation(value as "none" | "province" | "nation");
+              patchCard({ showOfficialAffiliation: value });
+            }}
+          />
         </div>
       </div>
     </Card>
