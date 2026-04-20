@@ -39,6 +39,8 @@ export const AddBout = (props: AddBoutProps) => {
         gender: "male",
         experience: "novice",
         boutType: "scored",
+        gloveSize: "10oz",
+        roundLength: "1 min",
       }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
