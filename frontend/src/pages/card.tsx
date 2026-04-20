@@ -7,6 +7,7 @@ import {
   useMutateCreateBout,
   useMutateDeleteBout,
   useMutateImportBouts,
+  useMutateMasterImportBouts,
   useMutateUpdateBout,
 } from "../api/bouts";
 import {
@@ -22,6 +23,7 @@ import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
+import { CardExports } from "../components/cards/CardExports";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { PageLayout } from "../layouts/page";
@@ -44,6 +46,7 @@ export const CardPage = () => {
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
+  const masterImportBouts = useMutateMasterImportBouts({ token, cardId: cardId! });
   const allBoutScores = useGetAllBoutScores({
     token,
     cardId,
@@ -92,7 +95,10 @@ export const CardPage = () => {
       }
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
       action={
-        <CardActions status={card.data?.status} onStart={start} onEnd={end} />
+        <div style={{ display: "flex", gap: 8 }}>
+          <CardExports cardId={cardId!} token={token} />
+          <CardActions status={card.data?.status} onStart={start} onEnd={end} />
+        </div>
       }
     >
       <Tabs
@@ -121,6 +127,7 @@ export const CardPage = () => {
                   }}
                   onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
                   onImport={(file) => importBouts.mutateAsync(file)}
+                  onMasterImport={(file) => masterImportBouts.mutateAsync(file)}
                 />
               </>
             ),

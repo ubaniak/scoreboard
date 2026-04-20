@@ -8,6 +8,7 @@ import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddBout } from "./add";
 import { ExportCard } from "./exportCard";
 import { ImportBoutsCSV } from "./importCSV";
+import { MasterImportCSV } from "./masterImportCSV";
 import { ListBouts } from "./list";
 
 export type BoutsIndexParams = {
@@ -23,6 +24,7 @@ export type BoutsIndexParams = {
     boutInfo: BoutRequestType;
   }) => void;
   onImport: (file: File) => Promise<unknown>;
+  onMasterImport: (file: File) => Promise<unknown>;
   onDeleteBout?: (boutId: string) => void;
 };
 export const BoutsIndex = (props: BoutsIndexParams) => {
@@ -39,6 +41,15 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 <>
                   <ImportBoutsCSV onClose={close} onImport={props.onImport} />
                 </>
+              ),
+            }}
+          />
+          <ActionMenu
+            trigger={{ text: "master import" }}
+            content={{
+              title: "Master Import (CSV)",
+              body: (close) => (
+                <MasterImportCSV onClose={close} onImport={props.onMasterImport} />
               ),
             }}
           />

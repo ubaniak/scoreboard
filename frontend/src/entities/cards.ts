@@ -28,12 +28,12 @@ export type Official = {
 };
 
 export type AgeCategory =
-  | "juniorA"
-  | "juniorB"
-  | "juniorC"
-  | "youth"
+  | "u13"
+  | "u15"
+  | "u17"
+  | "u19"
   | "elite"
-  | "master";
+  | "masters";
 
 export type BoutType = "sparring" | "developmental" | "scored";
 

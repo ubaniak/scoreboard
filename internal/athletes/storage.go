@@ -11,6 +11,7 @@ type Storage interface {
 	Create(athlete *entities.Athlete) error
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
+	FindByName(name string) ([]entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
 	Delete(id uint) error
 	SetImageUrl(id uint, url string) error

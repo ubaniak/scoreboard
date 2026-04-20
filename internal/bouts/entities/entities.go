@@ -40,10 +40,10 @@ const (
 type AgeCategory string
 
 const (
-	JuniorA AgeCategory = "juniorA"
-	JuniorB AgeCategory = "juniorB"
-	JuniorC AgeCategory = "juniorC"
-	Youth   AgeCategory = "youth"
+	JuniorA AgeCategory = "u13"
+	JuniorB AgeCategory = "u15"
+	JuniorC AgeCategory = "u17"
+	Youth   AgeCategory = "u19"
 	Elite   AgeCategory = "elite"
 	Masters AgeCategory = "masters"
 )

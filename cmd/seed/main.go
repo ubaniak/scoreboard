@@ -33,7 +33,7 @@ import (
 var ageCategories = []boutEntities.AgeCategory{
 	boutEntities.Elite, boutEntities.Elite, boutEntities.Elite,
 	boutEntities.Masters, boutEntities.Youth,
-	boutEntities.JuniorA, boutEntities.JuniorB,
+	boutEntities.JuniorA, boutEntities.JuniorB, boutEntities.JuniorC,
 }
 
 var experiences = []boutEntities.Experience{

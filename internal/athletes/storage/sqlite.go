@@ -93,6 +93,14 @@ func (s *Sqlite) Create(athlete *entities.Athlete) error {
 	return s.db.Create(m).Error
 }
 
+func (s *Sqlite) FindByName(name string) ([]entities.Athlete, error) {
+	var rows []Athlete
+	if err := s.db.Where("LOWER(name) = LOWER(?)", name).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return s.resolveClubNames(rows)
+}
+
 func (s *Sqlite) List() ([]entities.Athlete, error) {
 	var rows []Athlete
 	if err := s.db.Find(&rows).Error; err != nil {

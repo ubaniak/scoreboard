@@ -42,6 +42,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/login"
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
@@ -187,8 +188,13 @@ func main() {
 	auditLogApp := auditlogs.NewApp(auditLogUseCase)
 
 	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase}, athleteQuerier, auditLogUseCase)
+	boutsApp.WithAthleteFinderCreator(athleteUseCase)
 
-	cardApp := cards.NewApp(cardUseCase, boutsApp, nil, broadcaster)
+	// -- reports
+	reportsUseCase := reportsPackage.NewUseCase(cardUseCase, boutsUseCase, athleteUseCase, scoreUseCase, &commentQuerier{commentsUseCase})
+	reportsApp := reportsPackage.NewApp(reportsUseCase)
+
+	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
@@ -399,6 +405,22 @@ func (q *officialAffiliationQuerier) GetAffiliations() ([]currentEntities.Offici
 			Province: o.Province,
 			Nation:   o.Nation,
 		}
+	}
+	return result, nil
+}
+
+type commentQuerier struct {
+	uc comment.UseCase
+}
+
+func (q *commentQuerier) Get(entityKind string, entityId uint) ([]reportsPackage.Comment, error) {
+	entries, err := q.uc.Get(entityKind, entityId)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]reportsPackage.Comment, len(entries))
+	for i, e := range entries {
+		result[i] = reportsPackage.Comment{Comment: e.Comment}
 	}
 	return result, nil
 }

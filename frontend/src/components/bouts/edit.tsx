@@ -78,10 +78,10 @@ export const EditBout = (props: EditBoutProps) => {
       <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory">
         <Select
           options={[
-            { value: "juniorA", label: "Junior A" },
-            { value: "juniorB", label: "Junior B" },
-            { value: "juniorC", label: "Junior C" },
-            { value: "youth", label: "youth" },
+            { value: "u13", label: "U13" },
+            { value: "u15", label: "U15" },
+            { value: "u17", label: "U17" },
+            { value: "u19", label: "U19" },
             { value: "elite", label: "Elite" },
             { value: "masters", label: "Masters" },
           ]}

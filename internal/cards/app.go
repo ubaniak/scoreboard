@@ -51,9 +51,10 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 	h.boutsApp.RegisterRoutes(sr)
 
-	// Reports live at /api/cards/{id}/reports/...
-	reportsSr := sr.AddSubroute("{id}/reports")
-	h.reportsApp.RegisterRoutes(reportsSr)
+	if h.reportsApp != nil {
+		reportsSr := sr.AddSubroute("{id}/reports")
+		h.reportsApp.RegisterRoutes(reportsSr)
+	}
 }
 
 type CreateCardRequest struct {

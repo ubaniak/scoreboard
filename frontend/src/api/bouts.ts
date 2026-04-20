@@ -173,6 +173,26 @@ export const useMutateImportBouts = (props: TokenBase & CardRequestType) => {
   });
 };
 
+export const useMutateMasterImportBouts = (props: TokenBase & CardRequestType) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return fetchClient(`${baseUrl}/api/cards/${props.cardId}/bouts/master-import`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+        body: form,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+    },
+  });
+};
+
 export const useMutateDeleteBout = (cardId: string, token: string) => {
   const queryClient = useQueryClient();
   return useMutation({

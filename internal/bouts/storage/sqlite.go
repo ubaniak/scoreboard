@@ -18,6 +18,19 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 		return nil, err
 	}
 
+	// Migrate old age category values to new names.
+	renames := map[string]string{
+		"juniorA": "u13",
+		"juniorB": "u15",
+		"juniorC": "u17",
+		"youth":   "u19",
+	}
+	for old, new := range renames {
+		if err := db.Exec("UPDATE bouts SET age_category = ? WHERE age_category = ?", new, old).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	return &Sqlite{db: db}, nil
 }
 
