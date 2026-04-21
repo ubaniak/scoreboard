@@ -27,25 +27,29 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
   const [submittedRound, setSubmittedRound] = useState<number | null>(null);
   const [pickedWinner, setPickedWinner] = useState<"red" | "blue" | null>(null);
 
-  const boutId = props.current?.bout?.id;
+  // const boutId = props.current?.bout?.id;
+  const [boutId, setBoutId] = useState<string | undefined>(
+    props.current?.bout?.id,
+  );
   const roundNumber = props.current?.round?.roundNumber;
   const submitted = submittedRound !== null && submittedRound === roundNumber;
 
-  if (!props.current?.bout) {
-    return <IdleScreen role={props.role} />;
-  }
-
   // Reset per-bout state when a new bout starts
-  useEffect(() => {
+  if (boutId !== props.current?.bout?.id) {
     setSubmittedRound(null);
     setPickedWinner(null);
-  }, [boutId]); // eslint-disable-line react-hooks/exhaustive-deps
+    setBoutId(props.current?.bout?.id);
+  }
 
   useEffect(() => {
     if (selectedName && roundNumber) {
       props.controls.setReady(selectedName);
     }
   }, [roundNumber]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!props.current?.card) {
+    return <IdleScreen role={props.role} />;
+  }
 
   const handleSelectName = async (name: string) => {
     setSelectedName(name);

@@ -142,6 +142,7 @@ export const BoutIndex = (props: BoutIndexProps) => {
       <Show show={isReady}>
         <Scores
           scores={props.scores ?? {}}
+          currentRound={props.round?.roundNumber}
           rounds={props.bout?.rounds}
           boutStatus={props.bout?.status}
           isAdmin

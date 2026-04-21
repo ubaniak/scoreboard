@@ -8,6 +8,7 @@ const { Text } = Typography;
 
 export type ScoresProps = {
   scores: ScoresByRound;
+  currentRound?: number;
   rounds?: RoundDetails[];
   boutStatus?: string;
   isAdmin?: boolean;
@@ -21,7 +22,12 @@ type RowData = {
   [k: string]: string | number | undefined;
 };
 
-export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
+export const Scores = ({
+  scores,
+  rounds,
+  isAdmin,
+  currentRound,
+}: ScoresProps) => {
   // Collect judge roles in order from all rounds
   const judgeRoles: string[] = [];
   const judgeNames: Record<string, string> = {};
@@ -30,10 +36,13 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
     for (const s of scores[round] ?? []) {
       if (!judgeRoles.includes(s.judgeRole)) judgeRoles.push(s.judgeRole);
       if (s.judgeName) judgeNames[s.judgeRole] = s.judgeName;
-      if (s.status) judgeStatuses[s.judgeRole] = s.status;
     }
   }
+  for (const s of scores[currentRound || 0] ?? []) {
+    if (s.status) judgeStatuses[s.judgeRole] = s.status;
+  }
 
+  console.log(judgeStatuses);
   // Total warnings across all rounds
   let totalRedWarn = 0;
   let totalBlueWarn = 0;
@@ -82,11 +91,16 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
   });
 
   // Overall winner row — admin only, read from round 3 scores
-  const overallWinnerRow: RowData = { key: "__overall__", label: "Overall Winner" };
+  const overallWinnerRow: RowData = {
+    key: "__overall__",
+    label: "Overall Winner",
+  };
   let hasOverallWinner = false;
   if (isAdmin) {
     judgeRoles.forEach((role, i) => {
-      const pick = (scores[3] ?? []).find((sc) => sc.judgeRole === role)?.overallWinner;
+      const pick = (scores[3] ?? []).find(
+        (sc) => sc.judgeRole === role,
+      )?.overallWinner;
       if (pick) {
         overallWinnerRow[`j${i}_pick`] = pick;
         hasOverallWinner = true;
@@ -132,10 +146,13 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
     );
   };
 
-  const statusStyles: Record<string, { bg: string; color: string; label: string }> = {
-    complete:    { bg: "#f6ffed", color: "#52c41a", label: "Complete" },
-    ready:       { bg: "#e6f4ff", color: "#1677ff", label: "Ready" },
-    requested:   { bg: "#fffbe6", color: "#d48806", label: "Requested" },
+  const statusStyles: Record<
+    string,
+    { bg: string; color: string; label: string }
+  > = {
+    complete: { bg: "#f6ffed", color: "#52c41a", label: "Complete" },
+    ready: { bg: "#e6f4ff", color: "#1677ff", label: "Ready" },
+    requested: { bg: "#fffbe6", color: "#d48806", label: "Requested" },
     not_started: { bg: "#f5f5f5", color: "#8c8c8c", label: "Not Started" },
   };
 
@@ -148,26 +165,27 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
         <Text type="secondary" style={{ fontSize: 11, display: "block" }}>
           {judgeNames[role] || role}
         </Text>
-        {judgeStatuses[role] && (() => {
-          const st = statusStyles[judgeStatuses[role]];
-          return (
-            <span
-              style={{
-                display: "inline-block",
-                marginTop: 5,
-                padding: "2px 8px",
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 0.5,
-                background: st?.bg ?? "#f5f5f5",
-                color: st?.color ?? "#8c8c8c",
-              }}
-            >
-              {st?.label ?? judgeStatuses[role]}
-            </span>
-          );
-        })()}
+        {judgeStatuses[role] &&
+          (() => {
+            const st = statusStyles[judgeStatuses[role]];
+            return (
+              <span
+                style={{
+                  display: "inline-block",
+                  marginTop: 5,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 0.5,
+                  background: st?.bg ?? "#f5f5f5",
+                  color: st?.color ?? "#8c8c8c",
+                }}
+              >
+                {st?.label ?? judgeStatuses[role]}
+              </span>
+            );
+          })()}
       </div>
     ),
     children: [
@@ -181,15 +199,17 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
           if (record.key === "__overall__") {
             const pick = record[`j${i}_pick`];
             if (!pick) return <Text type="secondary">–</Text>;
-            return pick === "red"
-              ? <span style={{ fontSize: 18 }}>✓</span>
-              : null;
+            return pick === "red" ? (
+              <span style={{ fontSize: 18 }}>✓</span>
+            ) : null;
           }
           return scoreCell(val, "red", record.key);
         },
         onCell: (record: RowData) => ({
           style:
-            record.key === "__deductions__" || record.key === "__total__" || record.key === "__overall__"
+            record.key === "__deductions__" ||
+            record.key === "__total__" ||
+            record.key === "__overall__"
               ? sep
               : {},
         }),
@@ -204,15 +224,17 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
           if (record.key === "__overall__") {
             const pick = record[`j${i}_pick`];
             if (!pick) return <Text type="secondary">–</Text>;
-            return pick === "blue"
-              ? <span style={{ fontSize: 18 }}>✓</span>
-              : null;
+            return pick === "blue" ? (
+              <span style={{ fontSize: 18 }}>✓</span>
+            ) : null;
           }
           return scoreCell(val, "blue", record.key);
         },
         onCell: (record: RowData) => ({
           style:
-            record.key === "__deductions__" || record.key === "__total__" || record.key === "__overall__"
+            record.key === "__deductions__" ||
+            record.key === "__total__" ||
+            record.key === "__overall__"
               ? sep
               : {},
         }),
@@ -227,14 +249,21 @@ export const Scores = ({ scores, rounds, isAdmin }: ScoresProps) => {
       key: "label",
       render: (label: string, record: RowData) => {
         if (record.key === "__deductions__")
-          return <Text type="secondary" style={{ fontSize: 12 }}>Deductions</Text>;
+          return (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Deductions
+            </Text>
+          );
         if (record.key === "__total__") return <Text strong>Total</Text>;
-        if (record.key === "__overall__") return <Text strong>Overall Winner</Text>;
+        if (record.key === "__overall__")
+          return <Text strong>Overall Winner</Text>;
         return <Text>{label}</Text>;
       },
       onCell: (record: RowData) => ({
         style:
-          record.key === "__deductions__" || record.key === "__total__" || record.key === "__overall__"
+          record.key === "__deductions__" ||
+          record.key === "__total__" ||
+          record.key === "__overall__"
             ? sep
             : {},
       }),
