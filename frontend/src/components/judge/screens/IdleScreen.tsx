@@ -19,7 +19,7 @@ export const IdleScreen = ({ role }: { role: string }) => (
         color: "rgba(255,255,255,0.2)",
       }}
     >
-      {role}
+      ( {role} ) A card has not been started yet
     </Typography.Text>
   </div>
 );

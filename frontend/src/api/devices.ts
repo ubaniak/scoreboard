@@ -38,7 +38,7 @@ export const useMutationGenerateCode = (props: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["device-status"] });
+      queryClient.invalidateQueries({ queryKey: keys.status(props.token) });
     },
   });
 };
@@ -54,7 +54,7 @@ export const useHealthCheck = (props: TokenBase) => {
         },
       });
     },
-    refetchInterval: 5000,
+    refetchInterval: 2000,
   });
 };
 

@@ -32,7 +32,7 @@ export const PageLayout = (props: PageLayoutProps) => {
             gap: 12,
           }}
         >
-          <Space direction="vertical" size={0}>
+          <Space orientation="vertical" size={0}>
             <Title level={4} style={{ margin: 0 }}>
               {props.title}
             </Title>
