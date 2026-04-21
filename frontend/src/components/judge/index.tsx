@@ -36,6 +36,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
 
   // Reset per-bout state when a new bout starts
   if (boutId !== props.current?.bout?.id) {
+    setSelectedName(null);
     setSubmittedRound(null);
     setPickedWinner(null);
     setBoutId(props.current?.bout?.id);

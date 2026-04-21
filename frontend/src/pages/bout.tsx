@@ -41,10 +41,10 @@ export const BoutPage = () => {
   useEffect(() => {
     const es = new EventSource(`${baseUrl}/api/current/events`);
     es.addEventListener("update", () => {
-      queryClient.invalidateQueries({ queryKey: ["scores"] });
+      queryClient.invalidateQueries({ queryKey: ["scores", token] });
     });
     return () => es.close();
-  }, [queryClient]);
+  }, [queryClient, token]);
 
   const navigate = useNavigate();
   const card = useGetCardById({ token, cardId });
