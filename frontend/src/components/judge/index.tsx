@@ -31,6 +31,10 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
   const roundNumber = props.current?.round?.roundNumber;
   const submitted = submittedRound !== null && submittedRound === roundNumber;
 
+  if (!props.current?.bout) {
+    return <IdleScreen role={props.role} />;
+  }
+
   // Reset per-bout state when a new bout starts
   useEffect(() => {
     setSubmittedRound(null);
@@ -59,10 +63,6 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     await props.controls.pickOverallWinner(winner);
     setPickedWinner(winner);
   };
-
-  if (!props.current?.bout) {
-    return <IdleScreen role={props.role} />;
-  }
 
   if (!selectedName) {
     return (
