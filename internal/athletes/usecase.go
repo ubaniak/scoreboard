@@ -8,8 +8,9 @@ import (
 )
 
 type UseCase interface {
-	Create(name, dateOfBirth, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error
+	Create(name, ageCategory, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error
 	FindOrCreateByName(name, clubName string) (uint, error)
+	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -23,6 +24,24 @@ type useCase struct {
 
 func NewUseCase(storage Storage) UseCase {
 	return &useCase{storage: storage}
+}
+
+func (uc *useCase) FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error) {
+	matches, err := uc.storage.FindByName(name)
+	if err != nil {
+		return 0, err
+	}
+	if len(matches) > 0 {
+		return matches[0].ID, nil
+	}
+	if err := uc.storage.Create(&entities.Athlete{Name: name, ClubID: clubID}); err != nil {
+		return 0, err
+	}
+	created, err := uc.storage.FindByName(name)
+	if err != nil || len(created) == 0 {
+		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
+	}
+	return created[len(created)-1].ID, nil
 }
 
 func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
@@ -52,10 +71,10 @@ func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
 	return created[len(created)-1].ID, nil
 }
 
-func (uc *useCase) Create(name, dateOfBirth, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error {
+func (uc *useCase) Create(name, ageCategory, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error {
 	return uc.storage.Create(&entities.Athlete{
 		Name:             name,
-		DateOfBirth:      dateOfBirth,
+		AgeCategory:      ageCategory,
 		Nationality:      nationality,
 		ClubID:           clubID,
 		ProvinceName:     provinceName,

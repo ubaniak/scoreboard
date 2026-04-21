@@ -163,6 +163,24 @@ export const useMutateRemoveCardImage = (props: TokenBase) => {
   });
 };
 
+export const useMutateImportCard = (props: TokenBase) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return fetchClient(`${baseUrl}/api/cards/import`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${props.token}` },
+        body: form,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
+};
+
 export const useMutateUpdateCardStatus = (r: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({

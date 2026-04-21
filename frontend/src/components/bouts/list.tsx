@@ -18,7 +18,7 @@ export type ListBoutsProps = {
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
-  }) => void;
+  }) => Promise<unknown>;
   onDeleteBout?: (boutId: string) => void;
 };
 export const ListBouts = (props: ListBoutsProps) => {

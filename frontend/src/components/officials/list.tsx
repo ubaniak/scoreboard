@@ -12,7 +12,7 @@ export type ListOfficialsProps = {
   onEditOfficial: (vals: {
     toUpdate: UpdateOfficialProps;
     officialId: string;
-  }) => void;
+  }) => Promise<unknown>;
   onDeleteOfficial?: (officialId: string) => void;
 };
 

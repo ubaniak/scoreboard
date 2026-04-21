@@ -38,7 +38,7 @@ export const BoutPageActions = ({ bout, card, scores, officials, cardId, token }
               bout={bout}
               officials={officials}
               onClose={close}
-              onSubmit={(toUpdate) => updateBout.mutate({ toUpdate, boutInfo: { boutId: bout.id } })}
+              onSubmit={(toUpdate) => updateBout.mutateAsync({ toUpdate, boutInfo: { boutId: bout.id } })}
               onDelete={() => deleteBout.mutate(bout.id, { onSuccess: () => navigate({ to: `/card/${cardId}` }) })}
             />
           ),

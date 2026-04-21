@@ -7,19 +7,15 @@ type FieldType = {
 };
 
 export type AddCardProps = {
-  onSubmit: (props: CreateCardProps) => void;
-  onClose: () => void;
+  onSubmit: (props: CreateCardProps) => Promise<unknown>;
+  onClose: (promise?: Promise<unknown>) => void;
 };
 
 export const AddCard = (props: AddCardProps) => {
   const [form] = Form.useForm();
-  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    props.onSubmit({
-      name: values.name || "",
-      date: values.date || "",
-    });
-    props.onClose();
-    form.resetFields();
+  const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
+    const p = props.onSubmit({ name: values.name || "", date: values.date || "" });
+    props.onClose(p.then(() => form.resetFields()));
   };
 
   return (
@@ -44,7 +40,7 @@ export const AddCard = (props: AddCardProps) => {
         </Form.Item>
         <Form.Item label={null}>
           <Space>
-            <Button type="text" onClick={props.onClose}>
+            <Button type="text" onClick={() => props.onClose()}>
               Cancel
             </Button>
             <Button type="primary" htmlType="submit">

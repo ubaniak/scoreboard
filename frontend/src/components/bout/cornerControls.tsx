@@ -44,7 +44,7 @@ export const CornerControls = (props: CornerPanelProps) => {
         <Divider style={{ margin: "12px 0" }} />
         <Control
           corner={props.corner}
-          icon={<FlagOutlined />}
+          icon={<FlagOutlined style={{ filter: "invert(1)" }} />}
           label={`Cautions (${props.cautions.length})`}
           toolTip="Minor infractions"
           action={
@@ -59,7 +59,7 @@ export const CornerControls = (props: CornerPanelProps) => {
         />
         <Control
           corner={props.corner}
-          icon={<SafetyCertificateOutlined />}
+          icon={<SafetyCertificateOutlined style={{ filter: "invert(1)" }} />}
           label={`Warnings (${props.warnings.length})`}
           toolTip="Will remove points"
           action={
@@ -74,7 +74,7 @@ export const CornerControls = (props: CornerPanelProps) => {
         />
         <Control
           corner={props.corner}
-          icon={<ThunderboltOutlined />}
+          icon={<ThunderboltOutlined style={{ filter: "invert(1)" }} />}
           label={`Eight Counts (${props.eightCounts})`}
           toolTip="Eight counts"
           action={

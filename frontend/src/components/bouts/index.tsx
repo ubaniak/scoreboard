@@ -8,7 +8,6 @@ import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddBout } from "./add";
 import { ExportCard } from "./exportCard";
 import { ImportBoutsCSV } from "./importCSV";
-import { MasterImportCSV } from "./masterImportCSV";
 import { ListBouts } from "./list";
 
 export type BoutsIndexParams = {
@@ -18,13 +17,12 @@ export type BoutsIndexParams = {
   athletes?: Athlete[];
   allBoutScores?: Record<string, ScoresByRound>;
   loading?: boolean;
-  onAddBout: (values: CreateBoutProps) => void;
+  onAddBout: (values: CreateBoutProps) => Promise<unknown>;
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
-  }) => void;
+  }) => Promise<unknown>;
   onImport: (file: File) => Promise<unknown>;
-  onMasterImport: (file: File) => Promise<unknown>;
   onDeleteBout?: (boutId: string) => void;
 };
 export const BoutsIndex = (props: BoutsIndexParams) => {
@@ -41,15 +39,6 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 <>
                   <ImportBoutsCSV onClose={close} onImport={props.onImport} />
                 </>
-              ),
-            }}
-          />
-          <ActionMenu
-            trigger={{ text: "master import" }}
-            content={{
-              title: "Master Import (CSV)",
-              body: (close) => (
-                <MasterImportCSV onClose={close} onImport={props.onMasterImport} />
               ),
             }}
           />
@@ -77,9 +66,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                   <AddBout
                     onClose={close}
                     athletes={props.athletes}
-                    onSubmit={(values: CreateBoutProps) => {
-                      props.onAddBout(values);
-                    }}
+                    onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
                   />
                 </>
               ),

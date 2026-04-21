@@ -45,6 +45,7 @@ import (
 	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
+	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 )
 
 //go:embed all:frontend
@@ -195,6 +196,7 @@ func main() {
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
 	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
+	cardApp.WithImport(officialUsecCase, clubUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
@@ -423,6 +425,26 @@ func (q *commentQuerier) Get(entityKind string, entityId uint) ([]reportsPackage
 		result[i] = reportsPackage.Comment{Comment: e.Comment}
 	}
 	return result, nil
+}
+
+type importBoutAdapter struct {
+	uc     bouts.UseCase
+	cardUC cards.UseCase
+}
+
+func (a *importBoutAdapter) CreateBulk(cardId uint, boutsSlice []*boutEntities.Bout) error {
+	return a.uc.CreateBulk(cardId, boutsSlice)
+}
+
+func (a *importBoutAdapter) GetNumberOfJudges(cardId uint) (int, error) {
+	card, err := a.cardUC.Get(cardId)
+	if err != nil {
+		return 5, err
+	}
+	if card.NumberOfJudges == 0 {
+		return 5, nil
+	}
+	return card.NumberOfJudges, nil
 }
 
 func getLocalIP() string {

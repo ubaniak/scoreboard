@@ -11,6 +11,7 @@ type Storage interface {
 	Create(club *entities.Club) error
 	List() ([]entities.Club, error)
 	Get(id uint) (*entities.Club, error)
+	FindByName(name string) (*entities.Club, error)
 	Update(id uint, toUpdate *entities.UpdateClub) error
 	Delete(id uint) error
 	SetImageUrl(id uint, url string) error

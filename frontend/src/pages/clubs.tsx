@@ -39,7 +39,7 @@ export const ClubsPage = () => {
                 <EditClub
                   club={record}
                   onClose={close}
-                  onSubmit={(vals) => updateClub.mutate({ id: record.id, toUpdate: vals })}
+                  onSubmit={(vals) => updateClub.mutateAsync({ id: record.id, toUpdate: vals })}
                 />
               ),
             }}
@@ -72,7 +72,7 @@ export const ClubsPage = () => {
               body: (close) => (
                 <AddClub
                   onClose={close}
-                  onSubmit={(vals) => createClub.mutate(vals)}
+                  onSubmit={(vals) => createClub.mutateAsync(vals)}
                 />
               ),
             }}

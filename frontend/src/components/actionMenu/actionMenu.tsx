@@ -9,18 +9,21 @@ export type ActionButtonProps = {
   override?: (onOpen: () => void) => React.ReactNode;
 };
 
+export type CloseAction = (promise?: Promise<unknown>) => void;
+
 export type ActionMenuProps = {
   trigger: ActionButtonProps;
   menuOpen?: boolean;
   content: {
     title: string | React.ReactNode;
-    body: (close: () => void) => React.ReactNode;
+    body: (close: CloseAction) => React.ReactNode;
   };
   width?: number;
 };
 
 export const ActionMenu = (props: ActionMenuProps) => {
   const [open, setOpen] = useState(props.menuOpen ?? false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (props.menuOpen) {
@@ -28,8 +31,16 @@ export const ActionMenu = (props: ActionMenuProps) => {
     }
   }, [props.menuOpen]);
 
-  const close = () => {
-    setOpen(false);
+  const close: CloseAction = (promise?: Promise<unknown>) => {
+    if (!promise) {
+      setOpen(false);
+      return;
+    }
+    setLoading(true);
+    promise
+      .then(() => setOpen(false))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   const onOpen = () => {
@@ -54,7 +65,10 @@ export const ActionMenu = (props: ActionMenuProps) => {
         open={open}
         footer={null}
         width={props.width ?? 800}
-        onClose={close}
+        loading={loading}
+        closable={!loading}
+        maskClosable={!loading}
+        onClose={loading ? undefined : () => close()}
       >
         {props.content.body(close)}
       </Drawer>

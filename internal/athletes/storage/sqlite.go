@@ -24,6 +24,12 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 	if err := db.AutoMigrate(&Athlete{}); err != nil {
 		return nil, err
 	}
+	// Rename date_of_birth → age_category for existing databases
+	if db.Migrator().HasColumn(&Athlete{}, "date_of_birth") {
+		if err := db.Migrator().RenameColumn(&Athlete{}, "date_of_birth", "age_category"); err != nil {
+			return nil, err
+		}
+	}
 	return &Sqlite{db: db}, nil
 }
 
@@ -59,7 +65,7 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 		e := entities.Athlete{
 			ID:               a.ID,
 			Name:             a.Name,
-			DateOfBirth:      a.DateOfBirth,
+			AgeCategory:      a.AgeCategory,
 			Nationality:      a.Nationality,
 			ClubID:           a.ClubID,
 			ProvinceName:     a.ProvinceName,
@@ -82,7 +88,7 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 func (s *Sqlite) Create(athlete *entities.Athlete) error {
 	m := &Athlete{
 		Name:             athlete.Name,
-		DateOfBirth:      athlete.DateOfBirth,
+		AgeCategory:      athlete.AgeCategory,
 		Nationality:      athlete.Nationality,
 		ClubID:           athlete.ClubID,
 		ProvinceName:     athlete.ProvinceName,
@@ -132,8 +138,8 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	if toUpdate.Name != nil {
 		row.Name = *toUpdate.Name
 	}
-	if toUpdate.DateOfBirth != nil {
-		row.DateOfBirth = *toUpdate.DateOfBirth
+	if toUpdate.AgeCategory != nil {
+		row.AgeCategory = *toUpdate.AgeCategory
 	}
 	if toUpdate.Nationality != nil {
 		row.Nationality = *toUpdate.Nationality

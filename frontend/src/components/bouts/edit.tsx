@@ -17,8 +17,8 @@ export type EditBoutProps = {
   bout: Bout;
   officials?: Official[];
   athletes?: Athlete[];
-  onClose: () => void;
-  onSubmit: (values: UpdateBoutProps) => void;
+  onClose: (promise?: Promise<unknown>) => void;
+  onSubmit: (values: UpdateBoutProps) => Promise<unknown>;
   onDelete?: () => void;
 };
 
@@ -41,9 +41,8 @@ export const EditBout = (props: EditBoutProps) => {
     });
   }, [props.bout, form]); // Dependency on props.bout triggers the update
 
-  const onFinish: FormProps<UpdateBoutProps>["onFinish"] = async (values) => {
-    props.onSubmit(values);
-    props.onClose();
+  const onFinish: FormProps<UpdateBoutProps>["onFinish"] = (values) => {
+    props.onClose(props.onSubmit(values));
   };
 
   return (
@@ -151,7 +150,7 @@ export const EditBout = (props: EditBoutProps) => {
       </Form.Item>
       <Form.Item label={null}>
         <Space>
-          <Button type="text" onClick={props.onClose}>
+          <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button type="primary" htmlType="submit">

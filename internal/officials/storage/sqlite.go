@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 
 	"github.com/ubaniak/scoreboard/internal/officials/entities"
@@ -65,6 +67,26 @@ func (s *Sqlite) Get() ([]entities.Official, error) {
 		response = append(response, r)
 	}
 	return response, nil
+}
+
+func (s *Sqlite) FindByName(name string) (*entities.Official, error) {
+	var row Official
+	if err := s.db.Where("LOWER(name) = LOWER(?)", name).First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &entities.Official{
+		ID:                 row.ID,
+		Name:               row.Name,
+		Nationality:        row.Nationality,
+		Gender:             row.Gender,
+		YearOfBirth:        row.YearOfBirth,
+		RegistrationNumber: row.RegistrationNumber,
+		Province:           row.Province,
+		Nation:             row.Nation,
+	}, nil
 }
 
 func (s *Sqlite) Delete(id uint) error {

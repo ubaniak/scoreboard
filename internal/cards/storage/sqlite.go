@@ -69,6 +69,28 @@ func (s *Sqlite) List() ([]entities.Card, error) {
 	return result, nil
 }
 
+func (s *Sqlite) FindByName(name string) (*entities.Card, error) {
+	var card Card
+	if err := s.db.Where("LOWER(name) = LOWER(?)", name).First(&card).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	numJudges := card.NumberOfJudges
+	if numJudges == 0 {
+		numJudges = 5
+	}
+	return &entities.Card{
+		ID:             card.ID,
+		Name:           card.Name,
+		Date:           card.Date,
+		Status:         entities.CardStatus(card.Status),
+		NumberOfJudges: numJudges,
+		ImageUrl:       card.ImageUrl,
+	}, nil
+}
+
 func (s *Sqlite) Current() (*entities.Card, error) {
 	var card Card
 	if err := s.db.Where("status = ?", entities.CardStatusInProgress).First(&card).Error; err != nil {

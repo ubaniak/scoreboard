@@ -1,0 +1,18 @@
+Name: Spring Open 2024
+Date: 2024-04-20
+
+Officials:
+Name,Nationality,Year of Birth,Registration Number
+Jane Smith,CAN,1985,REG001
+John Doe,USA,1979,REG002
+Maria Garcia,MEX,1990,REG003
+
+Bouts:
+Bout Number,Bout Type,Red Athlete,Red Club,Blue Athlete,Blue Club,Age Category,Experience,Gender,Round Length,Glove Size
+1,scored,Alice Johnson,Eastside Boxing,Emma Davis,Westside BC,u13,novice,female,1,8oz
+2,scored,Carlos Rivera,City Gym,Liam Thompson,Northside BC,u15,open,male,1.5,10oz
+3,scored,Sofia Patel,Eastside Boxing,Mia Chen,Downtown Boxing,u17,novice,female,2,10oz
+4,scored,James Wilson,City Gym,Noah Martinez,Westside BC,u19,open,male,2,10oz
+5,scored,Olivia Brown,Northside BC,Ava Taylor,Eastside Boxing,elite,open,female,3,10oz
+6,scored,Ethan Anderson,Downtown Boxing,Mason Harris,City Gym,masters,open,male,3,12oz
+7,exhibition,Lucas White,Westside BC,Aiden Jackson,Northside BC,u13,novice,male,1,8oz

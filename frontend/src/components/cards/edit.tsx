@@ -14,22 +14,18 @@ export type EditCardProps = {
   onSubmit: (props: {
     id: CardRequestType;
     toUpdate: UpdateCardsProps;
-  }) => void;
-  onClose: () => void;
+  }) => Promise<unknown>;
+  onClose: (promise?: Promise<unknown>) => void;
 };
 
 export const EditCard = (props: EditCardProps) => {
   const [form] = Form.useForm();
-  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    props.onSubmit({
+  const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
+    const p = props.onSubmit({
       id: { cardId: props.card.id },
-      toUpdate: {
-        name: values.name || "",
-        date: values.date || "",
-      },
+      toUpdate: { name: values.name || "", date: values.date || "" },
     });
-    props.onClose();
-    form.resetFields();
+    props.onClose(p.then(() => form.resetFields()));
   };
 
   return (
@@ -54,7 +50,7 @@ export const EditCard = (props: EditCardProps) => {
         </Form.Item>
         <Form.Item label={null}>
           <Space>
-            <Button type="text" onClick={props.onClose}>
+            <Button type="text" onClick={() => props.onClose()}>
               Cancel
             </Button>
             <Button type="primary" htmlType="submit">

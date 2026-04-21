@@ -23,10 +23,14 @@ import (
 )
 
 type App struct {
-	useCase     UseCase
-	boutsApp    *bouts.App
-	reportsApp  *reports.App
-	broadcaster *events.Broadcaster
+	useCase         UseCase
+	boutsApp        *bouts.App
+	reportsApp      *reports.App
+	broadcaster     *events.Broadcaster
+	importOfficials ImportOfficialCreator
+	importClubs     ImportClubCreator
+	importAthletes  ImportAthleteCreator
+	importBouts     ImportBoutCreator
 }
 
 func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, broadcaster *events.Broadcaster) *App {
@@ -38,8 +42,16 @@ func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, broad
 	}
 }
 
+func (h *App) WithImport(officials ImportOfficialCreator, clubs ImportClubCreator, athletes ImportAthleteCreator, bouts ImportBoutCreator) {
+	h.importOfficials = officials
+	h.importClubs = clubs
+	h.importAthletes = athletes
+	h.importBouts = bouts
+}
+
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("cards")
+	sr.AddRoute("cards.import", "/import", "POST", h.ImportCSV, rbac.Admin)
 	sr.AddRoute("current", "/current", "GET", h.Current)
 	sr.AddRoute("list.cards", "", "GET", h.List, rbac.Admin)
 	sr.AddRoute("create.cards", "", "POST", h.Create, rbac.Admin)

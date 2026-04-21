@@ -1,11 +1,14 @@
 package cards
 
 import (
+	"fmt"
+
 	"github.com/ubaniak/scoreboard/internal/cards/entities"
 )
 
 type UseCase interface {
 	Create(name, date string) error
+	FindOrCreateByName(name, date string) (uint, error)
 	Update(id uint, toUpdate *entities.UpdateCard) error
 	List() ([]entities.Card, error)
 	Delete(id uint) error
@@ -53,4 +56,22 @@ func (uc *useCase) Delete(id uint) error {
 
 func (uc *useCase) SetImageUrl(id uint, url string) error {
 	return uc.storage.SetImageUrl(id, url)
+}
+
+func (uc *useCase) FindOrCreateByName(name, date string) (uint, error) {
+	existing, err := uc.storage.FindByName(name)
+	if err != nil {
+		return 0, err
+	}
+	if existing != nil {
+		return existing.ID, nil
+	}
+	if err := uc.Create(name, date); err != nil {
+		return 0, err
+	}
+	created, err := uc.storage.FindByName(name)
+	if err != nil || created == nil {
+		return 0, fmt.Errorf("failed to retrieve newly created card %q", name)
+	}
+	return created.ID, nil
 }

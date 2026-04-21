@@ -7,7 +7,6 @@ import {
   useMutateCreateBout,
   useMutateDeleteBout,
   useMutateImportBouts,
-  useMutateMasterImportBouts,
   useMutateUpdateBout,
 } from "../api/bouts";
 import {
@@ -46,7 +45,6 @@ export const CardPage = () => {
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
-  const masterImportBouts = useMutateMasterImportBouts({ token, cardId: cardId! });
   const allBoutScores = useGetAllBoutScores({
     token,
     cardId,
@@ -119,15 +117,10 @@ export const CardPage = () => {
                   officials={officials.data}
                   athletes={athletes.data}
                   allBoutScores={allBoutScores.data}
-                  onAddBout={(values) => {
-                    addBout.mutate(values);
-                  }}
-                  onEditBout={(values) => {
-                    updateBout.mutate(values);
-                  }}
+                  onAddBout={(values) => addBout.mutateAsync(values)}
+                  onEditBout={(values) => updateBout.mutateAsync(values)}
                   onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
                   onImport={(file) => importBouts.mutateAsync(file)}
-                  onMasterImport={(file) => masterImportBouts.mutateAsync(file)}
                 />
               </>
             ),

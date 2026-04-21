@@ -34,6 +34,7 @@ import {
   useListCards,
   useMutateCreateCards,
   useMutateDeleteCard,
+  useMutateImportCard,
   useMutateUpdateCards,
   useMutateUploadCardImage,
   useMutateRemoveCardImage,
@@ -68,6 +69,7 @@ export const HomePage = () => {
   const deleteCard = useMutateDeleteCard({ token });
   const uploadCardImage = useMutateUploadCardImage({ token });
   const removeCardImage = useMutateRemoveCardImage({ token });
+  const importCard = useMutateImportCard({ token });
 
   const clubsQuery = useListClubs({ token });
   const createClub = useMutateCreateClub({ token });
@@ -108,7 +110,7 @@ export const HomePage = () => {
           />
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined /> }}
-            content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutate({ id: record.id, toUpdate: vals })} /> }}
+            content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this club?" onConfirm={() => deleteClub.mutate(record.id)} okText="Delete" cancelText="Cancel">
             <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
@@ -128,7 +130,7 @@ export const HomePage = () => {
         </Space>
       ),
     },
-    { title: "Date of Birth", dataIndex: "dateOfBirth", key: "dateOfBirth" },
+    { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
     { title: "Club", dataIndex: "clubName", key: "clubName" },
     {
       title: "Action", key: "action",
@@ -140,7 +142,7 @@ export const HomePage = () => {
           />
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined /> }}
-            content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutate({ id: record.id, toUpdate: vals })} /> }}
+            content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this athlete?" onConfirm={() => deleteAthlete.mutate(record.id)} okText="Delete" cancelText="Cancel">
             <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
@@ -155,29 +157,30 @@ export const HomePage = () => {
       <CardIndex
         isLoading={cards.isLoading || cards.isError}
         cards={cards.data}
-        onCreateCard={(values) => createCard.mutate(values)}
-        onUpdateCard={(values) => updateCard.mutate(values)}
+        onCreateCard={(values) => createCard.mutateAsync(values)}
+        onUpdateCard={(values) => updateCard.mutateAsync(values)}
         onDeleteCard={(id) => deleteCard.mutate(id)}
         onUploadCardImage={(id, file) => uploadCardImage.mutate({ id, file })}
         onRemoveCardImage={(id) => removeCardImage.mutate(id)}
+        onImport={(file) => importCard.mutateAsync(file)}
       />
       <Collapse
         style={{ marginTop: 16 }}
         items={[
           {
             key: "clubs",
-            label: "Clubs",
+            label: `Clubs (${clubsQuery.data?.length ?? 0})`,
             children: (
               <TableLayout
                 actions={
                   <>
                     <ActionMenu
                       trigger={{ text: "import" }}
-                      content={{ title: "Import Clubs", body: (close) => <ImportCSV onClose={close} onImport={(f) => importClubs.mutate(f)} hint="Required columns: name. Optional: location" /> }}
+                      content={{ title: "Import Clubs", body: (close) => <ImportCSV onClose={close} onImport={(f) => importClubs.mutateAsync(f)} hint="Required columns: name. Optional: location" /> }}
                     />
                     <ActionMenu
                       trigger={{ text: "add" }}
-                      content={{ title: "Add Club", body: (close) => <AddClub onClose={close} onSubmit={(vals) => createClub.mutate(vals)} /> }}
+                      content={{ title: "Add Club", body: (close) => <AddClub onClose={close} onSubmit={(vals) => createClub.mutateAsync(vals)} /> }}
                     />
                   </>
                 }
@@ -191,18 +194,18 @@ export const HomePage = () => {
           },
           {
             key: "athletes",
-            label: "Athletes",
+            label: `Athletes (${athletesQuery.data?.length ?? 0})`,
             children: (
               <TableLayout
                 actions={
                   <>
                     <ActionMenu
                       trigger={{ text: "import" }}
-                      content={{ title: "Import Athletes", body: (close) => <ImportCSV onClose={close} onImport={(f) => importAthletes.mutate(f)} hint="Required columns: name. Optional: dateOfBirth, clubId" /> }}
+                      content={{ title: "Import Athletes", body: (close) => <ImportCSV onClose={close} onImport={(f) => importAthletes.mutateAsync(f)} hint="Required columns: name. Optional: dateOfBirth, clubId" /> }}
                     />
                     <ActionMenu
                       trigger={{ text: "add" }}
-                      content={{ title: "Add Athlete", body: (close) => <AddAthlete clubs={clubOptions} onClose={close} onSubmit={(vals) => createAthlete.mutate(vals)} /> }}
+                      content={{ title: "Add Athlete", body: (close) => <AddAthlete clubs={clubOptions} onClose={close} onSubmit={(vals) => createAthlete.mutateAsync(vals)} /> }}
                     />
                   </>
                 }
@@ -216,15 +219,15 @@ export const HomePage = () => {
           },
           {
             key: "officials",
-            label: "Officials",
+            label: `Officials (${officialsQuery.data?.length ?? 0})`,
             children: (
               <OfficialIndex
                 loading={officialsQuery.isLoading}
                 officials={officialsQuery.data}
-                onCreateOfficial={(values) => createOfficial.mutate(values)}
-                onEditOfficial={(values) => updateOfficial.mutate(values)}
+                onCreateOfficial={(values) => createOfficial.mutateAsync(values)}
+                onEditOfficial={(values) => updateOfficial.mutateAsync(values)}
                 onDeleteOfficial={(id) => deleteOfficial.mutate(id)}
-                onImport={(file) => importOfficials.mutate(file)}
+                onImport={(file) => importOfficials.mutateAsync(file)}
               />
             ),
           },

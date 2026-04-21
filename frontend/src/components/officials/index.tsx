@@ -15,10 +15,10 @@ export type OfficialIndexProps = {
   onEditOfficial: (vals: {
     toUpdate: UpdateOfficialProps;
     officialId: string;
-  }) => void;
-  onCreateOfficial: (values: CreateOfficialProps) => void;
+  }) => Promise<unknown>;
+  onCreateOfficial: (values: CreateOfficialProps) => Promise<unknown>;
   onDeleteOfficial?: (officialId: string) => void;
-  onImport: (file: File) => void;
+  onImport: (file: File) => Promise<unknown>;
 };
 
 export const OfficialIndex = (props: OfficialIndexProps) => {
@@ -40,14 +40,10 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
             content={{
               title: "Add Official",
               body: (close) => (
-                <>
-                  <AddOfficial
-                    onClose={close}
-                    onSubmit={(values: CreateOfficialProps) => {
-                      props.onCreateOfficial(values);
-                    }}
-                  />
-                </>
+                <AddOfficial
+                  onClose={close}
+                  onSubmit={(values: CreateOfficialProps) => props.onCreateOfficial(values)}
+                />
               ),
             }}
           />

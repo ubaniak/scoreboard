@@ -3,7 +3,7 @@ package entities
 type Athlete struct {
 	ID               uint
 	Name             string
-	DateOfBirth      string
+	AgeCategory      string
 	Nationality      string
 	ClubID           *uint
 	ClubName         string // populated on read, not stored
@@ -17,7 +17,7 @@ type Athlete struct {
 
 type UpdateAthlete struct {
 	Name             *string
-	DateOfBirth      *string
+	AgeCategory      *string
 	Nationality      *string
 	ClubID           **uint // nil = don't change; &nil = clear; &value = set
 	ProvinceName     *string

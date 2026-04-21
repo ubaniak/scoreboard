@@ -42,7 +42,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 type AthleteResponse struct {
 	ID               uint   `json:"id"`
 	Name             string `json:"name"`
-	DateOfBirth      string `json:"dateOfBirth,omitempty"`
+	AgeCategory      string `json:"ageCategory,omitempty"`
 	Nationality      string `json:"nationality,omitempty"`
 	ClubID           *uint  `json:"clubId,omitempty"`
 	ClubName         string `json:"clubName,omitempty"`
@@ -57,7 +57,7 @@ func toResponse(a entities.Athlete) AthleteResponse {
 	return AthleteResponse{
 		ID:               a.ID,
 		Name:             a.Name,
-		DateOfBirth:      a.DateOfBirth,
+		AgeCategory:      a.AgeCategory,
 		Nationality:      a.Nationality,
 		ClubID:           a.ClubID,
 		ClubName:         a.ClubName,
@@ -71,7 +71,7 @@ func toResponse(a entities.Athlete) AthleteResponse {
 
 type CreateAthleteRequest struct {
 	Name             string `json:"name"`
-	DateOfBirth      string `json:"dateOfBirth"`
+	AgeCategory      string `json:"ageCategory"`
 	Nationality      string `json:"nationality"`
 	ClubID           *uint  `json:"clubId"`
 	ProvinceName     string `json:"provinceName,omitempty"`
@@ -82,7 +82,7 @@ type CreateAthleteRequest struct {
 
 type UpdateAthleteRequest struct {
 	Name             *string `json:"name"`
-	DateOfBirth      *string `json:"dateOfBirth"`
+	AgeCategory      *string `json:"ageCategory"`
 	Nationality      *string `json:"nationality"`
 	ClubID           *uint   `json:"clubId"`
 	ClearClub        bool    `json:"clearClub"`
@@ -113,7 +113,7 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.DateOfBirth, req.Nationality, req.ClubID, req.ProvinceName, req.ProvinceImageUrl, req.NationName, req.NationImageUrl)
+	err := a.useCase.Create(req.Name, req.AgeCategory, req.Nationality, req.ClubID, req.ProvinceName, req.ProvinceImageUrl, req.NationName, req.NationImageUrl)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -133,7 +133,7 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 
 	toUpdate := &entities.UpdateAthlete{
 		Name:             req.Name,
-		DateOfBirth:      req.DateOfBirth,
+		AgeCategory:      req.AgeCategory,
 		Nationality:      req.Nationality,
 		ProvinceName:     req.ProvinceName,
 		ProvinceImageUrl: req.ProvinceImageUrl,
@@ -220,7 +220,7 @@ func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
 }
 
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: dateOfBirth, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
+// Required columns: name. Optional: ageCategory, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -257,7 +257,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	for _, row := range records[1:] {
 		name := row[colIndex["name"]]
 		dob := ""
-		if i, ok := colIndex["dateOfBirth"]; ok && i < len(row) {
+		if i, ok := colIndex["ageCategory"]; ok && i < len(row) {
 			dob = row[i]
 		}
 		nationality := ""

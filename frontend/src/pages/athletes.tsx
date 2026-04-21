@@ -49,7 +49,7 @@ export const AthletesPage = () => {
       ),
     },
     { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Date of Birth", dataIndex: "dateOfBirth", key: "dateOfBirth" },
+    { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
     { title: "Club", dataIndex: "clubName", key: "clubName" },
     {
       title: "Action",
@@ -87,7 +87,7 @@ export const AthletesPage = () => {
                   athlete={record}
                   clubs={clubOptions}
                   onClose={close}
-                  onSubmit={(vals) => updateAthlete.mutate({ id: record.id, toUpdate: vals })}
+                  onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })}
                 />
               ),
             }}
@@ -121,7 +121,7 @@ export const AthletesPage = () => {
                 <AddAthlete
                   clubs={clubOptions}
                   onClose={close}
-                  onSubmit={(vals) => createAthlete.mutate(vals)}
+                  onSubmit={(vals) => createAthlete.mutateAsync(vals)}
                 />
               ),
             }}

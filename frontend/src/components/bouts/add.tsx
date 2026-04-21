@@ -12,8 +12,8 @@ import type { CreateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
 
 export type AddBoutProps = {
-  onClose: () => void;
-  onSubmit: (values: CreateBoutProps) => void;
+  onClose: (promise?: Promise<unknown>) => void;
+  onSubmit: (values: CreateBoutProps) => Promise<unknown>;
   athletes?: Athlete[];
 };
 
@@ -23,9 +23,8 @@ export const AddBout = (props: AddBoutProps) => {
     label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
   }));
 
-  const onFinish: FormProps<CreateBoutProps>["onFinish"] = async (values) => {
-    props.onSubmit(values);
-    props.onClose();
+  const onFinish: FormProps<CreateBoutProps>["onFinish"] = (values) => {
+    props.onClose(props.onSubmit(values));
   };
 
   return (
@@ -145,7 +144,7 @@ export const AddBout = (props: AddBoutProps) => {
       </Form.Item>
       <Form.Item label={null}>
         <Space>
-          <Button type="text" onClick={props.onClose}>
+          <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button type="primary" htmlType="submit">

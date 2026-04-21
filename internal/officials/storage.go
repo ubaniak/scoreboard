@@ -10,6 +10,7 @@ import (
 type Storage interface {
 	Save(official *entities.Official) error
 	Get() ([]entities.Official, error)
+	FindByName(name string) (*entities.Official, error)
 	Delete(id uint) error
 }
 

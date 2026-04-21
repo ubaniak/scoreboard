@@ -82,7 +82,7 @@ export const useMutateImportClubs = (props: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries();
     },
   });
 };

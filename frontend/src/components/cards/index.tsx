@@ -9,20 +9,22 @@ import { TableLayout } from "../../layouts/table";
 import { StatusTag } from "../status/tag";
 import { Table, type TableProps } from "../table/table";
 import { AddCard } from "./add";
+import { CardImport } from "./CardImport";
 import { EditCard } from "./edit";
 import { ActionMenu } from "../actionMenu/actionMenu";
 
 export type CardTableProps = {
   cards?: Card[];
   isLoading: boolean;
-  onCreateCard: (props: CreateCardProps) => void;
+  onCreateCard: (props: CreateCardProps) => Promise<unknown>;
   onUpdateCard: (props: {
     id: CardRequestType;
     toUpdate: UpdateCardsProps;
-  }) => void;
+  }) => Promise<unknown>;
   onDeleteCard?: (cardId: string) => void;
   onUploadCardImage?: (cardId: string, file: File) => void;
   onRemoveCardImage?: (cardId: string) => void;
+  onImport?: (file: File) => Promise<unknown>;
 };
 
 interface DataType {
@@ -111,22 +113,33 @@ export const CardIndex = (props: CardTableProps) => {
       <TableLayout
         title="Cards"
         actions={
-          <ActionMenu
-            trigger={{
-              text: "Add",
-            }}
-            content={{
-              title: "Create Card",
-              body: (close) => (
-                <AddCard
-                  onClose={() => close()}
-                  onSubmit={(values) => {
-                    props.onCreateCard(values);
-                  }}
-                />
-              ),
-            }}
-          />
+          <>
+            {props.onImport && (
+              <ActionMenu
+                trigger={{ text: "Import" }}
+                content={{
+                  title: "Import Card",
+                  body: (close) => (
+                    <CardImport onClose={close} onImport={props.onImport!} />
+                  ),
+                }}
+              />
+            )}
+            <ActionMenu
+              trigger={{
+                text: "Add",
+              }}
+              content={{
+                title: "Create Card",
+                body: (close) => (
+                  <AddCard
+                    onClose={() => close()}
+                    onSubmit={(values) => props.onCreateCard(values)}
+                  />
+                ),
+              }}
+            />
+          </>
         }
       >
         <Table

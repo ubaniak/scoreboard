@@ -9,6 +9,7 @@ type UseCase interface {
 	Get() ([]entities.Official, error)
 	Delete(id uint) error
 	GetAffiliations() ([]entities.Official, error)
+	FindOrCreate(name, nationality string, yearOfBirth int, registrationNumber string) error
 }
 
 type useCase struct {
@@ -47,4 +48,20 @@ func (uc *useCase) Delete(id uint) error {
 
 func (uc *useCase) GetAffiliations() ([]entities.Official, error) {
 	return uc.storage.Get()
+}
+
+func (uc *useCase) FindOrCreate(name, nationality string, yearOfBirth int, registrationNumber string) error {
+	existing, err := uc.storage.FindByName(name)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return nil
+	}
+	return uc.storage.Save(&entities.Official{
+		Name:               name,
+		Nationality:        nationality,
+		YearOfBirth:        yearOfBirth,
+		RegistrationNumber: registrationNumber,
+	})
 }

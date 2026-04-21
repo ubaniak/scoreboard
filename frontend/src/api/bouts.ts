@@ -168,7 +168,7 @@ export const useMutateImportBouts = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries();
     },
   });
 };

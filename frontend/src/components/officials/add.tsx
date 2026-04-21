@@ -2,14 +2,13 @@ import { Button, Form, Input, InputNumber, Segmented, Space, type FormProps } fr
 import type { CreateOfficialProps } from "../../api/officials";
 
 export type AddOfficialProps = {
-  onClose: () => void;
-  onSubmit: (values: CreateOfficialProps) => void;
+  onClose: (promise?: Promise<unknown>) => void;
+  onSubmit: (values: CreateOfficialProps) => Promise<unknown>;
 };
 
 export const AddOfficial = (props: AddOfficialProps) => {
-  const onFinish: FormProps<CreateOfficialProps>["onFinish"] = async (values) => {
-    props.onSubmit(values);
-    props.onClose();
+  const onFinish: FormProps<CreateOfficialProps>["onFinish"] = (values) => {
+    props.onClose(props.onSubmit(values));
   };
   return (
     <Form
@@ -49,7 +48,7 @@ export const AddOfficial = (props: AddOfficialProps) => {
       </Form.Item>
       <Form.Item label={null}>
         <Space>
-          <Button type="text" onClick={props.onClose}>
+          <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button type="primary" htmlType="submit">

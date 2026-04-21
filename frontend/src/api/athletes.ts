@@ -6,7 +6,7 @@ import { fetchClient } from "./fetchClient";
 export type Athlete = {
   id: number;
   name: string;
-  dateOfBirth: string;
+  ageCategory: string;
   nationality?: string;
   clubId?: number;
   clubName?: string;
@@ -38,7 +38,7 @@ export const useListAthletes = (props: TokenBase) => {
 
 export type CreateAthleteProps = {
   name: string;
-  dateOfBirth: string;
+  ageCategory: string;
   nationality: string;
   clubId?: number;
   provinceName?: string;
@@ -67,7 +67,7 @@ export const useMutateCreateAthlete = (props: TokenBase) => {
 
 export type UpdateAthleteProps = {
   name?: string;
-  dateOfBirth?: string;
+  ageCategory?: string;
   nationality?: string;
   clubId?: number;
   clearClub?: boolean;
@@ -108,7 +108,7 @@ export const useMutateImportAthletes = (props: TokenBase) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries();
     },
   });
 };

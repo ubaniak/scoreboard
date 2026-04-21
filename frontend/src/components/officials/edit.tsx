@@ -4,17 +4,16 @@ import type { UpdateOfficialProps } from "../../api/officials";
 
 export type EditOfficialProps = {
   official: Official;
-  onClose: () => void;
+  onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (vals: {
     toUpdate: UpdateOfficialProps;
     officialId: string;
-  }) => void;
+  }) => Promise<unknown>;
 };
 
 export const EditOfficial = (props: EditOfficialProps) => {
-  const onFinish: FormProps<UpdateOfficialProps>["onFinish"] = async (values) => {
-    props.onSubmit({ toUpdate: values, officialId: props.official.id });
-    props.onClose();
+  const onFinish: FormProps<UpdateOfficialProps>["onFinish"] = (values) => {
+    props.onClose(props.onSubmit({ toUpdate: values, officialId: props.official.id }));
   };
   return (
     <Form
@@ -63,7 +62,7 @@ export const EditOfficial = (props: EditOfficialProps) => {
       </Form.Item>
       <Form.Item label={null}>
         <Space>
-          <Button type="text" onClick={props.onClose}>
+          <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button type="primary" htmlType="submit">

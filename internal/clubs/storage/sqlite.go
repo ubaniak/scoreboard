@@ -52,6 +52,17 @@ func (s *Sqlite) SetImageUrl(id uint, url string) error {
 	return s.db.Model(&Club{}).Where("id = ?", id).Update("image_url", url).Error
 }
 
+func (s *Sqlite) FindByName(name string) (*entities.Club, error) {
+	var row Club
+	if err := s.db.Where("LOWER(name) = LOWER(?)", name).First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &entities.Club{ID: row.ID, Name: row.Name, Location: row.Location, ImageUrl: row.ImageUrl}, nil
+}
+
 func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateClub) error {
 	var row Club
 	if err := s.db.First(&row, id).Error; err != nil {
