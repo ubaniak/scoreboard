@@ -42,7 +42,6 @@ export const Scores = ({
     if (s.status) judgeStatuses[s.judgeRole] = s.status;
   }
 
-  console.log(judgeStatuses);
   // Total warnings across all rounds
   let totalRedWarn = 0;
   let totalBlueWarn = 0;

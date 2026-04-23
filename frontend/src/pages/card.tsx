@@ -16,7 +16,6 @@ import {
 } from "../api/cards";
 import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
-import { useGetAllBoutScores } from "../api/score";
 import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
@@ -45,11 +44,6 @@ export const CardPage = () => {
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
-  const allBoutScores = useGetAllBoutScores({
-    token,
-    cardId,
-    boutIds: bouts.data?.map((b) => b.id) ?? [],
-  });
 
   const updateCardStatus = useMutateUpdateCardStatus({ token });
   const updateCardJudges = useMutateUpdateCardJudges({ token });
@@ -116,7 +110,6 @@ export const CardPage = () => {
                   bouts={bouts.data}
                   officials={officials.data}
                   athletes={athletes.data}
-                  allBoutScores={allBoutScores.data}
                   onAddBout={(values) => addBout.mutateAsync(values)}
                   onEditBout={(values) => updateBout.mutateAsync(values)}
                   onDeleteBout={(boutId) => deleteBout.mutate(boutId)}

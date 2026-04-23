@@ -5,7 +5,6 @@ import { useGetCurrent } from "../api/current";
 import { useHealthCheck } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { JudgeIndex } from "../components/judge";
-import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 import {
   useMutateCompleteScoreRound,
@@ -37,7 +36,12 @@ export const JudgePage = () => {
   const officials = useGetOfficials({ token });
   const ready = useMutateReadyScore({ token, cardId, boutId, roundNumber });
   const score = useMutateScoreRound({ token, cardId, boutId, roundNumber });
-  const completeRound = useMutateCompleteScoreRound({ token, cardId, boutId, roundNumber });
+  const completeRound = useMutateCompleteScoreRound({
+    token,
+    cardId,
+    boutId,
+    roundNumber,
+  });
   const overallWinner = useMutateOverallWinner({ token, cardId, boutId });
 
   const scoreRound = async (values: ScoreRoundProps) => {
@@ -57,18 +61,16 @@ export const JudgePage = () => {
   };
 
   return (
-    <PageLayout title="Judge" subTitle={current.data?.card?.name}>
-      <JudgeIndex
-        current={current.data}
-        role={role}
-        officials={officials.data ?? []}
-        controls={{
-          scoreRound,
-          complete,
-          setReady,
-          pickOverallWinner,
-        }}
-      />
-    </PageLayout>
+    <JudgeIndex
+      current={current.data}
+      role={role}
+      officials={officials.data ?? []}
+      controls={{
+        scoreRound,
+        complete,
+        setReady,
+        pickOverallWinner,
+      }}
+    />
   );
 };

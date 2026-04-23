@@ -6,7 +6,9 @@ export type TagColors =
   | "processing"
   | "warning"
   | "error"
-  | "orange";
+  | "orange"
+  | "blue"
+  | "cyan";
 
 export const StatusTag = ({ text }: { text: string }) => {
   let color: TagColors = "default";

@@ -16,17 +16,15 @@ func NewApp(useCase *UseCase) *App {
 	return &App{useCase: useCase}
 }
 
-// RegisterRoutes wires report endpoints under the cards subrouter.
-// Expected to be called with rb = cards subrouter so paths become
-// /api/cards/{cardId}/reports/...
+// RegisterRoutes wires report endpoints under the provided subrouter.
+// Expected to be called with rb already scoped to /api/cards/{id}/reports.
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	sr := rb.AddSubroute("reports")
-	sr.AddRoute("reports.full.csv",        "/full/csv",        "GET", a.FullCSV,        rbac.Admin)
-	sr.AddRoute("reports.full.pdf",        "/full/pdf",        "GET", a.FullPDF,        rbac.Admin)
-	sr.AddRoute("reports.public.csv",      "/public/csv",      "GET", a.PublicCSV,      rbac.Admin)
-	sr.AddRoute("reports.public.pdf",      "/public/pdf",      "GET", a.PublicPDF,      rbac.Admin)
-	sr.AddRoute("reports.consistency.csv", "/consistency/csv", "GET", a.ConsistencyCSV, rbac.Admin)
-	sr.AddRoute("reports.consistency.pdf", "/consistency/pdf", "GET", a.ConsistencyPDF, rbac.Admin)
+	rb.AddRoute("reports.full.csv",        "/full/csv",        "GET", a.FullCSV,        rbac.Admin)
+	rb.AddRoute("reports.full.pdf",        "/full/pdf",        "GET", a.FullPDF,        rbac.Admin)
+	rb.AddRoute("reports.public.csv",      "/public/csv",      "GET", a.PublicCSV,      rbac.Admin)
+	rb.AddRoute("reports.public.pdf",      "/public/pdf",      "GET", a.PublicPDF,      rbac.Admin)
+	rb.AddRoute("reports.consistency.csv", "/consistency/csv", "GET", a.ConsistencyCSV, rbac.Admin)
+	rb.AddRoute("reports.consistency.pdf", "/consistency/pdf", "GET", a.ConsistencyPDF, rbac.Admin)
 }
 
 func (a *App) cardId(r *http.Request) (uint, error) {

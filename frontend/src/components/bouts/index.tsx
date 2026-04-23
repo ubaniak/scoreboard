@@ -2,11 +2,9 @@ import type { CreateBoutProps, UpdateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
 import type { BoutRequestType } from "../../api/entities";
 import type { Bout, Card, Official } from "../../entities/cards";
-import type { ScoresByRound } from "../../entities/scores";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddBout } from "./add";
-import { ExportCard } from "./exportCard";
 import { ImportBoutsCSV } from "./importCSV";
 import { ListBouts } from "./list";
 
@@ -15,7 +13,6 @@ export type BoutsIndexParams = {
   bouts?: Bout[];
   officials?: Official[];
   athletes?: Athlete[];
-  allBoutScores?: Record<string, ScoresByRound>;
   loading?: boolean;
   onAddBout: (values: CreateBoutProps) => Promise<unknown>;
   onEditBout: (values: {
@@ -42,21 +39,6 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
               ),
             }}
           />
-          {props.card && (
-            <ActionMenu
-              trigger={{ text: "export" }}
-              content={{
-                title: "Export Bouts",
-                body: () => (
-                  <ExportCard
-                    card={props.card!}
-                    bouts={props.bouts ?? []}
-                    allBoutScores={props.allBoutScores ?? {}}
-                  />
-                ),
-              }}
-            />
-          )}
           <ActionMenu
             trigger={{ text: "add" }}
             content={{

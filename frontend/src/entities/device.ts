@@ -1,4 +1,4 @@
-export type DeviceStatus = "unknown" | "offline" | "connected";
+export type DeviceStatus = "unknown" | "offline" | "connected" | "ready" | "requested" | "complete";
 
 export type JudgeDevice = {
   role: string;

@@ -182,8 +182,6 @@ export const BoutPage = () => {
           </Button>
           <BoutPageActions
             bout={bout.data!}
-            card={card.data!}
-            scores={scores.data ?? {}}
             officials={officials.data ?? []}
             cardId={cardId!}
             token={token}

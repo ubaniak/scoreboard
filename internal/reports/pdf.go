@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	pageW      = 210.0
-	marginL    = 12.0
-	marginR    = 12.0
+	pageW      = 297.0
+	marginL    = 16.0
+	marginR    = 16.0
 	contentW   = pageW - marginL - marginR
 	headerH    = 7.0
 	rowH       = 6.0
-	smallFont  = 8.0
+	smallFont  = 8.5
 	normalFont = 10.0
-	titleFont  = 14.0
+	titleFont  = 15.0
 )
 
 func newPDF() *fpdf.Fpdf {
 	pdf := fpdf.New("L", "mm", "A4", "")
-	pdf.SetMargins(marginL, 12, marginR)
-	pdf.SetAutoPageBreak(true, 14)
+	pdf.SetMargins(marginL, 14, marginR)
+	pdf.SetAutoPageBreak(true, 16)
 	return pdf
 }
 
@@ -32,91 +32,156 @@ func setFont(pdf *fpdf.Fpdf, style string, size float64) {
 	pdf.SetFont("Helvetica", style, size)
 }
 
-func header(pdf *fpdf.Fpdf, title, cardName, date string) {
+func pageHeader(pdf *fpdf.Fpdf, title, cardName, date string) {
 	setFont(pdf, "B", titleFont)
 	pdf.CellFormat(0, 10, title, "", 1, "C", false, 0, "")
 	setFont(pdf, "", normalFont)
-	pdf.CellFormat(0, 6, cardName+"  |  "+date, "", 1, "C", false, 0, "")
-	pdf.Ln(4)
+	sub := cardName
+	if date != "" {
+		sub += "  |  " + date
+	}
+	pdf.CellFormat(0, 6, sub, "", 1, "C", false, 0, "")
+	pdf.Ln(5)
 }
 
-func sectionTitle(pdf *fpdf.Fpdf, text string) {
-	setFont(pdf, "B", normalFont)
+func metaRow(pdf *fpdf.Fpdf, label, value string) {
+	col := contentW / 2
+	setFont(pdf, "", smallFont)
+	pdf.SetTextColor(100, 100, 100)
+	pdf.CellFormat(col*0.35, rowH, label, "", 0, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	setFont(pdf, "B", smallFont)
+	pdf.CellFormat(col*0.65, rowH, value, "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+}
+
+func metaRowPair(pdf *fpdf.Fpdf, label1, val1, label2, val2 string) {
+	col := contentW / 2
+	setFont(pdf, "", smallFont)
+	pdf.SetTextColor(100, 100, 100)
+	pdf.CellFormat(col*0.35, rowH, label1, "", 0, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	setFont(pdf, "B", smallFont)
+	pdf.CellFormat(col*0.65, rowH, val1, "", 0, "L", false, 0, "")
+	pdf.SetTextColor(100, 100, 100)
+	setFont(pdf, "", smallFont)
+	pdf.CellFormat(col*0.35, rowH, label2, "", 0, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	setFont(pdf, "B", smallFont)
+	pdf.CellFormat(col*0.65, rowH, val2, "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+}
+
+func sectionLabel(pdf *fpdf.Fpdf, text string) {
+	pdf.Ln(3)
+	setFont(pdf, "B", smallFont)
 	pdf.SetFillColor(230, 230, 230)
-	pdf.CellFormat(0, headerH, text, "1", 1, "L", true, 0, "")
+	pdf.CellFormat(0, headerH, "  "+text, "1", 1, "L", true, 0, "")
+	pdf.SetFillColor(255, 255, 255)
 	setFont(pdf, "", smallFont)
 }
 
-// WriteFullPDF writes the full report PDF to w.
+// WriteFullPDF writes the full report PDF matching the old client-side layout.
 func WriteFullPDF(w io.Writer, rd *ReportData) error {
 	pdf := newPDF()
 	pdf.AddPage()
-	header(pdf, "Full Report", rd.CardName, rd.CardDate)
+	pageHeader(pdf, "Full Report", rd.CardName, rd.CardDate)
 
 	for _, b := range rd.Bouts {
 		if pdf.GetY() > 170 {
 			pdf.AddPage()
 		}
 
-		boutTypeLabel := strings.ToUpper(b.BoutType[:1]) + b.BoutType[1:]
-		sectionTitle(pdf, fmt.Sprintf("Bout %d  —  %s  |  %s vs %s", b.BoutNumber, boutTypeLabel, b.RedName, b.BlueName))
-
-		setFont(pdf, "", smallFont)
-		col := contentW / 2
-		pdf.CellFormat(col, rowH, fmt.Sprintf("Weight: %dkg  Gloves: %s  Rounds: %.1fmin", b.WeightClass, b.GloveSize, b.RoundLength), "", 0, "L", false, 0, "")
-		pdf.CellFormat(col, rowH, fmt.Sprintf("Gender: %s  Age: %s  Exp: %s", b.Gender, b.AgeCategory, b.Experience), "", 1, "L", false, 0, "")
-
-		pdf.CellFormat(col, rowH, "Red: "+b.RedName+" ("+b.RedClub+")", "", 0, "L", false, 0, "")
-		pdf.CellFormat(col, rowH, "Blue: "+b.BlueName+" ("+b.BlueClub+")", "", 1, "L", false, 0, "")
-
-		pdf.CellFormat(col, rowH, "Referee: "+b.Referee, "", 0, "L", false, 0, "")
-		pdf.CellFormat(col, rowH, fmt.Sprintf("Winner: %s  Decision: %s", b.Winner, b.Decision), "", 1, "L", false, 0, "")
-
-		if len(b.Comments) > 0 {
-			pdf.CellFormat(0, rowH, "Comments: "+strings.Join(b.Comments, "; "), "", 1, "L", false, 0, "")
+		boutTypeLabel := b.BoutType
+		if len(boutTypeLabel) > 0 {
+			boutTypeLabel = strings.ToUpper(boutTypeLabel[:1]) + boutTypeLabel[1:]
 		}
 
-		// Scores table
+		sectionLabel(pdf, fmt.Sprintf("Bout %d  —  %s", b.BoutNumber, boutTypeLabel))
+
+		// Bout details in two-column meta layout
+		metaRowPair(pdf, "Red Corner", b.RedName, "Blue Corner", b.BlueName)
+		metaRowPair(pdf, "Age Category", b.AgeCategory, "Gender", b.Gender)
+		metaRowPair(pdf, "Experience", b.Experience, "Weight Class", fmt.Sprintf("%dkg", b.WeightClass))
+		metaRowPair(pdf, "Glove Size", b.GloveSize, "Round Length", fmt.Sprintf("%.0f min", b.RoundLength))
+		if b.Referee != "" {
+			metaRow(pdf, "Referee", b.Referee)
+		}
+
+		// Result
+		pdf.Ln(2)
+		sectionLabel(pdf, "Result")
+		winnerVal := winnerLabel(b.Winner)
+		decVal := decisionLabel(b.Decision)
+		metaRowPair(pdf, "Winner", winnerVal, "Decision", decVal)
+
+		// Judge Scores table
 		if len(b.Scores) > 0 {
+			pdf.Ln(2)
+			sectionLabel(pdf, "Judge Scores")
+
 			judgeOrder := uniqueRoles(b.Scores)
 			judgeNames := resolveNames(b.Scores, judgeOrder)
 			roundNums := uniqueRounds(b.Scores)
 
-			pdf.Ln(2)
+			// Column widths: Round col + one pair per judge
+			roundColW := 20.0
+			judgeColW := (contentW - roundColW) / float64(len(judgeOrder))
+			redW := judgeColW * 0.5
+			blueW := judgeColW * 0.5
+
+			// Header
 			setFont(pdf, "B", smallFont)
-			judgeColW := contentW / float64(len(judgeOrder)+1)
-			pdf.CellFormat(judgeColW, rowH, "Round", "1", 0, "C", false, 0, "")
+			pdf.SetFillColor(220, 220, 220)
+			pdf.CellFormat(roundColW, rowH, "Round", "1", 0, "C", true, 0, "")
 			for _, role := range judgeOrder {
 				name := judgeNames[role]
-				pdf.CellFormat(judgeColW, rowH, name+" (R/B)", "1", 0, "C", false, 0, "")
+				pdf.CellFormat(judgeColW, rowH, name, "1", 0, "C", true, 0, "")
 			}
 			pdf.Ln(-1)
 
+			// Sub-header: Red / Blue per judge
 			setFont(pdf, "", smallFont)
+			pdf.CellFormat(roundColW, rowH, "", "1", 0, "C", false, 0, "")
+			for range judgeOrder {
+				pdf.SetTextColor(192, 57, 43)
+				pdf.CellFormat(redW, rowH, "Red", "1", 0, "C", false, 0, "")
+				pdf.SetTextColor(41, 128, 185)
+				pdf.CellFormat(blueW, rowH, "Blue", "1", 0, "C", false, 0, "")
+				pdf.SetTextColor(0, 0, 0)
+			}
+			pdf.Ln(-1)
+
+			// Score rows
 			for _, r := range roundNums {
-				pdf.CellFormat(judgeColW, rowH, fmt.Sprintf("Round %d", r), "1", 0, "C", false, 0, "")
+				setFont(pdf, "", smallFont)
+				pdf.CellFormat(roundColW, rowH, fmt.Sprintf("Round %d", r), "1", 0, "C", false, 0, "")
 				for _, role := range judgeOrder {
-					red, blue := "-", "-"
+					redVal, blueVal := "-", "-"
 					for _, s := range b.Scores {
 						if s.JudgeRole == role && s.Round == r {
-							red = fmt.Sprintf("%d", s.Red)
-							blue = fmt.Sprintf("%d", s.Blue)
+							redVal = fmt.Sprintf("%d", s.Red)
+							blueVal = fmt.Sprintf("%d", s.Blue)
 							break
 						}
 					}
-					pdf.CellFormat(judgeColW, rowH, red+"/"+blue, "1", 0, "C", false, 0, "")
+					pdf.SetTextColor(192, 57, 43)
+					pdf.CellFormat(redW, rowH, redVal, "1", 0, "C", false, 0, "")
+					pdf.SetTextColor(41, 128, 185)
+					pdf.CellFormat(blueW, rowH, blueVal, "1", 0, "C", false, 0, "")
+					pdf.SetTextColor(0, 0, 0)
 				}
 				pdf.Ln(-1)
 			}
 
 			// Overall winner row
 			setFont(pdf, "B", smallFont)
-			pdf.CellFormat(judgeColW, rowH, "Overall", "1", 0, "C", false, 0, "")
+			pdf.CellFormat(roundColW, rowH, "Overall", "1", 0, "C", false, 0, "")
 			for _, role := range judgeOrder {
 				ow := "-"
 				for _, s := range b.Scores {
 					if s.JudgeRole == role && s.OverallWinner != "" {
-						ow = s.OverallWinner
+						ow = winnerLabel(s.OverallWinner)
 						break
 					}
 				}
@@ -125,23 +190,32 @@ func WriteFullPDF(w io.Writer, rd *ReportData) error {
 			pdf.Ln(-1)
 		}
 
-		pdf.Ln(4)
+		// Comments
+		if len(b.Comments) > 0 {
+			pdf.Ln(2)
+			sectionLabel(pdf, "Comments")
+			setFont(pdf, "", smallFont)
+			for _, c := range b.Comments {
+				pdf.CellFormat(0, rowH, "• "+c, "", 1, "L", false, 0, "")
+			}
+		}
+
+		pdf.Ln(5)
 	}
 
 	return pdf.Output(w)
 }
 
-// WritePublicPDF writes the public report PDF.
+// WritePublicPDF writes the public results PDF matching the old client-side layout.
 func WritePublicPDF(w io.Writer, rd *ReportData) error {
 	pdf := newPDF()
 	pdf.AddPage()
-	header(pdf, "Public Results", rd.CardName, rd.CardDate)
+	pageHeader(pdf, "Public Results", rd.CardName, rd.CardDate)
 
-	// Table header
 	setFont(pdf, "B", smallFont)
 	pdf.SetFillColor(220, 220, 220)
-	cols := []float64{15, 45, 35, 45, 35, 25, 30}
-	hdrs := []string{"Bout", "Red Athlete", "Red Club", "Blue Athlete", "Blue Club", "Winner", "Decision"}
+	cols := []float64{14, 50, 36, 50, 36, 28, 51}
+	hdrs := []string{"Bout #", "Red Corner", "Age Cat.", "Blue Corner", "Gender / Exp.", "Winner", "Decision"}
 	for i, h := range hdrs {
 		pdf.CellFormat(cols[i], rowH, h, "1", 0, "C", true, 0, "")
 	}
@@ -150,28 +224,40 @@ func WritePublicPDF(w io.Writer, rd *ReportData) error {
 	setFont(pdf, "", smallFont)
 	for _, b := range rd.Bouts {
 		pdf.CellFormat(cols[0], rowH, fmt.Sprintf("%d", b.BoutNumber), "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(192, 57, 43)
 		pdf.CellFormat(cols[1], rowH, b.RedName, "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[2], rowH, b.RedClub, "1", 0, "L", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(cols[2], rowH, b.AgeCategory, "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(41, 128, 185)
 		pdf.CellFormat(cols[3], rowH, b.BlueName, "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[4], rowH, b.BlueClub, "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[5], rowH, b.Winner, "1", 0, "C", false, 0, "")
-		pdf.CellFormat(cols[6], rowH, b.Decision, "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(cols[4], rowH, b.Gender+" / "+b.Experience, "1", 0, "C", false, 0, "")
+
+		winner := winnerLabel(b.Winner)
+		if b.Winner == "red" {
+			pdf.SetTextColor(192, 57, 43)
+		} else if b.Winner == "blue" {
+			pdf.SetTextColor(41, 128, 185)
+		}
+		pdf.CellFormat(cols[5], rowH, winner, "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(cols[6], rowH, decisionLabel(b.Decision), "1", 0, "C", false, 0, "")
 		pdf.Ln(-1)
 	}
 
 	return pdf.Output(w)
 }
 
-// WriteConsistencyPDF writes the judge consistency report PDF.
+// WriteConsistencyPDF writes the judge consistency PDF matching the old client-side layout.
 func WriteConsistencyPDF(w io.Writer, cr *ConsistencyReport) error {
 	pdf := newPDF()
 	pdf.AddPage()
-	header(pdf, "Judge Consistency Report", cr.CardName, "")
+	pageHeader(pdf, "Judge Consistency Report", cr.CardName, cr.CardDate)
 
 	setFont(pdf, "B", smallFont)
 	pdf.SetFillColor(220, 220, 220)
-	cols := []float64{70, 35, 35, 40}
-	hdrs := []string{"Judge", "Bouts Scored", "Points", "Rating (%)"}
+	cols := []float64{80, 35, 35, 65, 50}
+	hdrs := []string{"Judge", "Total Red", "Total Blue", "Avg Deviation from Panel", "Agreement with Majority (%)"}
 	for i, h := range hdrs {
 		pdf.CellFormat(cols[i], rowH, h, "1", 0, "C", true, 0, "")
 	}
@@ -180,11 +266,41 @@ func WriteConsistencyPDF(w io.Writer, cr *ConsistencyReport) error {
 	setFont(pdf, "", smallFont)
 	for _, row := range cr.Rows {
 		pdf.CellFormat(cols[0], rowH, row.JudgeName, "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[1], rowH, fmt.Sprintf("%d", row.BoutsScored), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(cols[2], rowH, fmt.Sprintf("%.1f", row.Points), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(cols[3], rowH, fmt.Sprintf("%.1f%%", row.Rating), "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(192, 57, 43)
+		pdf.CellFormat(cols[1], rowH, fmt.Sprintf("%d", row.TotalRed), "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(41, 128, 185)
+		pdf.CellFormat(cols[2], rowH, fmt.Sprintf("%d", row.TotalBlue), "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+
+		devColor := [3]int{0, 0, 0}
+		if row.AvgDeviation <= 1 {
+			devColor = [3]int{56, 158, 13}
+		} else if row.AvgDeviation > 2 {
+			devColor = [3]int{207, 19, 34}
+		}
+		pdf.SetTextColor(devColor[0], devColor[1], devColor[2])
+		pdf.CellFormat(cols[3], rowH, fmt.Sprintf("%.2f", row.AvgDeviation), "1", 0, "C", false, 0, "")
+
+		agColor := [3]int{0, 0, 0}
+		if row.AgreementPct >= 80 {
+			agColor = [3]int{56, 158, 13}
+		} else if row.AgreementPct < 60 {
+			agColor = [3]int{207, 19, 34}
+		}
+		pdf.SetTextColor(agColor[0], agColor[1], agColor[2])
+		pdf.CellFormat(cols[4], rowH, fmt.Sprintf("%.1f%%", row.AgreementPct), "1", 0, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
 		pdf.Ln(-1)
 	}
+
+	// Legend
+	pdf.Ln(4)
+	setFont(pdf, "", 7.5)
+	pdf.SetTextColor(120, 120, 120)
+	pdf.MultiCell(0, 5,
+		"Avg Deviation: average absolute difference from the panel mean per round (lower = more consistent with the panel).\n"+
+			"Agreement %: percentage of rounds where the judge agreed with the majority on who won.",
+		"", "L", false)
 
 	return pdf.Output(w)
 }

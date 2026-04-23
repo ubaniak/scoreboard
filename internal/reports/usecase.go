@@ -1,6 +1,7 @@
 package reports
 
 import (
+	"math"
 	"sort"
 
 	athleteEntities "github.com/ubaniak/scoreboard/internal/athletes/entities"
@@ -51,32 +52,34 @@ func NewUseCase(cards CardQuerier, bouts BoutLister, athletes AthleteGetter, sco
 // --- data models used by renderers ---
 
 type BoutScore struct {
-	JudgeRole string
-	JudgeName string
-	Round     int
-	Red       int
-	Blue      int
+	JudgeRole     string
+	JudgeName     string
+	Round         int
+	Red           int
+	Blue          int
 	OverallWinner string
 }
 
 type BoutData struct {
-	BoutNumber  int
-	BoutType    string
-	RedName     string
-	RedClub     string
-	BlueName    string
-	BlueClub    string
-	Referee     string
-	Winner      string
-	Decision    string
-	WeightClass int
-	GloveSize   string
-	RoundLength float64
-	AgeCategory string
-	Experience  string
-	Gender      string
-	Comments    []string
-	Scores      []BoutScore
+	BoutNumber   int
+	BoutType     string
+	Status       string
+	RedName      string
+	RedClub      string
+	BlueName     string
+	BlueClub     string
+	Referee      string
+	Winner       string
+	Decision     string
+	WeightClass  int
+	GloveSize    string
+	RoundLength  float64
+	NumberOfRounds int
+	AgeCategory  string
+	Experience   string
+	Gender       string
+	Comments     []string
+	Scores       []BoutScore
 }
 
 type ReportData struct {
@@ -86,14 +89,16 @@ type ReportData struct {
 }
 
 type JudgeConsistencyRow struct {
-	JudgeName   string
-	BoutsScored int
-	Points      float64
-	Rating      float64 // 0-100
+	JudgeName    string
+	TotalRed     int
+	TotalBlue    int
+	AvgDeviation float64
+	AgreementPct float64
 }
 
 type ConsistencyReport struct {
 	CardName string
+	CardDate string
 	Rows     []JudgeConsistencyRow
 }
 
@@ -123,6 +128,7 @@ func (uc *UseCase) buildReportData(cardId uint) (*ReportData, error) {
 		bd := BoutData{
 			BoutNumber:  b.BoutNumber,
 			BoutType:    string(b.BoutType),
+			Status:      string(b.Status),
 			Referee:     b.Referee,
 			Winner:      b.Winner,
 			Decision:    b.Decision,
@@ -157,6 +163,7 @@ func (uc *UseCase) buildReportData(cardId uint) (*ReportData, error) {
 
 		scores, err := uc.scores.List(cardId, b.ID)
 		if err == nil {
+			maxRound := 0
 			for _, s := range scores {
 				bd.Scores = append(bd.Scores, BoutScore{
 					JudgeRole:     s.JudgeRole,
@@ -166,7 +173,11 @@ func (uc *UseCase) buildReportData(cardId uint) (*ReportData, error) {
 					Blue:          s.Blue,
 					OverallWinner: s.OverallWinner,
 				})
+				if s.RoundNumber > maxRound {
+					maxRound = s.RoundNumber
+				}
 			}
+			bd.NumberOfRounds = maxRound
 		}
 
 		rd.Bouts = append(rd.Bouts, bd)
@@ -189,148 +200,110 @@ func (uc *UseCase) ConsistencyReport(cardId uint) (*ConsistencyReport, error) {
 		return nil, err
 	}
 
-	type judgeStats struct {
-		boutsScored int
-		points      float64
+	type judgeStat struct {
+		totalRed   int
+		totalBlue  int
+		deviations []float64
+		agreed     int
+		total      int
 	}
-	stats := map[string]*judgeStats{}
+	stats := map[string]*judgeStat{}
 
 	for _, bout := range rd.Bouts {
-		if len(bout.Scores) == 0 {
-			continue
+		// Group scores by round
+		byRound := map[int][]BoutScore{}
+		for _, s := range bout.Scores {
+			byRound[s.Round] = append(byRound[s.Round], s)
 		}
 
-		// Group scores by judge role for this bout.
-		byRole := map[string][]*BoutScore{}
-		for i := range bout.Scores {
-			s := &bout.Scores[i]
-			byRole[s.JudgeRole] = append(byRole[s.JudgeRole], s)
-		}
-
-		// Each role has one or more round entries. Collect OverallWinner per role (from round 3).
-		judgeResults := map[string]*judgeResult{}
-		for role, entries := range byRole {
-			jr := &judgeResult{roundWins: map[int]string{}}
-			for _, e := range entries {
-				if e.JudgeName != "" {
-					jr.name = e.JudgeName
-				}
-				if e.Round == 3 && e.OverallWinner != "" {
-					jr.overallWinner = e.OverallWinner
-				}
-				if e.Red > e.Blue {
-					jr.roundWins[e.Round] = "red"
-				} else if e.Blue > e.Red {
-					jr.roundWins[e.Round] = "blue"
-				} else {
-					jr.roundWins[e.Round] = "tie"
-				}
-			}
-			judgeResults[role] = jr
-		}
-
-		if len(judgeResults) < 2 {
-			// Need at least 2 judges for consistency to mean anything.
-			continue
-		}
-
-		// Majority overall winner.
-		winnerCount := map[string]int{}
-		for _, jr := range judgeResults {
-			if jr.overallWinner != "" {
-				winnerCount[jr.overallWinner]++
-			}
-		}
-		majorityWinner := majorityKey(winnerCount)
-
-		// Majority per round.
-		rounds := collectRounds(judgeResults)
-		majorityRound := map[int]string{}
-		for _, r := range rounds {
-			rc := map[string]int{}
-			for _, jr := range judgeResults {
-				rc[jr.roundWins[r]]++
-			}
-			majorityRound[r] = majorityKey(rc)
-		}
-
-		for _, jr := range judgeResults {
-			if jr.name == "" {
+		for _, roundScores := range byRound {
+			if len(roundScores) == 0 {
 				continue
 			}
-			if _, ok := stats[jr.name]; !ok {
-				stats[jr.name] = &judgeStats{}
-			}
-			st := stats[jr.name]
-			st.boutsScored++
 
-			// Point 1: picked the overall winner correctly.
-			if majorityWinner != "" && jr.overallWinner == majorityWinner {
-				st.points++
+			// Mean scores across all judges this round
+			var sumRed, sumBlue float64
+			for _, s := range roundScores {
+				sumRed += float64(s.Red)
+				sumBlue += float64(s.Blue)
 			}
+			n := float64(len(roundScores))
+			meanRed := sumRed / n
+			meanBlue := sumBlue / n
 
-			// Point 2: round-by-round consistency.
-			if len(rounds) > 0 {
-				agreed := 0
-				for _, r := range rounds {
-					if majorityRound[r] != "" && jr.roundWins[r] == majorityRound[r] {
-						agreed++
-					}
+			// Majority winner this round
+			redWins, blueWins := 0, 0
+			for _, s := range roundScores {
+				if s.Red > s.Blue {
+					redWins++
+				} else if s.Blue > s.Red {
+					blueWins++
 				}
-				st.points += float64(agreed) / float64(len(rounds))
+			}
+			var majority string
+			if redWins > blueWins {
+				majority = "red"
+			} else if blueWins > redWins {
+				majority = "blue"
+			} else {
+				majority = "draw"
+			}
+
+			for _, s := range roundScores {
+				name := s.JudgeName
+				if name == "" {
+					name = s.JudgeRole
+				}
+				if _, ok := stats[name]; !ok {
+					stats[name] = &judgeStat{}
+				}
+				st := stats[name]
+				st.totalRed += s.Red
+				st.totalBlue += s.Blue
+				dev := math.Abs(float64(s.Red)-meanRed) + math.Abs(float64(s.Blue)-meanBlue)
+				st.deviations = append(st.deviations, dev)
+				st.total++
+
+				var judgeWinner string
+				if s.Red > s.Blue {
+					judgeWinner = "red"
+				} else if s.Blue > s.Red {
+					judgeWinner = "blue"
+				} else {
+					judgeWinner = "draw"
+				}
+				if judgeWinner == majority {
+					st.agreed++
+				}
 			}
 		}
 	}
 
-	result := &ConsistencyReport{CardName: rd.CardName}
+	result := &ConsistencyReport{CardName: rd.CardName, CardDate: rd.CardDate}
 	for name, st := range stats {
-		var rating float64
-		possible := float64(st.boutsScored) * 2
-		if possible > 0 {
-			rating = st.points / possible * 100
+		avgDev := 0.0
+		if len(st.deviations) > 0 {
+			sum := 0.0
+			for _, d := range st.deviations {
+				sum += d
+			}
+			avgDev = sum / float64(len(st.deviations))
+		}
+		agreePct := 0.0
+		if st.total > 0 {
+			agreePct = float64(st.agreed) / float64(st.total) * 100
 		}
 		result.Rows = append(result.Rows, JudgeConsistencyRow{
-			JudgeName:   name,
-			BoutsScored: st.boutsScored,
-			Points:      st.points,
-			Rating:      rating,
+			JudgeName:    name,
+			TotalRed:     st.totalRed,
+			TotalBlue:    st.totalBlue,
+			AvgDeviation: avgDev,
+			AgreementPct: agreePct,
 		})
 	}
 	sort.Slice(result.Rows, func(i, j int) bool {
-		return result.Rows[i].Rating > result.Rows[j].Rating
+		return result.Rows[i].AgreementPct > result.Rows[j].AgreementPct
 	})
 
 	return result, nil
 }
-
-type judgeResult struct {
-	name          string
-	overallWinner string
-	roundWins     map[int]string // round -> "red"/"blue"/"tie"
-}
-
-func majorityKey(counts map[string]int) string {
-	best, bestCount := "", 0
-	for k, v := range counts {
-		if v > bestCount {
-			best, bestCount = k, v
-		}
-	}
-	return best
-}
-
-func collectRounds(judgeResults map[string]*judgeResult) []int {
-	roundSet := map[int]struct{}{}
-	for _, jr := range judgeResults {
-		for r := range jr.roundWins {
-			roundSet[r] = struct{}{}
-		}
-	}
-	var rounds []int
-	for r := range roundSet {
-		rounds = append(rounds, r)
-	}
-	sort.Ints(rounds)
-	return rounds
-}
-

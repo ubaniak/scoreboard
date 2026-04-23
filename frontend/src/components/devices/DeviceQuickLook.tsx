@@ -39,7 +39,7 @@ export const DeviceQuickLook = ({
   onRefreshCode,
 }: Props) => {
   const connectedCount = devices.filter(
-    (device) => device.status === "connected",
+    (device) => device.status !== "offline" && device.status !== "unknown",
   ).length;
 
   const allConnected = connectedCount >= requiredJudges;

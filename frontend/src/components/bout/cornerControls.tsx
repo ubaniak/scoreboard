@@ -14,7 +14,6 @@ import type {
 } from "../../api/bouts";
 import { HandleEightCounts } from "../fouls/eightcounts";
 
-
 export type CornerPanelProps = {
   corner: Corner;
   allFouls: string[];
