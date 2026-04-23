@@ -74,8 +74,8 @@ export const ImageUpload = ({ currentImageUrl, onUpload, onRemove }: ImageUpload
         maxCount={1}
       >
         {fileList.length === 0 ? (
-          <button style={{ border: 0, background: "none" }} type="button">
-            <PlusOutlined />
+          <button style={{ border: 0, background: "none" }} type="button" aria-label="Upload image">
+            <PlusOutlined aria-hidden="true" />
             <div style={{ marginTop: 8 }}>Upload</div>
           </button>
         ) : null}

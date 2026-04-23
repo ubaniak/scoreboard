@@ -125,7 +125,7 @@ export const ListBouts = (props: ListBoutsProps) => {
           c: "Cancelled",
           wo: "Walk Over",
         };
-        return value ? labels[value] ?? value : null;
+        return value ? (labels[value] ?? value) : null;
       },
     },
     {
@@ -136,7 +136,7 @@ export const ListBouts = (props: ListBoutsProps) => {
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined /> }}
             content={{
-              title: "hi",
+              title: "Edit Bout",
               body: (close) => (
                 <EditBout
                   bout={record as Bout}

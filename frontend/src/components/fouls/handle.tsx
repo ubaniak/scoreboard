@@ -47,6 +47,7 @@ export const HandleFouls = (props: HandleFoulsProps) => {
         <ActionMenu
           trigger={{
             icon: <EyeOutlined />,
+            aria_label: `View ${props.corner} ${props.type}s`,
           }}
           content={{
             title: (

@@ -64,7 +64,7 @@ export const AthletesPage = () => {
               return false;
             }}
           >
-            <Button shape="circle" icon={<PictureOutlined />} size="small" title="Upload photo" />
+            <Button shape="circle" icon={<PictureOutlined />} size="small" aria-label="Upload photo" />
           </Upload>
           {record.imageUrl && (
             <Popconfirm
@@ -130,7 +130,8 @@ export const AthletesPage = () => {
       >
         <>
           <Input.Search
-            placeholder="Search athletes..."
+            aria-label="Search athletes"
+            placeholder="Search athletes…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ marginBottom: 12 }}

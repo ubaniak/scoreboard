@@ -167,6 +167,7 @@ export const BoutPage = () => {
               navigate({ to: `/card/${cardId}/bout/${prevBout.id}` })
             }
             disabled={prevBout === undefined}
+            aria-label={prevBout ? `Previous bout: Bout ${prevBout.boutNumber}` : "Previous bout"}
           >
             Bout {prevBout?.boutNumber}
           </Button>
@@ -177,6 +178,7 @@ export const BoutPage = () => {
               nextBout &&
               navigate({ to: `/card/${cardId}/bout/${nextBout.id}` })
             }
+            aria-label={nextBout ? `Next bout: Bout ${nextBout.boutNumber}` : "Next bout"}
           >
             Bout {nextBout?.boutNumber}
           </Button>

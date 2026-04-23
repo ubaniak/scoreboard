@@ -11,9 +11,12 @@ const CONFIG = {
   blue: { background: "#1d4ed8", label: "Blue Corner", transform: (open: boolean) => open ? "translateX(100%)" : "translateX(0)", position: { right: 0 } },
 };
 
-const CircleImage = ({ src, size }: { src: string; size: number }) => (
+const CircleImage = ({ src, size, alt }: { src: string; size: number; alt: string }) => (
   <img
     src={src}
+    alt={alt}
+    width={size}
+    height={size}
     style={{
       width: size,
       height: size,
@@ -52,13 +55,13 @@ export const Curtain = ({ side, name, open, athleteImageUrl, clubImageUrl }: Cur
         {label}
       </div>
 
-      {athleteImageUrl && <CircleImage src={athleteImageUrl} size={100} />}
+      {athleteImageUrl && <CircleImage src={athleteImageUrl} size={100} alt={name} />}
 
       <div style={{ fontSize: 52, fontWeight: 800, textAlign: "center", padding: "0 48px", lineHeight: 1.15 }}>
         {name || "—"}
       </div>
 
-      {clubImageUrl && <CircleImage src={clubImageUrl} size={48} />}
+      {clubImageUrl && <CircleImage src={clubImageUrl} size={48} alt="" />}
     </div>
   );
 };

@@ -17,10 +17,8 @@ type Props = {
 
 export const LoginProvider: React.FC<Props> = ({ children }) => {
   const navigate = useNavigate();
-  const roleFromLocal = localStorage.getItem("role");
-  const tokenFromLocal = localStorage.getItem("token");
-  const [role, setRole] = useState(roleFromLocal);
-  const [token, setToken] = useState(tokenFromLocal);
+  const [role, setRole] = useState(() => localStorage.getItem("role"));
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   const values: LoginContextType = {
     role: role || "",

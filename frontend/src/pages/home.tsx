@@ -186,7 +186,7 @@ export const HomePage = () => {
                 }
               >
                 <>
-                  <Input.Search placeholder="Search clubs..." value={clubSearch} onChange={(e) => setClubSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
+                  <Input.Search aria-label="Search clubs" placeholder="Search clubs…" value={clubSearch} onChange={(e) => setClubSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
                   <Table rowKey="id" dataSource={(clubsQuery.data ?? []).filter((c) => `${c.name} ${c.location}`.toLowerCase().includes(clubSearch.toLowerCase()))} columns={clubColumns} loading={clubsQuery.isLoading} pagination={false} />
                 </>
               </TableLayout>
@@ -211,7 +211,7 @@ export const HomePage = () => {
                 }
               >
                 <>
-                  <Input.Search placeholder="Search athletes..." value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
+                  <Input.Search aria-label="Search athletes" placeholder="Search athletes…" value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
                   <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
                 </>
               </TableLayout>

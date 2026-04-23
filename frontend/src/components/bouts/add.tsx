@@ -140,7 +140,7 @@ export const AddBout = (props: AddBoutProps) => {
         />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Referee" name="referee">
-        <Input />
+        <Input autoComplete="off" />
       </Form.Item>
       <Form.Item label={null}>
         <Space>

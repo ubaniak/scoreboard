@@ -30,8 +30,11 @@ export const RoundSelector = ({ rounds, selectedIndex, onSelect }: RoundSelector
       const complete = r.status === "complete";
       return (
         <Col key={r.roundNumber} xs={8}>
-          <div
+          <button
             onClick={() => onSelect(i, r.roundNumber)}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect(i, r.roundNumber)}
+            aria-label={`Select Round ${r.roundNumber}`}
+            aria-pressed={selected}
             style={{
               cursor: "pointer",
               borderRadius: 12,
@@ -46,7 +49,10 @@ export const RoundSelector = ({ rounds, selectedIndex, onSelect }: RoundSelector
                 : selected
                   ? "rgba(255,255,255,0.05)"
                   : "rgba(255,255,255,0.02)",
-              transition: "all 0.2s",
+              transition: "border-color 0.2s, background 0.2s",
+              width: "100%",
+              display: "block",
+              textAlign: "left",
             }}
           >
             <Space direction="vertical" size={4} style={{ width: "100%" }}>
@@ -66,7 +72,7 @@ export const RoundSelector = ({ rounds, selectedIndex, onSelect }: RoundSelector
                 {statusLabel(r.status)}
               </Text>
             </Space>
-          </div>
+          </button>
         </Col>
       );
     })}

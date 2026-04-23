@@ -145,7 +145,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
               {props.submitted ? "SUBMITTED" : "SUBMIT SCORE"}
             </Button>
             {!props.submitted && (
-              <span
+              <button
                 onClick={() => setSelected(null)}
                 style={{
                   fontSize: 11,
@@ -153,10 +153,13 @@ export const ScoreControls = (props: ScoreControlsProps) => {
                   textTransform: "uppercase",
                   color: "rgba(255,255,255,0.3)",
                   cursor: "pointer",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
                 }}
               >
                 Change score
-              </span>
+              </button>
             )}
           </div>
         )}

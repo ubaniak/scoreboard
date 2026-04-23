@@ -41,7 +41,7 @@ export const LoginPageForm = (props: LoginPageFormProps) => {
         name="code"
         rules={[{ required: true, message: "Please input your code!" }]}
       >
-        <Input />
+        <Input autoComplete="off" spellCheck={false} />
       </Form.Item>
 
       <Form.Item label={null}>

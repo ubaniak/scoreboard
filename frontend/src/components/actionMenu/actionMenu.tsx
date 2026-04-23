@@ -6,6 +6,7 @@ export type ActionButtonProps = {
   shape?: ButtonShape;
   icon?: React.ReactNode;
   text?: string;
+  aria_label?: string;
   override?: (onOpen: () => void) => React.ReactNode;
 };
 
@@ -56,6 +57,7 @@ export const ActionMenu = (props: ActionMenuProps) => {
           shape={props.trigger?.shape}
           onClick={() => setOpen(true)}
           icon={props.trigger.icon}
+          aria-label={props.trigger.aria_label}
         >
           {props.trigger.text}
         </Button>

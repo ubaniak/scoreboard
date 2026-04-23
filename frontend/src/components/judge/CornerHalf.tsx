@@ -16,8 +16,11 @@ export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: Corne
   const { background, label } = CONFIG[corner];
 
   return (
-    <div
+    <button
       onClick={onTap}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && !locked && onTap()}
+      disabled={locked}
+      aria-label={`Score ${label}`}
       style={{
         flex: 1,
         background,
@@ -30,6 +33,8 @@ export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: Corne
         transition: "opacity 0.3s ease",
         userSelect: "none",
         WebkitTapHighlightColor: "transparent",
+        border: "none",
+        padding: 0,
       }}
     >
       <div style={{ fontSize: 12, letterSpacing: 4, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", marginBottom: 16 }}>
@@ -43,6 +48,6 @@ export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: Corne
           {score}
         </div>
       )}
-    </div>
+    </button>
   );
 };

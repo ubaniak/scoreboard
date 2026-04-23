@@ -36,7 +36,7 @@ export const AddCard = (props: AddCardProps) => {
           <Input />
         </Form.Item>
         <Form.Item<FieldType> label="Date" name="date">
-          <Input />
+          <Input type="date" />
         </Form.Item>
         <Form.Item label={null}>
           <Space>
