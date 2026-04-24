@@ -45,6 +45,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 <AddBout
                   onClose={close}
                   athletes={props.athletes}
+                  nextBoutNumber={Math.max(0, ...(props.bouts ?? []).map((b) => b.boutNumber)) + 1}
                   onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
                 />
               ),

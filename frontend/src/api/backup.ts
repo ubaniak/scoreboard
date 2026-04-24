@@ -65,6 +65,24 @@ export const useMutateTriggerBackup = ({ token }: TokenBase) => {
   });
 };
 
+export const useMutateDeleteBackup = ({ token }: TokenBase) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (filename: string) => {
+      const res = await fetch(`${baseUrl}/api/backup/delete`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ filename }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Delete failed");
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["backup", "list"] }),
+  });
+};
+
 export const useMutateRestoreBackup = ({ token }: TokenBase) =>
   useMutation({
     mutationFn: async (filename: string) => {

@@ -256,37 +256,49 @@ export const ScoreTable = ({
                   (s, r) => s + ((scores[r] ?? [])[i]?.blue ?? 0),
                   0,
                 ) - totalBlueDeductions;
+              const redWins = redSum > blueSum;
+              const blueWins = blueSum > redSum;
               return (
                 <>
                   <td
                     key={`${i}_red`}
                     style={{ padding: "10px 12px", textAlign: "center" }}
                   >
-                    <span
-                      style={{
-                        color: "#fca5a5",
-                        fontFamily: "monospace",
-                        fontWeight: 900,
-                        fontSize: 22,
-                      }}
-                    >
-                      {redSum}
-                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <span
+                        style={{
+                          color: "#fca5a5",
+                          fontFamily: "monospace",
+                          fontWeight: 900,
+                          fontSize: 22,
+                        }}
+                      >
+                        {redSum}
+                      </span>
+                      {redWins && (
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#fca5a5" }} />
+                      )}
+                    </div>
                   </td>
                   <td
                     key={`${i}_blue`}
                     style={{ padding: "10px 12px", textAlign: "center" }}
                   >
-                    <span
-                      style={{
-                        color: "#93c5fd",
-                        fontFamily: "monospace",
-                        fontWeight: 900,
-                        fontSize: 22,
-                      }}
-                    >
-                      {blueSum}
-                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <span
+                        style={{
+                          color: "#93c5fd",
+                          fontFamily: "monospace",
+                          fontWeight: 900,
+                          fontSize: 22,
+                        }}
+                      >
+                        {blueSum}
+                      </span>
+                      {blueWins && (
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#93c5fd" }} />
+                      )}
+                    </div>
                   </td>
                 </>
               );

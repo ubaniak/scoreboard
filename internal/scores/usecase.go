@@ -45,10 +45,46 @@ func (u *usecase) Create(cardId, boutId uint, numberOfJudges int) error {
 }
 
 func (u *usecase) Recreate(cardId, boutId uint, numberOfJudges int) error {
-	if err := u.storage.DeleteByBout(cardId, boutId); err != nil {
+	existing, err := u.storage.List(cardId, boutId)
+	if err != nil {
 		return err
 	}
-	return u.Create(cardId, boutId, numberOfJudges)
+
+	existingRoles := make(map[string]bool)
+	for _, s := range existing {
+		existingRoles[s.JudgeRole] = true
+	}
+
+	for judge := 0; judge < numberOfJudges; judge++ {
+		role := rbac.JudgeList[judge]
+		if existingRoles[role] {
+			continue
+		}
+		for round := 1; round <= 3; round++ {
+			score := &entities.Score{
+				CardId:      cardId,
+				BoutNumber:  int(boutId),
+				RoundNumber: round,
+				JudgeRole:   role,
+				Status:      entities.ScoreStatusNotStarted,
+			}
+			if err := u.storage.Create(score); err != nil {
+				return err
+			}
+		}
+	}
+
+	for judge := numberOfJudges; judge < len(rbac.JudgeList); judge++ {
+		role := rbac.JudgeList[judge]
+		if !existingRoles[role] {
+			continue
+		}
+		if err := u.storage.DeleteByJudgeRole(cardId, boutId, role); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (u *usecase) RequestScores(cardId, boutId uint, roundNumber int) error {

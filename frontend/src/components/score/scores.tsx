@@ -86,8 +86,11 @@ export const Scores = ({
         s + ((scores[r] ?? []).find((sc) => sc.judgeRole === role)?.blue ?? 0),
       0,
     );
-    totalRow[`j${i}_red`] = redSum - totalRedWarn;
-    totalRow[`j${i}_blue`] = blueSum - totalBlueWarn;
+    const redTotal = redSum - totalRedWarn;
+    const blueTotal = blueSum - totalBlueWarn;
+    totalRow[`j${i}_red`] = redTotal;
+    totalRow[`j${i}_blue`] = blueTotal;
+    totalRow[`j${i}_winner`] = redTotal > blueTotal ? "red" : blueTotal > redTotal ? "blue" : "tie";
   });
 
   // Overall winner row — admin only, read from round 3 scores
@@ -124,26 +127,33 @@ export const Scores = ({
     val: number | string | undefined,
     corner: "red" | "blue",
     rowKey: string,
+    isWinner?: boolean,
   ) => {
     if (val === undefined) return <Text type="secondary">–</Text>;
     const isDeduction = rowKey === "__deductions__";
     const isTotal = rowKey === "__total__";
+    const color = isDeduction
+      ? "rgba(255,255,255,0.45)"
+      : corner === "red"
+        ? "#ff4d4f"
+        : "#1677ff";
     return (
-      <Text
-        style={{
-          color: isDeduction
-            ? "rgba(255,255,255,0.45)"
-            : corner === "red"
-              ? "#ff4d4f"
-              : "#1677ff",
-          fontFamily: "monospace",
-          fontVariantNumeric: "tabular-nums",
-          fontWeight: isTotal ? 800 : 700,
-          fontSize: isTotal ? 16 : 14,
-        }}
-      >
-        {isDeduction ? `-${val}` : val}
-      </Text>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+        <Text
+          style={{
+            color,
+            fontFamily: "monospace",
+            fontVariantNumeric: "tabular-nums",
+            fontWeight: isTotal ? 800 : 700,
+            fontSize: isTotal ? 16 : 14,
+          }}
+        >
+          {isDeduction ? `-${val}` : val}
+        </Text>
+        {isWinner && (
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        )}
+      </div>
     );
   };
 
@@ -194,7 +204,8 @@ export const Scores = ({
               <span style={{ fontSize: 18 }}>✓</span>
             ) : null;
           }
-          return scoreCell(val, "red", record.key);
+          const isWinner = record.key === "__total__" && record[`j${i}_winner`] === "red";
+          return scoreCell(val, "red", record.key, isWinner);
         },
         onCell: (record: RowData) => ({
           style:
@@ -219,7 +230,8 @@ export const Scores = ({
               <span style={{ fontSize: 18 }}>✓</span>
             ) : null;
           }
-          return scoreCell(val, "blue", record.key);
+          const isWinner = record.key === "__total__" && record[`j${i}_winner`] === "blue";
+          return scoreCell(val, "blue", record.key, isWinner);
         },
         onCell: (record: RowData) => ({
           style:

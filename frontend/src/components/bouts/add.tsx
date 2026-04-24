@@ -15,6 +15,7 @@ export type AddBoutProps = {
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: CreateBoutProps) => Promise<unknown>;
   athletes?: Athlete[];
+  nextBoutNumber?: number;
 };
 
 export const AddBout = (props: AddBoutProps) => {
@@ -33,7 +34,7 @@ export const AddBout = (props: AddBoutProps) => {
       wrapperCol={{ span: 14 }}
       layout="horizontal"
       initialValues={{
-        boutNumber: 0,
+        boutNumber: props.nextBoutNumber ?? 1,
         ageCategory: "",
         gender: "male",
         experience: "novice",

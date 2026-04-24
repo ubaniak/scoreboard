@@ -27,6 +27,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("backup.list", "/list", http.MethodGet, a.List, rbac.Admin)
 	sr.AddRoute("backup.now", "/now", http.MethodPost, a.BackupNow, rbac.Admin)
 	sr.AddRoute("backup.restore", "/restore", http.MethodPost, a.Restore, rbac.Admin)
+	sr.AddRoute("backup.delete", "/delete", http.MethodPost, a.Delete, rbac.Admin)
 }
 
 // TriggerIfEnabled is called by the bouts hook when a bout starts.
@@ -71,6 +72,21 @@ func (a *App) List(w http.ResponseWriter, _ *http.Request) {
 func (a *App) BackupNow(w http.ResponseWriter, _ *http.Request) {
 	if err := a.svc.createBackup(); err != nil {
 		http.Error(w, "backup failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (a *App) Delete(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Filename string `json:"filename"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Filename == "" {
+		http.Error(w, "missing filename", http.StatusBadRequest)
+		return
+	}
+	if err := a.svc.deleteBackup(body.Filename); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

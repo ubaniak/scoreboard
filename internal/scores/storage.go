@@ -12,6 +12,7 @@ type Storage interface {
 	List(cardId, boutId uint) ([]*entities.Score, error)
 	Get(cardId, boutId uint, roundNumber int, judgeRole string) (*entities.Score, error)
 	DeleteByBout(cardId, boutId uint) error
+	DeleteByJudgeRole(cardId, boutId uint, judgeRole string) error
 	SetOverallWinner(cardId, boutId uint, judgeRole, winner string) error
 }
 

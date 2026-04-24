@@ -102,6 +102,10 @@ func (s *Sqlite) DeleteByBout(cardId, boutId uint) error {
 	return s.db.Where("card_id = ? AND bout_number = ?", cardId, boutId).Delete(&Score{}).Error
 }
 
+func (s *Sqlite) DeleteByJudgeRole(cardId, boutId uint, judgeRole string) error {
+	return s.db.Where("card_id = ? AND bout_number = ? AND judge_role = ?", cardId, boutId, judgeRole).Delete(&Score{}).Error
+}
+
 func (s *Sqlite) Get(cardId, boutId uint, roundNumber int, judgeRole string) (*entities.Score, error) {
 	var row Score
 	if err := s.db.

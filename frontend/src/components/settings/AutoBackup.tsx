@@ -5,6 +5,7 @@ import {
   useGetBackupConfig,
   useListBackups,
   useMutateBackupConfig,
+  useMutateDeleteBackup,
   useMutateRestoreBackup,
   useMutateTriggerBackup,
 } from "../../api/backup";
@@ -27,6 +28,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const backupsQuery = useListBackups({ token });
   const triggerBackup = useMutateTriggerBackup({ token });
   const restoreBackup = useMutateRestoreBackup({ token });
+  const deleteBackup = useMutateDeleteBackup({ token });
 
   const cfg = configQuery.data;
   const [dirDraft, setDirDraft] = useState<string | undefined>(undefined);
@@ -67,6 +69,15 @@ export const AutoBackup = ({ token }: TokenBase) => {
       message.success("Restore complete — please restart the app for changes to take effect");
     } catch (err) {
       message.error((err as Error).message || "Restore failed");
+    }
+  };
+
+  const handleDelete = async (filename: string) => {
+    try {
+      await deleteBackup.mutateAsync(filename);
+      message.success("Backup deleted");
+    } catch (err) {
+      message.error((err as Error).message || "Delete failed");
     }
   };
 
@@ -136,18 +147,31 @@ export const AutoBackup = ({ token }: TokenBase) => {
                       <Text style={{ fontFamily: "monospace", fontSize: 13 }}>
                         {formatDate(b.createdAt)}
                       </Text>
-                      <Popconfirm
-                        title="Restore from this backup?"
-                        description="This will replace all current data. You will need to restart the app."
-                        okText="Restore"
-                        cancelText="Cancel"
-                        okButtonProps={{ danger: true }}
-                        onConfirm={() => handleRestore(b.filename)}
-                      >
-                        <Button size="small" danger loading={restoreBackup.isPending}>
-                          Restore from here
-                        </Button>
-                      </Popconfirm>
+                      <Space>
+                        <Popconfirm
+                          title="Restore from this backup?"
+                          description="This will replace all current data. You will need to restart the app."
+                          okText="Restore"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                          onConfirm={() => handleRestore(b.filename)}
+                        >
+                          <Button size="small" danger loading={restoreBackup.isPending}>
+                            Restore from here
+                          </Button>
+                        </Popconfirm>
+                        <Popconfirm
+                          title="Delete this backup?"
+                          okText="Delete"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                          onConfirm={() => handleDelete(b.filename)}
+                        >
+                          <Button size="small" loading={deleteBackup.isPending}>
+                            Delete
+                          </Button>
+                        </Popconfirm>
+                      </Space>
                     </Space>
                   ),
                 }))}

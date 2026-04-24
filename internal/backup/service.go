@@ -82,18 +82,48 @@ func (s *service) createBackup() error {
 	zw := zip.NewWriter(out)
 	defer zw.Close()
 
-	f, err := os.Open(s.dbPath)
+	// Add database.
+	if err := addFileToZip(zw, s.dbPath, "scoreboard.db"); err != nil {
+		return err
+	}
+
+	// Add uploads directory (images).
+	uploadsDir, err := datadir.UploadsDir()
+	if err == nil {
+		_ = filepath.Walk(uploadsDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return nil
+			}
+			rel, err := filepath.Rel(uploadsDir, path)
+			if err != nil {
+				return nil
+			}
+			return addFileToZip(zw, path, filepath.Join("uploads", rel))
+		})
+	}
+
+	return nil
+}
+
+func addFileToZip(zw *zip.Writer, srcPath, entryName string) error {
+	f, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-
-	fw, err := zw.Create("scoreboard.db")
+	fw, err := zw.Create(entryName)
 	if err != nil {
 		return err
 	}
 	_, err = io.Copy(fw, f)
 	return err
+}
+
+func (s *service) deleteBackup(filename string) error {
+	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
+		return fmt.Errorf("invalid backup filename")
+	}
+	return os.Remove(filepath.Join(s.cfg.BackupDir, filename))
 }
 
 func (s *service) listBackups() ([]BackupEntry, error) {
@@ -131,29 +161,64 @@ func (s *service) restoreBackup(filename string) error {
 	}
 	defer zr.Close()
 
+	uploadsDir, err := datadir.UploadsDir()
+	if err != nil {
+		return fmt.Errorf("get uploads dir: %w", err)
+	}
+
+	dbRestored := false
 	for _, zf := range zr.File {
-		if zf.Name != "scoreboard.db" {
+		if zf.FileInfo().IsDir() {
 			continue
 		}
-		rc, err := zf.Open()
-		if err != nil {
-			return err
+		// Reject any path traversal inside the zip.
+		if strings.Contains(zf.Name, "..") {
+			continue
 		}
-		defer rc.Close()
 
-		// Write to a temp file then rename for a safer replace.
-		tmp := s.dbPath + ".restore_tmp"
-		out, err := os.Create(tmp)
-		if err != nil {
-			return err
+		if zf.Name == "scoreboard.db" {
+			if err := extractZipEntry(zf, s.dbPath); err != nil {
+				return fmt.Errorf("restore db: %w", err)
+			}
+			dbRestored = true
+			continue
 		}
-		if _, err = io.Copy(out, rc); err != nil {
-			out.Close()
-			os.Remove(tmp)
-			return err
+
+		if strings.HasPrefix(zf.Name, "uploads/") {
+			rel := strings.TrimPrefix(zf.Name, "uploads/")
+			dest := filepath.Join(uploadsDir, rel)
+			if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+				return fmt.Errorf("create upload dir: %w", err)
+			}
+			if err := extractZipEntry(zf, dest); err != nil {
+				return fmt.Errorf("restore upload %s: %w", rel, err)
+			}
 		}
-		out.Close()
-		return os.Rename(tmp, s.dbPath)
 	}
-	return fmt.Errorf("scoreboard.db not found in backup archive")
+
+	if !dbRestored {
+		return fmt.Errorf("scoreboard.db not found in backup archive")
+	}
+	return nil
+}
+
+func extractZipEntry(zf *zip.File, dest string) error {
+	rc, err := zf.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	tmp := dest + ".restore_tmp"
+	out, err := os.Create(tmp)
+	if err != nil {
+		return err
+	}
+	if _, err = io.Copy(out, rc); err != nil {
+		out.Close()
+		os.Remove(tmp)
+		return err
+	}
+	out.Close()
+	return os.Rename(tmp, dest)
 }
