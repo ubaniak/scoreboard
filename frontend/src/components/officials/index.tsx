@@ -27,7 +27,7 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
       actions={
         <>
           <ActionMenu
-            trigger={{ text: "import" }}
+            trigger={{ text: "Import" }}
             content={{
               title: "Import Officials",
               body: (close) => (
@@ -36,7 +36,7 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
             }}
           />
           <ActionMenu
-            trigger={{ text: "add" }}
+            trigger={{ text: "Add" }}
             content={{
               title: "Add Official",
               body: (close) => (

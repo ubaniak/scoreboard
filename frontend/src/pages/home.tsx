@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
-import { Avatar, Button, Collapse, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { Avatar, Button, Input, Popconfirm, Space, Table, Tabs, type TableProps } from "antd";
 import { ImageUpload } from "../components/image/imageUpload";
 import { useState } from "react";
 import {
@@ -102,7 +102,7 @@ export const HomePage = () => {
     },
     { title: "Location", dataIndex: "location", key: "location" },
     {
-      title: "Action", key: "action",
+      title: "Actions", key: "action",
       render: (_, record) => (
         <Space>
           <ActionMenu
@@ -114,7 +114,7 @@ export const HomePage = () => {
             content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this club?" onConfirm={() => deleteClub.mutate(record.id)} okText="Delete" cancelText="Cancel">
-            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete club" />
+            <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete club" />
           </Popconfirm>
         </Space>
       ),
@@ -134,7 +134,7 @@ export const HomePage = () => {
     { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
     { title: "Club", dataIndex: "clubName", key: "clubName" },
     {
-      title: "Action", key: "action",
+      title: "Actions", key: "action",
       render: (_, record) => (
         <Space>
           <ActionMenu
@@ -146,7 +146,7 @@ export const HomePage = () => {
             content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this athlete?" onConfirm={() => deleteAthlete.mutate(record.id)} okText="Delete" cancelText="Cancel">
-            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete athlete" />
+            <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete athlete" />
           </Popconfirm>
         </Space>
       ),
@@ -165,7 +165,7 @@ export const HomePage = () => {
         onRemoveCardImage={(id) => removeCardImage.mutate(id)}
         onImport={(file) => importCard.mutateAsync(file)}
       />
-      <Collapse
+      <Tabs
         style={{ marginTop: 16 }}
         items={[
           {
@@ -176,11 +176,11 @@ export const HomePage = () => {
                 actions={
                   <>
                     <ActionMenu
-                      trigger={{ text: "import" }}
-                      content={{ title: "Import Clubs", body: (close) => <ImportCSV onClose={close} onImport={(f) => importClubs.mutateAsync(f)} hint="Required columns: name. Optional: location" /> }}
+                      trigger={{ text: "Import" }}
+                      content={{ title: "Import Clubs", body: (close) => <ImportCSV onClose={close} onImport={(f) => importClubs.mutateAsync(f)} hint="Required columns: name. Optional: location" template={{ filename: "clubs-template.csv", content: "name,location\nCity Boxing Club,New York\nWestside Boxing,Los Angeles\nEastside BC," }} /> }}
                     />
                     <ActionMenu
-                      trigger={{ text: "add" }}
+                      trigger={{ text: "Add" }}
                       content={{ title: "Add Club", body: (close) => <AddClub onClose={close} onSubmit={(vals) => createClub.mutateAsync(vals)} /> }}
                     />
                   </>
@@ -201,11 +201,11 @@ export const HomePage = () => {
                 actions={
                   <>
                     <ActionMenu
-                      trigger={{ text: "import" }}
-                      content={{ title: "Import Athletes", body: (close) => <ImportCSV onClose={close} onImport={(f) => importAthletes.mutateAsync(f)} hint="Required columns: name. Optional: dateOfBirth, clubId" /> }}
+                      trigger={{ text: "Import" }}
+                      content={{ title: "Import Athletes", body: (close) => <ImportCSV onClose={close} onImport={(f) => importAthletes.mutateAsync(f)} hint="Required columns: name. Optional: dateOfBirth, clubId" template={{ filename: "athletes-template.csv", content: "name,dateOfBirth,clubId\nJane Smith,2005-03-15,\nJohn Doe,2007-08-22,\nAlice Brown,," }} /> }}
                     />
                     <ActionMenu
-                      trigger={{ text: "add" }}
+                      trigger={{ text: "Add" }}
                       content={{ title: "Add Athlete", body: (close) => <AddAthlete clubs={clubOptions} onClose={close} onSubmit={(vals) => createAthlete.mutateAsync(vals)} /> }}
                     />
                   </>

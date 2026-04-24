@@ -1,6 +1,23 @@
-import { InboxOutlined } from "@ant-design/icons";
+import { DownloadOutlined, InboxOutlined } from "@ant-design/icons";
 import { App, Button, Space, Upload, type UploadFile } from "antd";
 import { useState } from "react";
+
+const TEMPLATE = [
+  "red,blue,age,experience,gender,weightClass",
+  "Jane Smith,Maria Garcia,u17,open,female,54",
+  "John Doe,Mike Johnson,elite,novice,male,60",
+  "Alice Brown,Bob White,u13,novice,male,46",
+].join("\n");
+
+function downloadTemplate() {
+  const blob = new Blob([TEMPLATE], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bouts-template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 type ImportBoutsCSVProps = {
   onClose: (promise?: Promise<unknown>) => void;
@@ -22,6 +39,9 @@ export const ImportBoutsCSV = (props: ImportBoutsCSVProps) => {
 
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
+      <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>
+        Download template
+      </Button>
       <Upload.Dragger
         accept=".csv"
         maxCount={1}

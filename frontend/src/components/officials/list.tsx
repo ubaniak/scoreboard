@@ -35,13 +35,13 @@ export const ListOfficials = (props: ListOfficialsProps) => {
     { title: "Year of Birth", dataIndex: "yearOfBirth", key: "yearOfBirth", render: (v) => v || null },
     { title: "Reg. Number", dataIndex: "registrationNumber", key: "registrationNumber" },
     {
-      title: "Action",
+      title: "Actions",
       key: "action",
       render: (_, record) => {
         return (
           <Space>
             <ActionMenu
-              trigger={{ shape: "circle", icon: <EditOutlined /> }}
+              trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit official" }}
               content={{
                 title: "Edit Official",
                 body: (close) => (
@@ -60,7 +60,7 @@ export const ListOfficials = (props: ListOfficialsProps) => {
                 okText="Delete"
                 cancelText="Cancel"
               >
-                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+                <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete official" />
               </Popconfirm>
             )}
           </Space>
@@ -72,7 +72,7 @@ export const ListOfficials = (props: ListOfficialsProps) => {
   return (
     <>
       <Input.Search
-        placeholder="Search officials..."
+        placeholder="Search officials…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: 12 }}

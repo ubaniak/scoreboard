@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -219,8 +220,36 @@ func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(a.useCase.SetImageUrl(id, "")).Present()
 }
 
+// ageCategoryFromDOB derives the boxing age category from a YYYY-MM-DD date of birth.
+// Rules: U13=11-12, U15=13-14, U17=15-16, U19=17-18, Elite=19-39, Masters=40+
+func ageCategoryFromDOB(dob string) string {
+	t, err := time.Parse("2006-01-02", dob)
+	if err != nil {
+		return ""
+	}
+	now := time.Now()
+	age := now.Year() - t.Year()
+	if now.Month() < t.Month() || (now.Month() == t.Month() && now.Day() < t.Day()) {
+		age--
+	}
+	switch {
+	case age <= 12:
+		return "u13"
+	case age <= 14:
+		return "u15"
+	case age <= 16:
+		return "u17"
+	case age <= 18:
+		return "u19"
+	case age <= 39:
+		return "elite"
+	default:
+		return "masters"
+	}
+}
+
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: ageCategory, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
+// Required columns: name. Optional: dateOfBirth (YYYY-MM-DD), ageCategory, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -256,9 +285,14 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range records[1:] {
 		name := row[colIndex["name"]]
-		dob := ""
-		if i, ok := colIndex["ageCategory"]; ok && i < len(row) {
-			dob = row[i]
+		ageCategory := ""
+		if i, ok := colIndex["dateOfBirth"]; ok && i < len(row) && row[i] != "" {
+			ageCategory = ageCategoryFromDOB(row[i])
+		}
+		if ageCategory == "" {
+			if i, ok := colIndex["ageCategory"]; ok && i < len(row) {
+				ageCategory = row[i]
+			}
 		}
 		nationality := ""
 		if i, ok := colIndex["nationality"]; ok && i < len(row) {
@@ -287,7 +321,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 				clubID = &id
 			}
 		}
-		if err := a.useCase.Create(name, dob, nationality, clubID, provinceName, provinceImageUrl, nationName, nationImageUrl); err != nil {
+		if err := a.useCase.Create(name, ageCategory, nationality, clubID, provinceName, provinceImageUrl, nationName, nationImageUrl); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

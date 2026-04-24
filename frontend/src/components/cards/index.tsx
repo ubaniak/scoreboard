@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
 import { Link } from "@tanstack/react-router";
-import { Button, Popconfirm, Space } from "antd";
+import { Button, Popconfirm, Space, Typography } from "antd";
 import { ImageUpload } from "../image/imageUpload";
 import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
 import type { CardRequestType } from "../../api/entities";
@@ -35,6 +35,26 @@ interface DataType {
 }
 
 export const CardIndex = (props: CardTableProps) => {
+  const emptyText = (
+    <div style={{ padding: "24px 0", textAlign: "center" }}>
+      <Typography.Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+        No event cards yet — create your first card to get started.
+      </Typography.Text>
+      <ActionMenu
+        trigger={{ text: "Create Card" }}
+        content={{
+          title: "Create Card",
+          body: (close) => (
+            <AddCard
+              onClose={() => close()}
+              onSubmit={(values) => props.onCreateCard(values)}
+            />
+          ),
+        }}
+      />
+    </div>
+  );
+
   const columns: TableProps<DataType>["columns"] = [
     {
       title: "Name",
@@ -62,7 +82,7 @@ export const CardIndex = (props: CardTableProps) => {
       },
     },
     {
-      title: "Action",
+      title: "Actions",
       key: "action",
       render: (_, record) => {
         return (
@@ -93,7 +113,7 @@ export const CardIndex = (props: CardTableProps) => {
                 okText="Delete"
                 cancelText="Cancel"
               >
-                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete card" />
+                <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete card" />
               </Popconfirm>
             )}
           </Space>
@@ -139,6 +159,7 @@ export const CardIndex = (props: CardTableProps) => {
           dataSource={props.cards || []}
           columns={columns}
           loading={props.isLoading}
+          locale={{ emptyText }}
         />
       </TableLayout>
   );

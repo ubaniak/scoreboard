@@ -1,4 +1,6 @@
-import { Button, Form, Input, Select, Space } from "antd";
+import { Button, DatePicker, Form, Input, Select, Space, Typography } from "antd";
+import type { Dayjs } from "dayjs";
+import { ageCategoryFromDOB } from "../../utils/ageCategory";
 
 type ClubOption = { value: number; label: string };
 
@@ -28,11 +30,21 @@ type AddAthleteProps = {
 
 export const AddAthlete = ({ clubs, onClose, onSubmit }: AddAthleteProps) => {
   const [form] = Form.useForm();
+
+  const handleDOBChange = (date: Dayjs | null) => {
+    if (date) {
+      form.setFieldValue("ageCategory", ageCategoryFromDOB(date));
+    }
+  };
+
   return (
     <Form form={form} layout="vertical" onFinish={(v) => {
       onClose(onSubmit(v).then(() => form.resetFields()));
     }}>
       <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
+      <Form.Item label="Date of Birth" name="dateOfBirth" extra={<Typography.Text type="secondary" style={{ fontSize: 12 }}>Auto-fills age category</Typography.Text>}>
+        <DatePicker format="YYYY-MM-DD" onChange={handleDOBChange} style={{ width: "100%" }} />
+      </Form.Item>
       <Form.Item label="Age Category" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
         <Select options={AGE_CATEGORY_OPTIONS} placeholder="Select age category..." />
       </Form.Item>

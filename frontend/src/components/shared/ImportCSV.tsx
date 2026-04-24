@@ -1,4 +1,4 @@
-import { InboxOutlined } from "@ant-design/icons";
+import { DownloadOutlined, InboxOutlined } from "@ant-design/icons";
 import { App as AntApp, Button, Space, Upload, type UploadFile } from "antd";
 import { useState } from "react";
 
@@ -6,9 +6,20 @@ type ImportCSVProps = {
   onClose: (promise?: Promise<unknown>) => void;
   onImport: (f: File) => Promise<unknown>;
   hint: string;
+  template?: { content: string; filename: string };
 };
 
-export const ImportCSV = ({ onClose, onImport, hint }: ImportCSVProps) => {
+const downloadCSV = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+export const ImportCSV = ({ onClose, onImport, hint, template }: ImportCSVProps) => {
   const { message } = AntApp.useApp();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
@@ -23,6 +34,14 @@ export const ImportCSV = ({ onClose, onImport, hint }: ImportCSVProps) => {
 
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
+      {template && (
+        <Button
+          icon={<DownloadOutlined />}
+          onClick={() => downloadCSV(template.content, template.filename)}
+        >
+          Download template
+        </Button>
+      )}
       <Upload.Dragger
         accept=".csv"
         maxCount={1}
