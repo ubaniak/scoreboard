@@ -75,10 +75,20 @@ func (uc *useCase) CreateBulk(cardId uint, bouts []*entities.Bout) error {
 }
 
 func (uc *useCase) Update(cardId, id uint, bout *entities.UpdateBout) error {
+	var oldJudgeCount int
+	if bout.NumberOfJudges != nil {
+		current, err := uc.storage.Get(cardId, id)
+		if err != nil {
+			return err
+		}
+		oldJudgeCount = current.NumberOfJudges
+	}
+
 	if err := uc.storage.Update(cardId, id, bout); err != nil {
 		return err
 	}
-	if bout.NumberOfJudges != nil {
+
+	if bout.NumberOfJudges != nil && *bout.NumberOfJudges != oldJudgeCount {
 		if err := uc.score.Recreate(cardId, id, *bout.NumberOfJudges); err != nil {
 			return err
 		}

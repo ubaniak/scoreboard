@@ -1,16 +1,17 @@
 import { useNavigate } from "@tanstack/react-router";
+import { App, Row } from "antd";
 import { useMutateLogin } from "../api/login";
 import { LoginPageForm } from "../components/login/login";
 import type { Login } from "../entities/login";
 import { useProfile } from "../providers/login";
 import { PageLayout } from "../layouts/page";
 import { Card } from "../components/card/card";
-import { Row } from "antd";
 
 export const LoginPage = () => {
   const { mutateAsync: login } = useMutateLogin();
   const navigate = useNavigate();
   const profile = useProfile();
+  const { message } = App.useApp();
 
   const onFinish = async (values: Login) => {
     try {
@@ -27,8 +28,8 @@ export const LoginPage = () => {
       if (values.role?.startsWith("judge")) {
         navigate({ to: "/judge" });
       }
-    } catch (e) {
-      console.log(e);
+    } catch {
+      message.error("Invalid code — please try again");
     }
   };
   return (

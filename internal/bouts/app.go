@@ -991,9 +991,12 @@ func (h *App) MasterImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build a case-insensitive column index (collapse spaces and lowercase).
+	// Build a case-insensitive column index (collapse spaces, underscores, and lowercase).
 	normalise := func(s string) string {
-		return strings.ToLower(strings.ReplaceAll(strings.TrimSpace(s), " ", ""))
+		s = strings.ToLower(strings.TrimSpace(s))
+		s = strings.ReplaceAll(s, " ", "")
+		s = strings.ReplaceAll(s, "_", "")
+		return s
 	}
 	colIndex := make(map[string]int, len(records[0]))
 	for i, col := range records[0] {

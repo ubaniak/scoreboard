@@ -30,6 +30,7 @@ import {
   useMutateUpdateOfficial,
 } from "../api/officials";
 import { OfficialIndex } from "../components/officials";
+import { DataDump } from "../components/settings/DataDump";
 import {
   useListCards,
   useMutateCreateCards,
@@ -105,15 +106,15 @@ export const HomePage = () => {
       render: (_, record) => (
         <Space>
           <ActionMenu
-            trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+            trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload club image" }}
             content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={record.imageUrl} onUpload={(file) => uploadClubImage.mutate({ id: record.id, file })} onRemove={() => removeClubImage.mutate(record.id)} /> }}
           />
           <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit club" }}
             content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this club?" onConfirm={() => deleteClub.mutate(record.id)} okText="Delete" cancelText="Cancel">
-            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete club" />
           </Popconfirm>
         </Space>
       ),
@@ -137,15 +138,15 @@ export const HomePage = () => {
       render: (_, record) => (
         <Space>
           <ActionMenu
-            trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+            trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload athlete image" }}
             content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={record.imageUrl} onUpload={(file) => uploadAthleteImage.mutate({ id: record.id, file })} onRemove={() => removeAthleteImage.mutate(record.id)} /> }}
           />
           <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined /> }}
+            trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit athlete" }}
             content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
           />
           <Popconfirm title="Delete this athlete?" onConfirm={() => deleteAthlete.mutate(record.id)} okText="Delete" cancelText="Cancel">
-            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+            <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete athlete" />
           </Popconfirm>
         </Space>
       ),
@@ -153,7 +154,7 @@ export const HomePage = () => {
   ];
 
   return (
-    <PageLayout breadCrumbs={[{ title: "home" }]} title="Home page">
+    <PageLayout breadCrumbs={[{ title: "Home" }]} title="Home Page">
       <CardIndex
         isLoading={cards.isLoading || cards.isError}
         cards={cards.data}
@@ -230,6 +231,11 @@ export const HomePage = () => {
                 onImport={(file) => importOfficials.mutateAsync(file)}
               />
             ),
+          },
+          {
+            key: "settings",
+            label: "Settings",
+            children: <DataDump token={token} />,
           },
         ]}
       />

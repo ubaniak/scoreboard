@@ -17,7 +17,7 @@ export const LoginPageForm = (props: LoginPageFormProps) => {
       wrapperCol={{ span: 16 }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
-      autoComplete="off"
+      autoComplete="on"
     >
       <Form.Item<Login>
         label="Role"
@@ -41,12 +41,12 @@ export const LoginPageForm = (props: LoginPageFormProps) => {
         name="code"
         rules={[{ required: true, message: "Please input your code!" }]}
       >
-        <Input autoComplete="off" spellCheck={false} />
+        <Input autoComplete="current-password" spellCheck={false} />
       </Form.Item>
 
       <Form.Item label={null}>
         <Button type="primary" htmlType="submit">
-          Submit
+          Sign In
         </Button>
       </Form.Item>
     </Form>

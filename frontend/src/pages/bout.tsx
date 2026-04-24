@@ -56,7 +56,7 @@ export const BoutPage = () => {
   const [nextBout, setNextBout] = useState<Bout | undefined>(undefined);
 
   useEffect(() => {
-    const setBouts = async () => {
+    const setBouts = () => {
       const currentIndex = boutList.findIndex(
         (b) => b.id.toString() === boutId,
       );
@@ -190,7 +190,11 @@ export const BoutPage = () => {
           />
         </Space>
       }
-      title="Bout details"
+      title={
+        bout.data
+          ? `Bout ${bout.data.boutNumber} — ${bout.data.redCorner ?? "—"} vs ${bout.data.blueCorner ?? "—"}`
+          : "Bout details"
+      }
       subTitle={
         <>
           <CardSummary card={card.data!} />
@@ -206,7 +210,7 @@ export const BoutPage = () => {
       breadCrumbs={[
         { title: <a href="/">home</a> },
         { title: <a href={`/card/${cardId}`}>card</a> },
-        { title: `bout ${boutId}` },
+        { title: bout.data ? `Bout ${bout.data.boutNumber}` : `bout ${boutId}` },
       ]}
     >
       <BoutIndex

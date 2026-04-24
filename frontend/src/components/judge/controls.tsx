@@ -96,17 +96,18 @@ export const ScoreControls = (props: ScoreControlsProps) => {
 
         {/* Round badge */}
         <div
+          className="judge-round-badge"
           style={{
             position: "absolute",
-            bottom: selected ? 120 : 40,
+            bottom: 40,
             left: "50%",
-            transform: "translateX(-50%)",
+            transform: `translateX(-50%) translateY(${selected ? "-80px" : "0"})`,
             color: "rgba(255,255,255,0.35)",
             fontSize: 11,
             letterSpacing: 3,
             textTransform: "uppercase",
             whiteSpace: "nowrap",
-            transition: "bottom 0.3s ease",
+            transition: "transform 0.3s ease",
           }}
         >
           Round {props.current?.round?.roundNumber}
@@ -147,6 +148,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
             {!props.submitted && (
               <button
                 onClick={() => setSelected(null)}
+                className="judge-text-btn"
                 style={{
                   fontSize: 11,
                   letterSpacing: 2,
@@ -156,6 +158,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
                   background: "none",
                   border: "none",
                   padding: 0,
+                  fontFamily: "inherit",
                 }}
               >
                 Change score

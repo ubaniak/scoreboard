@@ -1,5 +1,72 @@
 /* src/index.css or src/global.css */
 
+/* Dark color scheme — browser native controls adopt dark mode */
+html {
+  color-scheme: dark;
+}
+
+/* Skip link — hidden until focused by keyboard */
+.skip-link:focus-visible {
+  position: fixed !important;
+  left: 16px !important;
+  top: 16px !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  z-index: 9999 !important;
+  padding: 8px 16px !important;
+  background: #1677ff !important;
+  color: white !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* Judge UI — custom buttons need touch-action to eliminate 300ms tap delay */
+.judge-corner-btn,
+.judge-margin-btn,
+.judge-winner-btn,
+.judge-text-btn {
+  touch-action: manipulation;
+}
+
+/* Focus rings for judge custom buttons */
+.judge-corner-btn:focus-visible {
+  outline: 4px solid rgba(255, 255, 255, 0.8);
+  outline-offset: -4px;
+}
+
+.judge-margin-btn:focus-visible,
+.judge-winner-btn:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 2px;
+}
+
+.judge-text-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Hover states for judge buttons */
+.judge-margin-btn:hover,
+.judge-winner-btn:hover {
+  opacity: 0.85;
+}
+
+.judge-text-btn:hover {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .curtain-panel,
+  .judge-round-badge,
+  .judge-corner-btn {
+    transition: none !important;
+  }
+}
+
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
 
 /* 1. Make html and body truly full-screen */

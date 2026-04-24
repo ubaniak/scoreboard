@@ -1,4 +1,4 @@
-import { Col, Row, Typography } from "antd";
+import { Col, Row } from "antd";
 import { useEffect, useState } from "react";
 import type {
   MakeDecisionProps,
@@ -12,9 +12,11 @@ import { Card } from "../card/card";
 import { RoundControls } from "./RoundControls";
 import { RoundSelector } from "./RoundSelector";
 
-const { Text } = Typography;
 
-const statusLabel = (status: RoundDetails["status"]) => status.replace(/_/g, " ");
+const statusLabel = (status: RoundDetails["status"]) =>
+  status
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export type RoundIndexProps = {
   round?: RoundDetails;
@@ -65,6 +67,7 @@ export const RoundIndex = (props: RoundIndexProps) => {
       <RoundControls
         isDecisionPhase={isDecisionPhase}
         boutStatus={props.boutStatus}
+        roundStatus={viewingRound?.status}
         scores={props.scores}
         rounds={props.rounds}
         onNextRoundState={props.controls.onNextRoundState}
@@ -75,10 +78,15 @@ export const RoundIndex = (props: RoundIndexProps) => {
 
       <Card>
         {viewingRound && (
-          <Row justify="center" style={{ margin: "4px 0 12px" }}>
-            <Text style={{ fontWeight: 600, fontSize: 16, textTransform: "capitalize" }}>
-              Round {viewingRound.roundNumber} — {statusLabel(viewingRound.status)}
-            </Text>
+          <Row justify="center" style={{ margin: "4px 0 20px" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>
+                Round {viewingRound.roundNumber}
+              </div>
+              <div style={{ fontSize: 13, letterSpacing: 2, textTransform: "uppercase", opacity: 0.5, marginTop: 4 }}>
+                {statusLabel(viewingRound.status)}
+              </div>
+            </div>
           </Row>
         )}
         {props.rounds && (

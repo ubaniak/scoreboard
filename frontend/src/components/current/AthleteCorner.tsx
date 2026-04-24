@@ -28,6 +28,8 @@ export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCorne
         <img
           src={imageUrl}
           alt={name}
+          width={96}
+          height={96}
           style={{
             width: 96,
             height: 96,

@@ -6,7 +6,7 @@ export type ActionButtonProps = {
   shape?: ButtonShape;
   icon?: React.ReactNode;
   text?: string;
-  aria_label?: string;
+  ariaLabel?: string;
   override?: (onOpen: () => void) => React.ReactNode;
 };
 
@@ -57,7 +57,7 @@ export const ActionMenu = (props: ActionMenuProps) => {
           shape={props.trigger?.shape}
           onClick={() => setOpen(true)}
           icon={props.trigger.icon}
-          aria-label={props.trigger.aria_label}
+          aria-label={props.trigger.ariaLabel}
         >
           {props.trigger.text}
         </Button>
@@ -70,6 +70,7 @@ export const ActionMenu = (props: ActionMenuProps) => {
         loading={loading}
         closable={!loading}
         maskClosable={!loading}
+        destroyOnClose
         onClose={loading ? undefined : () => close()}
       >
         {props.content.body(close)}

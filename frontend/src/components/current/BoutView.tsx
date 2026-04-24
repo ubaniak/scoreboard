@@ -29,7 +29,7 @@ export const BoutView = ({ current }: BoutViewProps) => {
           alignItems: "center",
           justifyContent: "center",
           color: "white",
-          padding: "80px 48px 48px",
+          padding: "80px 48px calc(48px + env(safe-area-inset-bottom))",
           gap: 32,
         }}
       >

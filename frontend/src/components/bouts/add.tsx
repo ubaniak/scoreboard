@@ -39,7 +39,7 @@ export const AddBout = (props: AddBoutProps) => {
         experience: "novice",
         boutType: "scored",
         gloveSize: "10oz",
-        roundLength: "1 min",
+        roundLength: 1,
       }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
@@ -55,7 +55,7 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Bout Number" name="boutNumber">
+      <Form.Item<CreateBoutProps> label="Bout #" name="boutNumber">
         <InputNumber />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Red Athlete" name="redAthleteId">
@@ -64,7 +64,7 @@ export const AddBout = (props: AddBoutProps) => {
           allowClear
           showSearch
           optionFilterProp="label"
-          placeholder="Select athlete..."
+          placeholder="Select athlete…"
         />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId">
@@ -73,7 +73,7 @@ export const AddBout = (props: AddBoutProps) => {
           allowClear
           showSearch
           optionFilterProp="label"
-          placeholder="Select athlete..."
+          placeholder="Select athlete…"
         />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory">
@@ -117,10 +117,10 @@ export const AddBout = (props: AddBoutProps) => {
           size={"large"}
           shape="round"
           options={[
-            { value: 1, label: "1 min" },
-            { value: 1.5, label: "1.5 min" },
-            { value: 2, label: "2 min" },
-            { value: 3, label: "3 min" },
+            { value: 1, label: "1" },
+            { value: 1.5, label: "1.5" },
+            { value: 2, label: "2" },
+            { value: 3, label: "3" },
           ]}
         />
       </Form.Item>

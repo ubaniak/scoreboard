@@ -21,6 +21,7 @@ export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: Corne
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && !locked && onTap()}
       disabled={locked}
       aria-label={`Score ${label}`}
+      className="judge-corner-btn"
       style={{
         flex: 1,
         background,

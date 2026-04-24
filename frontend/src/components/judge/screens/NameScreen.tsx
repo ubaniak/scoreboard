@@ -37,7 +37,8 @@ export const NameScreen = ({ role, officials, onSelect }: NameScreenProps) => (
     <Select
       style={{ width: "100%", maxWidth: 360 }}
       size="large"
-      placeholder="Select your name..."
+      placeholder="Select your name…"
+      aria-label="Select your name"
       options={officials.map((o) => ({ value: o.name, label: o.name }))}
       onChange={onSelect}
     />

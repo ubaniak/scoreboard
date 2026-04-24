@@ -82,6 +82,7 @@ export const WaitingScreen = ({
           <div style={{ display: "flex", gap: 16 }}>
             <button
               onClick={() => onPickWinner?.("red")}
+              className="judge-winner-btn"
               style={{
                 padding: "20px 36px",
                 borderRadius: 14,
@@ -98,6 +99,7 @@ export const WaitingScreen = ({
             </button>
             <button
               onClick={() => onPickWinner?.("blue")}
+              className="judge-winner-btn"
               style={{
                 padding: "20px 36px",
                 borderRadius: 14,
@@ -116,8 +118,9 @@ export const WaitingScreen = ({
         </div>
       )}
 
-      <Typography.Text
+      <button
         onClick={onChangeName}
+        className="judge-text-btn"
         style={{
           fontSize: 11,
           color: "rgba(255,255,255,0.25)",
@@ -125,10 +128,14 @@ export const WaitingScreen = ({
           cursor: "pointer",
           letterSpacing: 2,
           textTransform: "uppercase",
+          background: "none",
+          border: "none",
+          padding: 0,
+          fontFamily: "inherit",
         }}
       >
         Change name
-      </Typography.Text>
+      </button>
     </div>
   );
 };

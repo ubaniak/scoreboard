@@ -69,17 +69,31 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ── Parse card details ───────────────────────────────────────────────────
+	// Supports "Name: Foo" / "Date: Foo" key-value lines and
+	// "card_name,Foo" / "date,Foo" CSV row style.
 	cardName, cardDate := "", ""
 	for _, line := range lines {
 		if after, ok := strings.CutPrefix(line, "Name:"); ok {
-			cardName = strings.TrimSpace(after)
+			cardName = firstCSVField(strings.TrimSpace(after))
+			continue
 		}
 		if after, ok := strings.CutPrefix(line, "Date:"); ok {
-			cardDate = strings.TrimSpace(after)
+			cardDate = firstCSVField(strings.TrimSpace(after))
+			continue
+		}
+		// CSV row style: first field is the key, second is the value.
+		if parts := strings.SplitN(line, ",", 3); len(parts) >= 2 {
+			key := strings.ToLower(strings.TrimSpace(parts[0]))
+			val := strings.TrimSpace(parts[1])
+			if key == "card_name" || key == "card name" || key == "name" {
+				cardName = val
+			} else if key == "date" {
+				cardDate = val
+			}
 		}
 	}
 	if cardName == "" {
-		presenter.WithError(errors.New("CSV missing Name: field")).Present()
+		presenter.WithError(errors.New("CSV missing card name (use 'Name: Foo' or 'card_name,Foo')")).Present()
 		return
 	}
 
@@ -307,6 +321,8 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 // splitSections returns the CSV row lines for the Officials and Bouts sections.
+// Section headers may have trailing commas (e.g. "Officials:,,,,") as produced
+// by spreadsheet exports.
 func splitSections(lines []string) (officials, bouts []string) {
 	const (
 		secNone      = 0
@@ -315,16 +331,17 @@ func splitSections(lines []string) (officials, bouts []string) {
 	)
 	sec := secNone
 	for _, line := range lines {
-		norm := strings.ToLower(strings.TrimSpace(line))
-		if norm == "officials:" {
+		// Use only the first CSV field when detecting section headers.
+		firstField := strings.ToLower(strings.TrimSpace(strings.SplitN(line, ",", 2)[0]))
+		if firstField == "officials:" {
 			sec = secOfficials
 			continue
 		}
-		if norm == "bouts:" {
+		if firstField == "bouts:" {
 			sec = secBouts
 			continue
 		}
-		if strings.TrimSpace(line) == "" {
+		if isBlankCSVRow(line) {
 			continue
 		}
 		switch sec {
@@ -337,13 +354,35 @@ func splitSections(lines []string) (officials, bouts []string) {
 	return
 }
 
-// normaliseHeader builds a lowercase-no-spaces column index from a header row.
+// normaliseHeader builds a lowercase column index with spaces and underscores
+// stripped, so "Age Category", "age_category", and "agecategory" all map to
+// the same key "agecategory".
 func normaliseHeader(header []string) map[string]int {
 	m := make(map[string]int, len(header))
 	for i, h := range header {
-		m[strings.ToLower(strings.ReplaceAll(strings.TrimSpace(h), " ", ""))] = i
+		key := strings.ToLower(strings.TrimSpace(h))
+		key = strings.ReplaceAll(key, " ", "")
+		key = strings.ReplaceAll(key, "_", "")
+		m[key] = i
 	}
 	return m
+}
+
+// firstCSVField returns the content before the first comma, trimmed. This
+// strips trailing commas that spreadsheet exports add to every line.
+func firstCSVField(s string) string {
+	return strings.TrimSpace(strings.SplitN(s, ",", 2)[0])
+}
+
+// isBlankCSVRow reports whether every field in a CSV line is empty, which
+// happens when a spreadsheet exports a blank row as ",,,,,,,,,,".
+func isBlankCSVRow(line string) bool {
+	for _, field := range strings.Split(line, ",") {
+		if strings.TrimSpace(field) != "" {
+			return false
+		}
+	}
+	return true
 }
 
 // colVal returns the trimmed value for a column key (normalised) from a row.

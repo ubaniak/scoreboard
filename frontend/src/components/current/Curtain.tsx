@@ -33,6 +33,7 @@ export const Curtain = ({ side, name, open, athleteImageUrl, clubImageUrl }: Cur
 
   return (
     <div
+      className="curtain-panel"
       style={{
         position: "absolute",
         top: 0,

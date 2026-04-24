@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Button, Popconfirm, Space } from "antd";
 import { ImageUpload } from "../image/imageUpload";
 import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
@@ -35,12 +35,6 @@ interface DataType {
 }
 
 export const CardIndex = (props: CardTableProps) => {
-  const navigate = useNavigate();
-
-  const handleNavigate = (card: Card) => {
-    navigate({ to: `/card/${card.id}` });
-  };
-
   const columns: TableProps<DataType>["columns"] = [
     {
       title: "Name",
@@ -48,9 +42,9 @@ export const CardIndex = (props: CardTableProps) => {
       key: "name",
       render: (text, record) => {
         return (
-          <Button type="link" onClick={() => handleNavigate(record as Card)}>
+          <Link to="/card/$cardId" params={{ cardId: record.id }} style={{ color: "#1677ff" }}>
             {text}
-          </Button>
+          </Link>
         );
       },
     },
@@ -75,12 +69,12 @@ export const CardIndex = (props: CardTableProps) => {
           <Space>
             {props.onUploadCardImage && (
               <ActionMenu
-                trigger={{ shape: "circle", icon: <PictureOutlined /> }}
+                trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload card image" }}
                 content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={(record as Card).imageUrl} onUpload={(file) => props.onUploadCardImage!(record.id, file)} onRemove={props.onRemoveCardImage ? () => props.onRemoveCardImage!(record.id) : undefined} /> }}
               />
             )}
             <ActionMenu
-              trigger={{ shape: "circle", icon: <EditOutlined /> }}
+              trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit card" }}
               content={{
                 title: "Edit Card",
                 body: (close) => (
@@ -99,7 +93,7 @@ export const CardIndex = (props: CardTableProps) => {
                 okText="Delete"
                 cancelText="Cancel"
               >
-                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" />
+                <Button danger shape="circle" icon={<DeleteOutlined />} size="small" aria-label="Delete card" />
               </Popconfirm>
             )}
           </Space>
@@ -109,8 +103,7 @@ export const CardIndex = (props: CardTableProps) => {
   ];
 
   return (
-    <>
-      <TableLayout
+    <TableLayout
         title="Cards"
         actions={
           <>
@@ -148,6 +141,5 @@ export const CardIndex = (props: CardTableProps) => {
           loading={props.isLoading}
         />
       </TableLayout>
-    </>
   );
 };

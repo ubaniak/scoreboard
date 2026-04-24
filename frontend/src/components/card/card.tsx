@@ -5,6 +5,7 @@ export type CardProps = {
   children: React.ReactNode;
   title?: React.ReactNode;
   extra?: React.ReactNode;
+  style?: React.CSSProperties;
 };
 
 export const Card = (props: CardProps) => {
@@ -16,6 +17,7 @@ export const Card = (props: CardProps) => {
         borderRadius: 16,
         boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
         marginBottom: 16,
+        ...props.style,
       }}
       styles={{
         body: { padding: 16 },

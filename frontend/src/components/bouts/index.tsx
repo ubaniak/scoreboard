@@ -33,9 +33,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
             content={{
               title: "Import Bouts",
               body: (close) => (
-                <>
-                  <ImportBoutsCSV onClose={close} onImport={props.onImport} />
-                </>
+                <ImportBoutsCSV onClose={close} onImport={props.onImport} />
               ),
             }}
           />
@@ -44,13 +42,11 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
             content={{
               title: "Add Bout",
               body: (close) => (
-                <>
-                  <AddBout
-                    onClose={close}
-                    athletes={props.athletes}
-                    onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
-                  />
-                </>
+                <AddBout
+                  onClose={close}
+                  athletes={props.athletes}
+                  onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
+                />
               ),
             }}
           />

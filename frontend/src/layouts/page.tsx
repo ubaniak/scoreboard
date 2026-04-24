@@ -16,6 +16,7 @@ export const PageLayout = (props: PageLayoutProps) => {
     <Layout style={{ minHeight: "100vh", background: "#0b0f1a" }}>
       <a
         href="#main-content"
+        className="skip-link"
         style={{
           position: "absolute",
           left: "-9999px",
@@ -32,20 +33,26 @@ export const PageLayout = (props: PageLayoutProps) => {
           background: "#131929",
           borderBottom: "1px solid rgba(255,255,255,0.08)",
           padding: "0 16px",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          height: "auto",
+          minHeight: 64,
+          lineHeight: "normal",
         }}
       >
         <div
           style={{
             maxWidth: 1280,
             margin: "0 auto",
-            height: 64,
+            padding: "12px 0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: 12,
           }}
         >
-          <Space orientation="vertical" size={0}>
+          <Space vertical size={0}>
             <Title level={2} style={{ margin: 0, fontSize: 18 }}>
               {props.title}
             </Title>

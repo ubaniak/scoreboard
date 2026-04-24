@@ -8,7 +8,7 @@ export const AppLayout = () => {
     <LoginProvider>
       <GlobalErrorHandler />
       <ApiErrorHandler />
-      <div style={{ padding: "20px 48px", minHeight: "100vh", background: "#0b0f1a" }}>
+      <div style={{ minHeight: "100vh", background: "#0b0f1a" }}>
         <Outlet />
       </div>
     </LoginProvider>

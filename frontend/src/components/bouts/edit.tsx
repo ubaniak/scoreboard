@@ -65,14 +65,14 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Bout #" name="boutNumber">
+      <Form.Item<UpdateBoutProps> label="Bout Number" name="boutNumber">
         <InputNumber />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId">
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId">
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete..." />
+        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory">
         <Select
@@ -117,7 +117,7 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Round length (min)" name="roundLength" rules={[{ required: true, message: "Round length is required" }]}>
+      <Form.Item<UpdateBoutProps> label="Round Length" name="roundLength" rules={[{ required: true, message: "Round length is required" }]}>
         <Segmented
           size={"large"}
           shape="round"
@@ -145,7 +145,7 @@ export const EditBout = (props: EditBoutProps) => {
         <Select
           options={officialOptions}
           allowClear
-          placeholder="Select referee..."
+          placeholder="Select referee…"
         />
       </Form.Item>
       <Form.Item label={null}>

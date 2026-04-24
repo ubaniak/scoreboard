@@ -1,4 +1,4 @@
-import { Table, Typography } from "antd";
+import { Table, Tag, Typography } from "antd";
 import type { ColumnType } from "antd/es/table";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
@@ -14,7 +14,6 @@ export type ScoresProps = {
   isAdmin?: boolean;
 };
 
-const ROUNDS = [1, 2, 3];
 
 type RowData = {
   key: string;
@@ -28,6 +27,8 @@ export const Scores = ({
   isAdmin,
   currentRound,
 }: ScoresProps) => {
+  const ROUNDS = rounds && rounds.length > 0 ? rounds.map((r) => r.roundNumber) : [1, 2, 3];
+
   // Collect judge roles in order from all rounds
   const judgeRoles: string[] = [];
   const judgeNames: Record<string, string> = {};
@@ -117,7 +118,7 @@ export const Scores = ({
         ]
       : [];
 
-  const sep = { borderTop: "1px solid rgba(0,0,0,0.12)" };
+  const sep = { borderTop: "1px solid rgba(255,255,255,0.12)" };
 
   const scoreCell = (
     val: number | string | undefined,
@@ -136,6 +137,7 @@ export const Scores = ({
               ? "#ff4d4f"
               : "#1677ff",
           fontFamily: "monospace",
+          fontVariantNumeric: "tabular-nums",
           fontWeight: isTotal ? 800 : 700,
           fontSize: isTotal ? 16 : 14,
         }}
@@ -145,14 +147,17 @@ export const Scores = ({
     );
   };
 
-  const statusStyles: Record<
-    string,
-    { bg: string; color: string; label: string }
-  > = {
-    complete: { bg: "#f6ffed", color: "#52c41a", label: "Complete" },
-    ready: { bg: "#e6f4ff", color: "#1677ff", label: "Ready" },
-    requested: { bg: "#fffbe6", color: "#d48806", label: "Requested" },
-    not_started: { bg: "#f5f5f5", color: "#8c8c8c", label: "Not Started" },
+  const statusTagColor: Record<string, string> = {
+    complete: "success",
+    ready: "processing",
+    requested: "warning",
+    not_started: "default",
+  };
+  const statusLabel: Record<string, string> = {
+    complete: "Complete",
+    ready: "Ready",
+    requested: "Requested",
+    not_started: "Not Started",
   };
 
   const judgeColumns: ColumnType<RowData>[] = judgeRoles.map((role, i) => ({
@@ -164,27 +169,14 @@ export const Scores = ({
         <Text type="secondary" style={{ fontSize: 11, display: "block" }}>
           {judgeNames[role] || role}
         </Text>
-        {judgeStatuses[role] &&
-          (() => {
-            const st = statusStyles[judgeStatuses[role]];
-            return (
-              <span
-                style={{
-                  display: "inline-block",
-                  marginTop: 5,
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: 0.5,
-                  background: st?.bg ?? "#f5f5f5",
-                  color: st?.color ?? "#8c8c8c",
-                }}
-              >
-                {st?.label ?? judgeStatuses[role]}
-              </span>
-            );
-          })()}
+        {judgeStatuses[role] && (
+          <Tag
+            color={statusTagColor[judgeStatuses[role]] ?? "default"}
+            style={{ marginTop: 5 }}
+          >
+            {statusLabel[judgeStatuses[role]] ?? judgeStatuses[role]}
+          </Tag>
+        )}
       </div>
     ),
     children: [

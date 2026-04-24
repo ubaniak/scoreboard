@@ -27,6 +27,7 @@ export const MarginDrawer = ({ open, winner, winnerName, onClose, onSelect }: Ma
         <button
           key={margin}
           onClick={() => onSelect(margin)}
+          className="judge-margin-btn"
           style={{
             flex: 1,
             height: 88,

@@ -10,6 +10,7 @@ import { Card } from "../card/card";
 type RoundControlsProps = {
   isDecisionPhase: boolean;
   boutStatus?: string;
+  roundStatus?: string;
   scores?: ScoresByRound;
   rounds?: RoundDetails[];
   onNextRoundState: () => void;
@@ -18,9 +19,18 @@ type RoundControlsProps = {
   onCompleteBout: () => void;
 };
 
+const accentColor = (roundStatus?: string) => {
+  if (roundStatus === "in_progress") return "#1677ff";           // blue
+  if (roundStatus === "waiting_for_results") return "#faad14";   // yellow
+  if (roundStatus === "score_complete") return "#95de64";        // light green
+  if (roundStatus === "complete") return "#52c41a";              // green
+  return "#ff4d4f";                                              // red — ready/locked
+};
+
 export const RoundControls = ({
   isDecisionPhase,
   boutStatus,
+  roundStatus,
   scores,
   rounds,
   onNextRoundState,
@@ -28,10 +38,14 @@ export const RoundControls = ({
   onShowDecision,
   onCompleteBout,
 }: RoundControlsProps) => (
-  <Card>
-    <Space style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+  <Card
+    style={{
+      borderTop: `3px solid ${accentColor(roundStatus)}`,
+    }}
+  >
+    <Space size={12} style={{ display: "flex", justifyContent: "center" }}>
       {!isDecisionPhase && (
-        <Button size="large" onClick={onNextRoundState}>
+        <Button type="primary" size="large" onClick={onNextRoundState}>
           Advance Round State
         </Button>
       )}

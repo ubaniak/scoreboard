@@ -12,7 +12,9 @@ John Doe,USA,1979,REG002
 
 Bouts:
 Bout Number,Bout Type,Red Athlete,Red Club,Blue Athlete,Blue Club,Age Category,Experience,Gender,Round Length,Glove Size
-1,scored,Alice Johnson,Eastside Boxing,Bob Williams,Westside BC,u17,open,female,2,8oz
+1,scored,Alice Johnson,Eastside Boxing,Bob Williams,Westside BC,u17,open,female,2,10oz
+2,scored,Maria Garcia,Westside Club,John Doe,City Boxing,elite,open,male,3,12oz
+3,sparring,Alice Brown,,Bob White,,u13,novice,male,1,10oz
 `;
 
 export const CardImport = ({
@@ -48,7 +50,7 @@ export const CardImport = ({
         </p>
         <p className="ant-upload-text">Click or drag CSV file to import</p>
         <p className="ant-upload-hint">
-          Imports card, officials, clubs, athletes, and bouts from a single CSV file
+          Imports card, officials, and bouts (athletes and clubs are created from bout rows)
         </p>
       </Upload.Dragger>
     </div>
