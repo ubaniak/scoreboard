@@ -28,6 +28,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
+	"github.com/ubaniak/scoreboard/internal/backup"
 	"github.com/ubaniak/scoreboard/internal/dump"
 	auditStorage "github.com/ubaniak/scoreboard/internal/auditlogs/storage"
 	"github.com/ubaniak/scoreboard/internal/auth"
@@ -215,6 +216,13 @@ func main() {
 
 	dumpApp := dump.NewApp(db, uploadsDir)
 	apiRegister.Add(dumpApp)
+
+	backupApp, err := backup.NewApp(dbPath)
+	if err != nil {
+		panic(err)
+	}
+	apiRegister.Add(backupApp)
+	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
 
 	apiRegister.Register(rb)
 

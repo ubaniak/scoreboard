@@ -31,10 +31,18 @@ type useCase struct {
 	roundUseCase round.UseCase
 	comments     comment.UseCase
 	score        scores.UseCase
+	onBoutStart  func()
 }
 
 func NewUseCase(storage Storage, roundUseCase round.UseCase, comments comment.UseCase, score scores.UseCase) UseCase {
 	return &useCase{storage: storage, roundUseCase: roundUseCase, comments: comments, score: score}
+}
+
+// SetBoutStartHook registers fn to be called once when any bout first transitions to in_progress.
+func SetBoutStartHook(uc UseCase, fn func()) {
+	if u, ok := uc.(*useCase); ok {
+		u.onBoutStart = fn
+	}
 }
 
 func (uc *useCase) Create(cardId uint, bout *entities.Bout) error {
@@ -176,9 +184,12 @@ func (uc *useCase) UpdateStatus(cardId, boutId uint, status entities.BoutStatus)
 	if err := uc.storage.SetStatus(cardId, boutId, status); err != nil {
 		return err
 	}
-	// On initial start only, advance round 1 to in_progress
+	// On initial start only, advance round 1 to in_progress and trigger backup.
 	if status == entities.BoutStatusInProgress && prevStatus == entities.BoutStatusNotStarted {
 		_ = uc.roundUseCase.UpdateStatus(boutId, 1, roundEntities.RoundStatusReady)
+		if uc.onBoutStart != nil {
+			go uc.onBoutStart()
+		}
 	}
 	return nil
 }

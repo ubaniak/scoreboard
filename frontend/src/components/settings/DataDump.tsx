@@ -1,8 +1,9 @@
-import { App, Button, Space, Typography, Upload } from "antd";
+import { App, Button, Divider, Space, Typography, Upload } from "antd";
 import { DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import type { RcFile } from "antd/es/upload";
 import { useExportData, useImportData } from "../../api/settings";
 import type { TokenBase } from "../../api/entities";
+import { AutoBackup } from "./AutoBackup";
 
 export const DataDump = ({ token }: TokenBase) => {
   const { message } = App.useApp();
@@ -68,6 +69,9 @@ export const DataDump = ({ token }: TokenBase) => {
           </Button>
         )}
       </div>
+
+      <Divider />
+      <AutoBackup token={token} />
     </Space>
   );
 };
