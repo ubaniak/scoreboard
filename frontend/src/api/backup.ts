@@ -83,6 +83,23 @@ export const useMutateDeleteBackup = ({ token }: TokenBase) => {
   });
 };
 
+export const useDownloadBackup = ({ token }: TokenBase) =>
+  useMutation({
+    mutationFn: async (filename: string) => {
+      const res = await fetch(`${baseUrl}/api/backup/download?filename=${encodeURIComponent(filename)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+
 export const useMutateRestoreBackup = ({ token }: TokenBase) =>
   useMutation({
     mutationFn: async (filename: string) => {
@@ -95,5 +112,15 @@ export const useMutateRestoreBackup = ({ token }: TokenBase) =>
         const text = await res.text();
         throw new Error(text || "Restore failed");
       }
+    },
+  });
+
+export const useQuitApp = ({ token }: TokenBase) =>
+  useMutation({
+    mutationFn: async () => {
+      await fetch(`${baseUrl}/api/backup/quit`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
     },
   });

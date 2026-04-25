@@ -119,6 +119,13 @@ func addFileToZip(zw *zip.Writer, srcPath, entryName string) error {
 	return err
 }
 
+func (s *service) backupFilePath(filename string) (string, error) {
+	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
+		return "", fmt.Errorf("invalid backup filename")
+	}
+	return filepath.Join(s.cfg.BackupDir, filename), nil
+}
+
 func (s *service) deleteBackup(filename string) error {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
 		return fmt.Errorf("invalid backup filename")

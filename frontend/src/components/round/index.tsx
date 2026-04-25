@@ -10,13 +10,9 @@ import type { ScoresByRound } from "../../entities/scores";
 import { CornerControls } from "../bout/cornerControls";
 import { Card } from "../card/card";
 import { RoundControls } from "./RoundControls";
-import { RoundSelector } from "./RoundSelector";
-
 
 const statusLabel = (status: RoundDetails["status"]) =>
-  status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export type RoundIndexProps = {
   round?: RoundDetails;
@@ -55,15 +51,6 @@ export const RoundIndex = (props: RoundIndexProps) => {
 
   return (
     <>
-      <RoundSelector
-        rounds={props.rounds || []}
-        selectedIndex={selectedRound}
-        onSelect={(i, roundNumber) => {
-          setSelectedRound(i);
-          props.onChange(roundNumber);
-        }}
-      />
-
       <RoundControls
         isDecisionPhase={isDecisionPhase}
         boutStatus={props.boutStatus}
@@ -83,7 +70,15 @@ export const RoundIndex = (props: RoundIndexProps) => {
               <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>
                 Round {viewingRound.roundNumber}
               </div>
-              <div style={{ fontSize: 13, letterSpacing: 2, textTransform: "uppercase", opacity: 0.5, marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  opacity: 0.5,
+                  marginTop: 4,
+                }}
+              >
                 {statusLabel(viewingRound.status)}
               </div>
             </div>

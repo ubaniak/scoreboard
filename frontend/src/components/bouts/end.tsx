@@ -68,11 +68,12 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
           ageCategory: "",
           gender: "male",
           experience: "novice",
+          winner: "na",
         }}
         style={{ maxWidth: 600 }}
         onFinish={onFinish}
       >
-        <Form.Item label="Overall Winner" name="winner">
+        <Form.Item label="Overall Winner" name="winner" rules={[{ required: true, message: "Winner is required" }]}>
           <Segmented
             size={"large"}
             shape="round"
@@ -83,7 +84,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
             ]}
           />
         </Form.Item>
-        <Form.Item label="Decision" name="decision">
+        <Form.Item label="Decision" name="decision" rules={[{ required: true, message: "Decision is required" }]}>
           <Select
             placeholder="Select decision"
             options={Object.entries(decisionLabels).map(([value, label]) => ({

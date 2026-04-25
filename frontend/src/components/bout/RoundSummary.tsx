@@ -17,9 +17,6 @@ export const RoundSummary = ({ round }: RoundSummaryProps) => {
 
   return (
     <div>
-      <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 6 }}>
-        Round {round.roundNumber}
-      </Text>
       <Space direction="vertical" size={4}>
         <Space size={4}>
           <Text style={{ fontSize: 12, minWidth: 70 }} type="secondary">Cautions</Text>

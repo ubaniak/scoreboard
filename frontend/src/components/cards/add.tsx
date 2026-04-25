@@ -32,10 +32,10 @@ export const AddCard = (props: AddCardProps) => {
         style={{ maxWidth: 600 }}
         onFinish={onFinish}
       >
-        <Form.Item<FieldType> label="Name" name="name">
+        <Form.Item<FieldType> label="Name" name="name" rules={[{ required: true, message: "Name is required" }]}>
           <Input />
         </Form.Item>
-        <Form.Item<FieldType> label="Date" name="date">
+        <Form.Item<FieldType> label="Date" name="date" rules={[{ required: true, message: "Date is required" }]}>
           <Input type="date" />
         </Form.Item>
         <Form.Item label={null}>
