@@ -56,10 +56,10 @@ export const AddBout = (props: AddBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Bout #" name="boutNumber">
+      <Form.Item<CreateBoutProps> label="Bout #" name="boutNumber" rules={[{ required: true, message: "Bout number is required" }]}>
         <InputNumber />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Red Athlete" name="redAthleteId">
+      <Form.Item<CreateBoutProps> label="Red Athlete" name="redAthleteId" rules={[{ required: true, message: "Red athlete is required" }]}>
         <Select
           options={athleteOptions}
           allowClear
@@ -68,7 +68,7 @@ export const AddBout = (props: AddBoutProps) => {
           placeholder="Select athlete…"
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId">
+      <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId" rules={[{ required: true, message: "Blue athlete is required" }]}>
         <Select
           options={athleteOptions}
           allowClear
@@ -77,7 +77,7 @@ export const AddBout = (props: AddBoutProps) => {
           placeholder="Select athlete…"
         />
       </Form.Item>
-      <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory">
+      <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
         <Select
           options={[
             { value: "u13", label: "U13" },

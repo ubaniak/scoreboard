@@ -5,7 +5,6 @@ import type {
   MutateHandleFoulProps,
 } from "../../api/bouts";
 import type { Bout, Official, RoundDetails } from "../../entities/cards";
-import { BLUE, RED } from "../../entities/corner";
 import type { ScoresByRound } from "../../entities/scores";
 import { Card } from "../card/card";
 import { RoundIndex } from "../round";
@@ -47,59 +46,11 @@ export const BoutIndex = (props: BoutIndexProps) => {
 
   return (
     <>
-      {/* Names card — always first */}
-      {props.bout && (
-        <Card>
-          <div style={{ display: "flex", gap: 16 }}>
-            <div
-              style={{
-                flex: 1,
-                borderLeft: `4px solid ${RED}`,
-                paddingLeft: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  opacity: 0.5,
-                  textTransform: "uppercase",
-                  letterSpacing: 2,
-                  marginBottom: 4,
-                }}
-              >
-                Red Corner
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>
-                {props.bout.redCorner || "—"}
-              </div>
-            </div>
-            <div
-              style={{
-                flex: 1,
-                borderLeft: `4px solid ${BLUE}`,
-                paddingLeft: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  opacity: 0.5,
-                  textTransform: "uppercase",
-                  letterSpacing: 2,
-                  marginBottom: 4,
-                }}
-              >
-                Blue Corner
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>
-                {props.bout.blueCorner || "—"}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      <DescribeBout bout={props.bout} />
+      <DescribeBout
+        bout={props.bout}
+        onSetRound={props.controls.setRound}
+        activeRoundNumber={props.round?.roundNumber}
+      />
 
       <Show show={!isReady}>
         <Card>

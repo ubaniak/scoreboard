@@ -3,6 +3,7 @@ package backup
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -28,6 +29,8 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("backup.now", "/now", http.MethodPost, a.BackupNow, rbac.Admin)
 	sr.AddRoute("backup.restore", "/restore", http.MethodPost, a.Restore, rbac.Admin)
 	sr.AddRoute("backup.delete", "/delete", http.MethodPost, a.Delete, rbac.Admin)
+	sr.AddRoute("backup.download", "/download", http.MethodGet, a.Download, rbac.Admin)
+	sr.AddRoute("backup.quit", "/quit", http.MethodPost, a.Quit, rbac.Admin)
 }
 
 // TriggerIfEnabled is called by the bouts hook when a bout starts.
@@ -90,6 +93,27 @@ func (a *App) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *App) Download(w http.ResponseWriter, r *http.Request) {
+	filename := r.URL.Query().Get("filename")
+	if filename == "" {
+		http.Error(w, "missing filename", http.StatusBadRequest)
+		return
+	}
+	path, err := a.svc.backupFilePath(filename)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	http.ServeFile(w, r, path)
+}
+
+func (a *App) Quit(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	go func() { os.Exit(0) }()
 }
 
 func (a *App) Restore(w http.ResponseWriter, r *http.Request) {

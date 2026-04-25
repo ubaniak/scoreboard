@@ -23,9 +23,14 @@ const ScorePanelTab = () => {
   const url = `http://${baseUrlData}:8080/scoreboard`;
 
   return (
-    <Space direction="vertical" size={16} align="center" style={{ width: "100%" }}>
+    <Space
+      orientation="vertical"
+      size={16}
+      align="center"
+      style={{ width: "100%" }}
+    >
       <QRCode value={url || "http://localhost:8080/scoreboard"} size={160} />
-      <Space direction="vertical" size={2} align="center">
+      <Space orientation="vertical" size={2} align="center">
         <Text type="secondary">Scan to open the score panel display</Text>
         <Text copyable>{url || "http://localhost:8080/scoreboard"}</Text>
       </Space>
@@ -64,9 +69,13 @@ export const DeviceQuickLook = ({
       trigger={{
         override: (onOpen) => (
           <Button
-            icon={allConnected
-              ? <CheckCircleTwoTone twoToneColor="#52c41a" />
-              : <ExclamationCircleTwoTone twoToneColor="#ff4d4f" />}
+            icon={
+              allConnected ? (
+                <CheckCircleTwoTone twoToneColor="#52c41a" />
+              ) : (
+                <ExclamationCircleTwoTone twoToneColor="#ff4d4f" />
+              )
+            }
             onClick={onOpen}
           >
             Judges {connectedCount}/{requiredJudges}

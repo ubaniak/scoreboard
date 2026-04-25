@@ -65,16 +65,16 @@ export const EditBout = (props: EditBoutProps) => {
           ]}
         />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Bout Number" name="boutNumber">
+      <Form.Item<UpdateBoutProps> label="Bout Number" name="boutNumber" rules={[{ required: true, message: "Bout number is required" }]}>
         <InputNumber />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId">
+      <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId" rules={[{ required: true, message: "Red athlete is required" }]}>
         <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId">
+      <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId" rules={[{ required: true, message: "Blue athlete is required" }]}>
         <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
       </Form.Item>
-      <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory">
+      <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
         <Select
           options={[
             { value: "u13", label: "U13" },

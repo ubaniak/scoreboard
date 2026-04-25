@@ -25,7 +25,6 @@ import { isApisLoading } from "../api/handlers";
 import { useGetOfficials } from "../api/officials";
 import { useGetScores } from "../api/score";
 import { BoutIndex } from "../components/bout";
-import { BoutPageActions } from "../components/bouts/BoutPageActions";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { ApiLoading } from "../components/loading/Apiloading";
@@ -182,11 +181,12 @@ export const BoutPage = () => {
           >
             Bout {nextBout?.boutNumber}
           </Button>
-          <BoutPageActions
-            bout={bout.data!}
-            officials={officials.data ?? []}
-            cardId={cardId!}
-            token={token}
+          <DeviceQuickLook
+            requiredJudges={bout.data?.numberOfJudges ?? 5}
+            devices={judgeDevices.data || []}
+            onRefreshCode={(values) => {
+              generateCode.mutate(values);
+            }}
           />
         </Space>
       }
@@ -196,16 +196,7 @@ export const BoutPage = () => {
           : "Bout details"
       }
       subTitle={
-        <>
-          <CardSummary card={card.data!} />
-          <DeviceQuickLook
-            requiredJudges={bout.data?.numberOfJudges ?? 5}
-            devices={judgeDevices.data || []}
-            onRefreshCode={(values) => {
-              generateCode.mutate(values);
-            }}
-          />
-        </>
+        <CardSummary card={card.data!} />
       }
       breadCrumbs={[
         { title: <a href="/">home</a> },

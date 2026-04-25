@@ -1,13 +1,15 @@
-import { CloudUploadOutlined, HistoryOutlined } from "@ant-design/icons";
+import { CloudUploadOutlined, DownloadOutlined, HistoryOutlined, PoweroffOutlined } from "@ant-design/icons";
 import { App, Button, Collapse, Input, Popconfirm, Space, Switch, Timeline, Typography } from "antd";
 import { useState } from "react";
 import {
+  useDownloadBackup,
   useGetBackupConfig,
   useListBackups,
   useMutateBackupConfig,
   useMutateDeleteBackup,
   useMutateRestoreBackup,
   useMutateTriggerBackup,
+  useQuitApp,
 } from "../../api/backup";
 import type { TokenBase } from "../../api/entities";
 
@@ -29,9 +31,12 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const triggerBackup = useMutateTriggerBackup({ token });
   const restoreBackup = useMutateRestoreBackup({ token });
   const deleteBackup = useMutateDeleteBackup({ token });
+  const downloadBackup = useDownloadBackup({ token });
+  const quitApp = useQuitApp({ token });
 
   const cfg = configQuery.data;
   const [dirDraft, setDirDraft] = useState<string | undefined>(undefined);
+  const [restoreDone, setRestoreDone] = useState(false);
   const displayDir = dirDraft ?? cfg?.backupDir ?? "";
 
   const handleToggle = async (enabled: boolean) => {
@@ -66,7 +71,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const handleRestore = async (filename: string) => {
     try {
       await restoreBackup.mutateAsync(filename);
-      message.success("Restore complete — please restart the app for changes to take effect");
+      setRestoreDone(true);
     } catch (err) {
       message.error((err as Error).message || "Restore failed");
     }
@@ -84,6 +89,32 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const backups = backupsQuery.data ?? [];
 
   return (
+    <>
+    {restoreDone && (
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.85)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 24,
+      }}>
+        <Text style={{ color: "#fff", fontSize: 28, fontWeight: 600 }}>
+          Restore complete
+        </Text>
+        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 16 }}>
+          Please restart the application for changes to take effect.
+        </Text>
+        <Button
+          type="primary"
+          danger
+          size="large"
+          icon={<PoweroffOutlined />}
+          loading={quitApp.isPending}
+          onClick={() => quitApp.mutate()}
+        >
+          Turn Off
+        </Button>
+      </div>
+    )}
     <Space direction="vertical" style={{ width: "100%", maxWidth: 480 }}>
       <Title level={5} style={{ marginBottom: 4 }}>Auto Backup</Title>
 
@@ -139,6 +170,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
             children: backups.length === 0 ? (
               <Text type="secondary">No backups yet</Text>
             ) : (
+              <div style={{ maxHeight: 560, overflowY: "auto", paddingRight: 4 }}>
               <Timeline
                 items={backups.map((b) => ({
                   key: b.filename,
@@ -148,6 +180,14 @@ export const AutoBackup = ({ token }: TokenBase) => {
                         {formatDate(b.createdAt)}
                       </Text>
                       <Space>
+                        <Button
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          loading={downloadBackup.isPending}
+                          onClick={() => downloadBackup.mutate(b.filename)}
+                        >
+                          Download
+                        </Button>
                         <Popconfirm
                           title="Restore from this backup?"
                           description="This will replace all current data. You will need to restart the app."
@@ -176,10 +216,12 @@ export const AutoBackup = ({ token }: TokenBase) => {
                   ),
                 }))}
               />
+              </div>
             ),
           },
         ]}
       />
     </Space>
+    </>
   );
 };
