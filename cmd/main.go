@@ -30,6 +30,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	"github.com/ubaniak/scoreboard/internal/backup"
 	"github.com/ubaniak/scoreboard/internal/dump"
+	"github.com/ubaniak/scoreboard/internal/gdrive"
 	auditStorage "github.com/ubaniak/scoreboard/internal/auditlogs/storage"
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
@@ -223,6 +224,9 @@ func main() {
 	}
 	apiRegister.Add(backupApp)
 	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
+
+	gdriveApp := gdrive.NewApp(officialUsecCase, clubUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
+	apiRegister.Add(gdriveApp)
 
 	apiRegister.Register(rb)
 

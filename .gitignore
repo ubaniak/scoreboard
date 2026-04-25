@@ -3,3 +3,4 @@ scoreboard
 scoreboard.db
 scoreboard.db
 cmd/frontend/dist
+build
