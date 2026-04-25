@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
 	"embed"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -85,7 +87,11 @@ func main() {
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		panic("JWT_SECRET environment variable is not set")
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			panic(err)
+		}
+		jwtSecret = hex.EncodeToString(b)
 	}
 	authUseCase := auth.NewUseCase(authStorage, jwtSecret)
 
