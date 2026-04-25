@@ -1,0 +1,5 @@
+- Csv upload did not work
+- Need to show RED or BLUE at the end as an overall winner
+- Don't auto open when all scores are in.
+- when complete move round directly to in progress
+- when uploading bouts, ask if size weight ect are good
