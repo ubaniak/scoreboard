@@ -1,3 +1,8 @@
+---
+name: frontend-style
+description: when developing a front-end feature follow this style guide
+---
+
 # frontend-style
 
 You are helping the user add or modify React/TypeScript frontend code in the scoreboard project. Apply the patterns below exactly. Read existing files before writing anything new.
@@ -26,6 +31,7 @@ src/
 **No data fetching inside components.** All `useQuery` / `useMutation` calls live in the page or in a component that is explicitly a "container" (rare). Regular UI components receive data and callbacks as props only.
 
 **Props type at the top of the file, unexported:**
+
 ```tsx
 type FooProps = {
   name: string;
@@ -46,9 +52,10 @@ One file per backend domain. Structure:
 ```ts
 // 1. query key factory (keeps invalidation consistent)
 const keys = {
-  all:  (token: string) => ["domain", token] as const,
+  all: (token: string) => ["domain", token] as const,
   list: (token: string) => [...keys.all(token), "list"] as const,
-  get:  (token: string, id: string) => [...keys.all(token), `get-${id}`] as const,
+  get: (token: string, id: string) =>
+    [...keys.all(token), `get-${id}`] as const,
 };
 
 // 2. query hooks — useGet*, useList*
@@ -56,9 +63,10 @@ export const useListFoos = (props: TokenBase) =>
   useQuery({
     queryKey: keys.list(props.token),
     enabled: !!props.token,
-    queryFn: () => fetchClient<Foo[]>(`${baseUrl}/api/foos`, {
-      headers: { Authorization: `Bearer ${props.token}` },
-    }),
+    queryFn: () =>
+      fetchClient<Foo[]>(`${baseUrl}/api/foos`, {
+        headers: { Authorization: `Bearer ${props.token}` },
+      }),
   });
 
 // 3. mutation hooks — useMutate*
@@ -68,10 +76,14 @@ export const useMutateCreateFoo = (props: TokenBase) => {
     mutationFn: (body: CreateFooProps) =>
       fetchClient(`${baseUrl}/api/foos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${props.token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
         body: JSON.stringify(body),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.list(props.token) }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token) }),
   });
 };
 ```
@@ -113,7 +125,10 @@ export const FooPage = () => {
   const createFoo = useMutateCreateFoo({ token });
 
   return (
-    <PageLayout title="Foos" breadCrumbs={[{ title: <a href="/">home</a> }, { title: "foos" }]}>
+    <PageLayout
+      title="Foos"
+      breadCrumbs={[{ title: <a href="/">home</a> }, { title: "foos" }]}
+    >
       <FooList
         foos={foos.data ?? []}
         loading={foos.isLoading}
@@ -151,15 +166,15 @@ Scoreboard / public display routes get a full-screen fixed-inset `div` with `bac
 
 ## Naming conventions
 
-| Thing | Convention |
-|---|---|
-| Query hook | `useGet<Entity>`, `useList<Entities>` |
-| Mutation hook | `useMutate<Verb><Entity>` |
-| Component | PascalCase matching the filename |
-| Props type | `<ComponentName>Props`, unexported |
-| Page component | `<Name>Page` |
+| Thing            | Convention                               |
+| ---------------- | ---------------------------------------- |
+| Query hook       | `useGet<Entity>`, `useList<Entities>`    |
+| Mutation hook    | `useMutate<Verb><Entity>`                |
+| Component        | PascalCase matching the filename         |
+| Props type       | `<ComponentName>Props`, unexported       |
+| Page component   | `<Name>Page`                             |
 | Entity type file | lowercase singular: `bout.ts`, `card.ts` |
-| API file | lowercase plural: `bouts.ts`, `cards.ts` |
+| API file         | lowercase plural: `bouts.ts`, `cards.ts` |
 
 ---
 

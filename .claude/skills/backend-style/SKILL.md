@@ -1,3 +1,8 @@
+---
+name: backend-style
+description: When developing backend components follow this style guideline
+---
+
 # backend-style
 
 You are helping the user add or modify Go backend code in the scoreboard project. When invoked, apply the patterns below exactly as described. Read relevant existing files before writing anything new.
@@ -25,6 +30,7 @@ internal/<domain>/
 ## Patterns to follow
 
 ### `storage.go` — interface shim
+
 The package-level `Storage` interface and a thin `NewSqlite` wrapper that delegates to the concrete type:
 
 ```go
@@ -42,6 +48,7 @@ func NewSqlite(db *gorm.DB) (Storage, error) {
 ```
 
 ### `storage/<domain>.go` — GORM model
+
 Plain GORM struct with `gorm.Model` embedded. No business logic.
 
 ```go
@@ -53,6 +60,7 @@ type Foo struct {
 ```
 
 ### `storage/sqlite.go` — Sqlite implementation
+
 - `NewSqlite` runs `db.AutoMigrate` and returns `(*Sqlite, error)`
 - `ToGormModel` and `ToEntity` are value-receiver methods that convert between entity and GORM model
 - Each CRUD method is a pointer-receiver on `*Sqlite`
@@ -72,6 +80,7 @@ func (*Sqlite) ToEntity(m Foo) *entities.Foo     { … }
 ```
 
 ### `usecase.go` — business logic
+
 - Export a `UseCase` interface listing every operation
 - Unexported `useCase` struct implements it
 - `NewUseCase` returns the interface, not the struct
@@ -93,6 +102,7 @@ func NewUseCase(storage Storage) UseCase {
 ```
 
 ### `app.go` — HTTP layer
+
 - `App` struct holds a `UseCase` and any cross-domain interfaces (narrow interfaces, not full packages)
 - Cross-domain deps use narrow local interfaces to avoid circular imports:
   ```go
@@ -116,9 +126,11 @@ func NewUseCase(storage Storage) UseCase {
 - Routes use `rbac.Admin` or a judge role constant from `internal/rbac/roles.go`
 
 ### `entities/entities.go` — plain structs
+
 No GORM tags. No JSON tags on internal domain entities (those go on the DTO/response structs in `app.go`).
 
 ### Registering a new domain in `cmd/main.go`
+
 1. Init storage: `fooStorage, err := foo.NewSqlite(db)`
 2. Init use case: `fooUseCase := foo.NewUseCase(fooStorage)`
 3. Init app: `fooApp := foo.NewApp(fooUseCase)`
@@ -128,14 +140,14 @@ No GORM tags. No JSON tags on internal domain entities (those go on the DTO/resp
 
 ## Naming conventions
 
-| Thing | Convention |
-|---|---|
-| GORM model | `Foo` (same as entity, lives in `storage/` package) |
-| Entity | `Foo` (lives in `entities/` package) |
-| Interface | `UseCase`, `Storage` (not `IFoo`) |
-| Constructor | `NewFoo`, `NewUseCase`, `NewSqlite` |
+| Thing               | Convention                                                   |
+| ------------------- | ------------------------------------------------------------ |
+| GORM model          | `Foo` (same as entity, lives in `storage/` package)          |
+| Entity              | `Foo` (lives in `entities/` package)                         |
+| Interface           | `UseCase`, `Storage` (not `IFoo`)                            |
+| Constructor         | `NewFoo`, `NewUseCase`, `NewSqlite`                          |
 | HTTP handler method | PascalCase verb: `Create`, `List`, `Get`, `Update`, `Delete` |
-| Route label | `"<domain>.<action>"` e.g. `"bouts.create"` |
+| Route label         | `"<domain>.<action>"` e.g. `"bouts.create"`                  |
 
 ---
 
