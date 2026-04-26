@@ -26,18 +26,29 @@ type BackupEntry struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type service struct {
+type UseCase interface {
+	IsEnabled() bool
+	GetConfig() Config
+	SaveConfig(cfg Config) error
+	ListBackups() ([]BackupEntry, error)
+	CreateBackup() error
+	BackupFilePath(filename string) (string, error)
+	DeleteBackup(filename string) error
+	RestoreBackup(filename string) error
+}
+
+type useCase struct {
 	dbPath     string
 	configPath string
 	cfg        Config
 }
 
-func newService(dbPath string) (*service, error) {
+func NewUseCase(dbPath string) (UseCase, error) {
 	dir, err := datadir.Dir()
 	if err != nil {
 		return nil, err
 	}
-	svc := &service{
+	uc := &useCase{
 		dbPath:     dbPath,
 		configPath: filepath.Join(dir, "backup_config.json"),
 		cfg: Config{
@@ -45,33 +56,38 @@ func newService(dbPath string) (*service, error) {
 			BackupDir: filepath.Join(dir, "backup"),
 		},
 	}
-	_ = svc.loadConfig()
-	return svc, nil
+	_ = uc.loadConfig()
+	return uc, nil
 }
 
-func (s *service) loadConfig() error {
-	data, err := os.ReadFile(s.configPath)
+func (uc *useCase) IsEnabled() bool { return uc.cfg.Enabled }
+
+func (uc *useCase) GetConfig() Config { return uc.cfg }
+
+func (uc *useCase) SaveConfig(cfg Config) error {
+	uc.cfg = cfg
+	data, err := json.MarshalIndent(uc.cfg, "", "  ")
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, &s.cfg)
+	return os.WriteFile(uc.configPath, data, 0644)
 }
 
-func (s *service) saveConfig() error {
-	data, err := json.MarshalIndent(s.cfg, "", "  ")
+func (uc *useCase) loadConfig() error {
+	data, err := os.ReadFile(uc.configPath)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.configPath, data, 0644)
+	return json.Unmarshal(data, &uc.cfg)
 }
 
-func (s *service) createBackup() error {
-	if err := os.MkdirAll(s.cfg.BackupDir, 0755); err != nil {
+func (uc *useCase) CreateBackup() error {
+	if err := os.MkdirAll(uc.cfg.BackupDir, 0755); err != nil {
 		return fmt.Errorf("create backup dir: %w", err)
 	}
 	ts := time.Now().Format("2006-01-02-15-04-05")
 	filename := ts + "-scoreboardDB.zip"
-	dest := filepath.Join(s.cfg.BackupDir, filename)
+	dest := filepath.Join(uc.cfg.BackupDir, filename)
 
 	out, err := os.Create(dest)
 	if err != nil {
@@ -82,12 +98,10 @@ func (s *service) createBackup() error {
 	zw := zip.NewWriter(out)
 	defer zw.Close()
 
-	// Add database.
-	if err := addFileToZip(zw, s.dbPath, "scoreboard.db"); err != nil {
+	if err := addFileToZip(zw, uc.dbPath, "scoreboard.db"); err != nil {
 		return err
 	}
 
-	// Add uploads directory (images).
 	uploadsDir, err := datadir.UploadsDir()
 	if err == nil {
 		_ = filepath.Walk(uploadsDir, func(path string, info os.FileInfo, err error) error {
@@ -105,39 +119,25 @@ func (s *service) createBackup() error {
 	return nil
 }
 
-func addFileToZip(zw *zip.Writer, srcPath, entryName string) error {
-	f, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	fw, err := zw.Create(entryName)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(fw, f)
-	return err
-}
-
-func (s *service) backupFilePath(filename string) (string, error) {
+func (uc *useCase) BackupFilePath(filename string) (string, error) {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
 		return "", fmt.Errorf("invalid backup filename")
 	}
-	return filepath.Join(s.cfg.BackupDir, filename), nil
+	return filepath.Join(uc.cfg.BackupDir, filename), nil
 }
 
-func (s *service) deleteBackup(filename string) error {
+func (uc *useCase) DeleteBackup(filename string) error {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
 		return fmt.Errorf("invalid backup filename")
 	}
-	return os.Remove(filepath.Join(s.cfg.BackupDir, filename))
+	return os.Remove(filepath.Join(uc.cfg.BackupDir, filename))
 }
 
-func (s *service) listBackups() ([]BackupEntry, error) {
-	if err := os.MkdirAll(s.cfg.BackupDir, 0755); err != nil {
+func (uc *useCase) ListBackups() ([]BackupEntry, error) {
+	if err := os.MkdirAll(uc.cfg.BackupDir, 0755); err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(s.cfg.BackupDir)
+	entries, err := os.ReadDir(uc.cfg.BackupDir)
 	if err != nil {
 		return nil, err
 	}
@@ -157,11 +157,11 @@ func (s *service) listBackups() ([]BackupEntry, error) {
 	return out, nil
 }
 
-func (s *service) restoreBackup(filename string) error {
+func (uc *useCase) RestoreBackup(filename string) error {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "..") || !strings.HasSuffix(filename, "-scoreboardDB.zip") {
 		return fmt.Errorf("invalid backup filename")
 	}
-	src := filepath.Join(s.cfg.BackupDir, filename)
+	src := filepath.Join(uc.cfg.BackupDir, filename)
 	zr, err := zip.OpenReader(src)
 	if err != nil {
 		return fmt.Errorf("open backup: %w", err)
@@ -178,13 +178,12 @@ func (s *service) restoreBackup(filename string) error {
 		if zf.FileInfo().IsDir() {
 			continue
 		}
-		// Reject any path traversal inside the zip.
 		if strings.Contains(zf.Name, "..") {
 			continue
 		}
 
 		if zf.Name == "scoreboard.db" {
-			if err := extractZipEntry(zf, s.dbPath); err != nil {
+			if err := extractZipEntry(zf, uc.dbPath); err != nil {
 				return fmt.Errorf("restore db: %w", err)
 			}
 			dbRestored = true
@@ -207,6 +206,20 @@ func (s *service) restoreBackup(filename string) error {
 		return fmt.Errorf("scoreboard.db not found in backup archive")
 	}
 	return nil
+}
+
+func addFileToZip(zw *zip.Writer, srcPath, entryName string) error {
+	f, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	fw, err := zw.Create(entryName)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(fw, f)
+	return err
 }
 
 func extractZipEntry(zf *zip.File, dest string) error {

@@ -8,7 +8,7 @@ type BoutPageActionsProps = {
   bout: Bout;
   officials: Official[];
   cardId: string;
-  onUpdate: (toUpdate: UpdateBoutProps["toUpdate"]) => Promise<void>;
+  onUpdate: (toUpdate: UpdateBoutProps) => Promise<void>;
   onDelete: () => void;
 };
 
@@ -32,10 +32,10 @@ export const BoutPageActions = ({
             officials={officials}
             onClose={close}
             onSubmit={(toUpdate) => onUpdate(toUpdate)}
-            onDelete={() =>
+            onDelete={() => {
               onDelete();
               navigate({ to: `/card/${cardId}` });
-            }
+            }}
           />
         ),
       }}

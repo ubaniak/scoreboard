@@ -36,8 +36,13 @@ type Comment struct {
 	Comment string
 }
 
-// UseCase builds reports for a card.
-type UseCase struct {
+type UseCase interface {
+	FullReport(cardId uint) (*ReportData, error)
+	PublicReport(cardId uint) (*ReportData, error)
+	ConsistencyReport(cardId uint) (*ConsistencyReport, error)
+}
+
+type useCase struct {
 	cards    CardQuerier
 	bouts    BoutLister
 	athletes AthleteGetter
@@ -45,8 +50,8 @@ type UseCase struct {
 	comments CommentGetter
 }
 
-func NewUseCase(cards CardQuerier, bouts BoutLister, athletes AthleteGetter, scores ScoreLister, comments CommentGetter) *UseCase {
-	return &UseCase{cards: cards, bouts: bouts, athletes: athletes, scores: scores, comments: comments}
+func NewUseCase(cards CardQuerier, bouts BoutLister, athletes AthleteGetter, scores ScoreLister, comments CommentGetter) UseCase {
+	return &useCase{cards: cards, bouts: bouts, athletes: athletes, scores: scores, comments: comments}
 }
 
 // --- data models used by renderers ---
@@ -104,7 +109,7 @@ type ConsistencyReport struct {
 
 // --- builders ---
 
-func (uc *UseCase) buildReportData(cardId uint) (*ReportData, error) {
+func (uc *useCase) buildReportData(cardId uint) (*ReportData, error) {
 	card, err := uc.cards.Get(cardId)
 	if err != nil {
 		return nil, err
@@ -186,15 +191,15 @@ func (uc *UseCase) buildReportData(cardId uint) (*ReportData, error) {
 	return rd, nil
 }
 
-func (uc *UseCase) FullReport(cardId uint) (*ReportData, error) {
+func (uc *useCase) FullReport(cardId uint) (*ReportData, error) {
 	return uc.buildReportData(cardId)
 }
 
-func (uc *UseCase) PublicReport(cardId uint) (*ReportData, error) {
+func (uc *useCase) PublicReport(cardId uint) (*ReportData, error) {
 	return uc.buildReportData(cardId)
 }
 
-func (uc *UseCase) ConsistencyReport(cardId uint) (*ConsistencyReport, error) {
+func (uc *useCase) ConsistencyReport(cardId uint) (*ConsistencyReport, error) {
 	rd, err := uc.buildReportData(cardId)
 	if err != nil {
 		return nil, err

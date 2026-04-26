@@ -9,10 +9,10 @@ import (
 )
 
 type App struct {
-	useCase *UseCase
+	useCase UseCase
 }
 
-func NewApp(useCase *UseCase) *App {
+func NewApp(useCase UseCase) *App {
 	return &App{useCase: useCase}
 }
 

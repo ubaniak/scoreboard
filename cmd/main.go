@@ -216,13 +216,15 @@ func main() {
 	apiRegister.Add(officialApp)
 	apiRegister.Add(auditLogApp)
 
-	dumpApp := dump.NewApp(db, uploadsDir)
+	dumpUseCase := dump.NewUseCase(db, uploadsDir)
+	dumpApp := dump.NewApp(dumpUseCase)
 	apiRegister.Add(dumpApp)
 
-	backupApp, err := backup.NewApp(dbPath)
+	backupUseCase, err := backup.NewUseCase(dbPath)
 	if err != nil {
 		panic(err)
 	}
+	backupApp := backup.NewApp(backupUseCase)
 	apiRegister.Add(backupApp)
 	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
 

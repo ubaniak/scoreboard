@@ -9,17 +9,12 @@ import (
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
-// App exposes backup endpoints and a hook for bout-start auto-backup.
 type App struct {
-	svc *service
+	useCase UseCase
 }
 
-func NewApp(dbPath string) (*App, error) {
-	svc, err := newService(dbPath)
-	if err != nil {
-		return nil, err
-	}
-	return &App{svc: svc}, nil
+func NewApp(useCase UseCase) *App {
+	return &App{useCase: useCase}
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -36,13 +31,13 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 // TriggerIfEnabled is called by the bouts hook when a bout starts.
 func (a *App) TriggerIfEnabled() {
-	if a.svc.cfg.Enabled {
-		_ = a.svc.createBackup()
+	if a.useCase.IsEnabled() {
+		_ = a.useCase.CreateBackup()
 	}
 }
 
 func (a *App) GetConfig(w http.ResponseWriter, r *http.Request) {
-	presenters.NewHTTPPresenter[Config](r, w).WithData(a.svc.cfg).Present()
+	presenters.NewHTTPPresenter[Config](r, w).WithData(a.useCase.GetConfig()).Present()
 }
 
 func (a *App) PutConfig(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +46,7 @@ func (a *App) PutConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
-	a.svc.cfg = cfg
-	if err := a.svc.saveConfig(); err != nil {
+	if err := a.useCase.SaveConfig(cfg); err != nil {
 		http.Error(w, "failed to save config: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -60,7 +54,7 @@ func (a *App) PutConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) List(w http.ResponseWriter, r *http.Request) {
-	backups, err := a.svc.listBackups()
+	backups, err := a.useCase.ListBackups()
 	if err != nil {
 		presenters.NewHTTPPresenter[[]BackupEntry](r, w).WithError(err).Present()
 		return
@@ -72,7 +66,7 @@ func (a *App) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) BackupNow(w http.ResponseWriter, _ *http.Request) {
-	if err := a.svc.createBackup(); err != nil {
+	if err := a.useCase.CreateBackup(); err != nil {
 		http.Error(w, "backup failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -87,7 +81,7 @@ func (a *App) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing filename", http.StatusBadRequest)
 		return
 	}
-	if err := a.svc.deleteBackup(body.Filename); err != nil {
+	if err := a.useCase.DeleteBackup(body.Filename); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -100,7 +94,7 @@ func (a *App) Download(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing filename", http.StatusBadRequest)
 		return
 	}
-	path, err := a.svc.backupFilePath(filename)
+	path, err := a.useCase.BackupFilePath(filename)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -123,7 +117,7 @@ func (a *App) Restore(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing filename", http.StatusBadRequest)
 		return
 	}
-	if err := a.svc.restoreBackup(body.Filename); err != nil {
+	if err := a.useCase.RestoreBackup(body.Filename); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

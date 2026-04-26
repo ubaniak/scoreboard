@@ -1,7 +1,6 @@
 package dump
 
 import (
-	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"archive/zip"
+
 	"gorm.io/gorm"
 
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -19,12 +20,11 @@ import (
 
 // App provides /settings/export and /settings/import endpoints.
 type App struct {
-	db         *gorm.DB
-	uploadsDir string
+	useCase UseCase
 }
 
-func NewApp(db *gorm.DB, uploadsDir string) *App {
-	return &App{db: db, uploadsDir: uploadsDir}
+func NewApp(useCase UseCase) *App {
+	return &App{useCase: useCase}
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -165,24 +165,10 @@ type exportPayload struct {
 
 // Export streams a ZIP containing data.json and all uploaded images.
 func (a *App) Export(w http.ResponseWriter, r *http.Request) {
-	var p exportPayload
-	p.Version = 1
-	p.ExportedAt = time.Now()
-
-	for _, q := range []func() error{
-		func() error { return a.db.Find(&p.Clubs).Error },
-		func() error { return a.db.Find(&p.Athletes).Error },
-		func() error { return a.db.Find(&p.Officials).Error },
-		func() error { return a.db.Find(&p.Cards).Error },
-		func() error { return a.db.Find(&p.Bouts).Error },
-		func() error { return a.db.Find(&p.Rounds).Error },
-		func() error { return a.db.Find(&p.RoundFouls).Error },
-		func() error { return a.db.Find(&p.Scores).Error },
-	} {
-		if err := q(); err != nil {
-			http.Error(w, "failed to read data: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+	p, err := a.useCase.ExportData()
+	if err != nil {
+		http.Error(w, "failed to read data: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	jsonBytes, err := json.MarshalIndent(p, "", "  ")
@@ -204,11 +190,12 @@ func (a *App) Export(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _ = fw.Write(jsonBytes)
 
-	_ = filepath.Walk(a.uploadsDir, func(path string, info os.FileInfo, err error) error {
+	uploadsDir := a.useCase.UploadsDir()
+	_ = filepath.Walk(uploadsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return nil
 		}
-		rel, err := filepath.Rel(a.uploadsDir, path)
+		rel, err := filepath.Rel(uploadsDir, path)
 		if err != nil {
 			return nil
 		}
@@ -278,14 +265,15 @@ func (a *App) Import(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.restore(&p); err != nil {
+	if err := a.useCase.Restore(&p); err != nil {
 		http.Error(w, "restore failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	uploadsDir := a.useCase.UploadsDir()
 	for _, zf := range imageFiles {
 		rel := strings.TrimPrefix(zf.Name, "uploads/")
-		dest := filepath.Join(a.uploadsDir, filepath.FromSlash(rel))
+		dest := filepath.Join(uploadsDir, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 			continue
 		}
@@ -306,62 +294,4 @@ func (a *App) Import(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(`{}`))
-}
-
-// restore clears all tables and re-inserts from the payload inside a transaction.
-func (a *App) restore(p *exportPayload) error {
-	return a.db.Transaction(func(tx *gorm.DB) error {
-		// Delete in reverse FK dependency order.
-		for _, table := range []string{
-			"scores", "round_fouls", "rounds", "bouts",
-			"officials", "cards", "athletes", "clubs",
-		} {
-			if err := tx.Exec("DELETE FROM " + table).Error; err != nil {
-				return fmt.Errorf("clear %s: %w", table, err)
-			}
-		}
-
-		for i := range p.Clubs {
-			if err := tx.Create(&p.Clubs[i]).Error; err != nil {
-				return fmt.Errorf("insert club %d: %w", p.Clubs[i].ID, err)
-			}
-		}
-		for i := range p.Athletes {
-			if err := tx.Create(&p.Athletes[i]).Error; err != nil {
-				return fmt.Errorf("insert athlete %d: %w", p.Athletes[i].ID, err)
-			}
-		}
-		for i := range p.Officials {
-			if err := tx.Create(&p.Officials[i]).Error; err != nil {
-				return fmt.Errorf("insert official %d: %w", p.Officials[i].ID, err)
-			}
-		}
-		for i := range p.Cards {
-			if err := tx.Create(&p.Cards[i]).Error; err != nil {
-				return fmt.Errorf("insert card %d: %w", p.Cards[i].ID, err)
-			}
-		}
-		for i := range p.Bouts {
-			if err := tx.Create(&p.Bouts[i]).Error; err != nil {
-				return fmt.Errorf("insert bout %d: %w", p.Bouts[i].ID, err)
-			}
-		}
-		for i := range p.Rounds {
-			if err := tx.Create(&p.Rounds[i]).Error; err != nil {
-				return fmt.Errorf("insert round %d: %w", p.Rounds[i].ID, err)
-			}
-		}
-		for i := range p.RoundFouls {
-			if err := tx.Create(&p.RoundFouls[i]).Error; err != nil {
-				return fmt.Errorf("insert round_foul %d: %w", p.RoundFouls[i].ID, err)
-			}
-		}
-		for i := range p.Scores {
-			if err := tx.Create(&p.Scores[i]).Error; err != nil {
-				return fmt.Errorf("insert score: %w", err)
-			}
-		}
-
-		return nil
-	})
 }

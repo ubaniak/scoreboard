@@ -24,6 +24,7 @@ import { HomePage } from "./pages/home";
 import { JudgePage } from "./pages/judge";
 import { LoginPage } from "./pages/login";
 import { ScoreboardPage } from "./pages/scoreboard";
+import { SetupPage } from "./pages/setup";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -73,6 +74,11 @@ const routeTree = rootRoute.addChildren([
     }),
   ]),
   scoreboardRoute,
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/setup",
+    component: SetupPage,
+  }),
   // createRoute({
   //   getParentRoute: () => rootRoute,
   //   path: "/supervisor/$Id",
