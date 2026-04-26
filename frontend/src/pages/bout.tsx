@@ -20,7 +20,7 @@ import {
 } from "../api/bouts";
 import { useGetCardById } from "../api/cards";
 import { baseUrl } from "../api/constants";
-import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
+import { useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { isApisLoading } from "../api/handlers";
 import { useGetOfficials } from "../api/officials";
 import { useGetScores } from "../api/score";
@@ -77,6 +77,7 @@ export const BoutPage = () => {
 
   const judgeDevices = useJudgeDevices({ token });
   const generateCode = useMutationGenerateCode({ token });
+  const { data: deviceBaseUrl } = useGetBaseUrl({ token });
 
   const [roundNumber, setRoundNumber] = useState(1);
 
@@ -184,6 +185,7 @@ export const BoutPage = () => {
           <DeviceQuickLook
             requiredJudges={bout.data?.numberOfJudges ?? 5}
             devices={judgeDevices.data || []}
+            baseUrl={deviceBaseUrl}
             onRefreshCode={(values) => {
               generateCode.mutate(values);
             }}

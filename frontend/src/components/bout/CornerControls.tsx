@@ -6,7 +6,7 @@ import {
 import { Divider, Space, Tag } from "antd";
 import { BLUE, RED, type Corner } from "../../entities/corner";
 import { Card } from "../card/card";
-import { Control } from "./control";
+import { Control } from "./Control";
 import { HandleFouls } from "../fouls/handle";
 import type {
   MutateEightCountProps,

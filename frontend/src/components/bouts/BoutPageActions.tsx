@@ -1,38 +1,44 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useMutateDeleteBout, useMutateUpdateBout } from "../../api/bouts";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { EditBout } from "./edit";
 import type { Bout, Official } from "../../entities/cards";
+import type { UpdateBoutProps } from "../../api/bouts";
 
 type BoutPageActionsProps = {
   bout: Bout;
   officials: Official[];
   cardId: string;
-  token: string;
+  onUpdate: (toUpdate: UpdateBoutProps["toUpdate"]) => Promise<void>;
+  onDelete: () => void;
 };
 
-export const BoutPageActions = ({ bout, officials, cardId, token }: BoutPageActionsProps) => {
+export const BoutPageActions = ({
+  bout,
+  officials,
+  cardId,
+  onUpdate,
+  onDelete,
+}: BoutPageActionsProps) => {
   const navigate = useNavigate();
-  const deleteBout = useMutateDeleteBout(cardId, token);
-  const updateBout = useMutateUpdateBout({ token, cardId });
 
   return (
-    <>
-      <ActionMenu
-        trigger={{ text: "Edit" }}
-        content={{
-          title: "Edit Bout",
-          body: (close) => (
-            <EditBout
-              bout={bout}
-              officials={officials}
-              onClose={close}
-              onSubmit={(toUpdate) => updateBout.mutateAsync({ toUpdate, boutInfo: { boutId: bout.id } })}
-              onDelete={() => deleteBout.mutate(bout.id, { onSuccess: () => navigate({ to: `/card/${cardId}` }) })}
-            />
-          ),
-        }}
-      />
-    </>
+    <ActionMenu
+      trigger={{ text: "Edit" }}
+      content={{
+        title: "Edit Bout",
+        body: (close) => (
+          <EditBout
+            bout={bout}
+            officials={officials}
+            onClose={close}
+            onSubmit={(toUpdate) => onUpdate(toUpdate)}
+            onDelete={() =>
+              onDelete();
+              navigate({ to: `/card/${cardId}` });
+            }
+          />
+        ),
+      }}
+    />
   );
 };

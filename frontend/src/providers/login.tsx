@@ -51,7 +51,7 @@ export const LoginProvider: React.FC<Props> = ({ children }) => {
 export const useProfile = (): LoginContextType => {
   const context = useContext(LoginContext);
   if (!context) {
-    throw new Error("useProfile must be used within a NotificationProvider");
+    throw new Error("useProfile must be used within a LoginProvider");
   }
   return context;
 };

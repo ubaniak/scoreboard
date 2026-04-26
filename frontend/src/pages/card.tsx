@@ -13,8 +13,9 @@ import {
   useGetCardById,
   useMutateUpdateCardJudges,
   useMutateUpdateCardStatus,
+  useMutateUpdateCards,
 } from "../api/cards";
-import { useJudgeDevices, useMutationGenerateCode } from "../api/devices";
+import { useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { BoutsIndex } from "../components/bouts";
@@ -39,6 +40,7 @@ export const CardPage = () => {
 
   const judgeDevices = useJudgeDevices({ token });
   const generateCode = useMutationGenerateCode({ token });
+  const { data: baseUrl } = useGetBaseUrl({ token });
 
   const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
@@ -47,6 +49,7 @@ export const CardPage = () => {
 
   const updateCardStatus = useMutateUpdateCardStatus({ token });
   const updateCardJudges = useMutateUpdateCardJudges({ token });
+  const updateCard = useMutateUpdateCards({ token });
 
   const onSetJudges = (count: number) => {
     updateCardJudges.mutate({ id: { cardId }, numberOfJudges: count });
@@ -79,6 +82,7 @@ export const CardPage = () => {
               ...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]),
             )}
             devices={judgeDevices.data || []}
+            baseUrl={baseUrl}
             onRefreshCode={(values) => {
               generateCode.mutate(values);
             }}
@@ -101,7 +105,16 @@ export const CardPage = () => {
             children: (
               <>
                 {card.data && (
-                  <CardControls card={card.data} onSetJudges={onSetJudges} />
+                  <CardControls
+                  card={card.data}
+                  onSetJudges={onSetJudges}
+                  onPatch={(patch) =>
+                    updateCard.mutate({
+                      id: { cardId: String(card.data!.id) },
+                      toUpdate: patch as never,
+                    })
+                  }
+                />
                 )}
                 <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
                 <BoutsIndex
