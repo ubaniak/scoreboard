@@ -1,5 +1,5 @@
 import { Col, Row } from "antd";
-import { CornerPanel } from "./cornerPanel";
+import { CornerPanel } from "./CornerPanel";
 import type { Bout } from "../../entities/cards";
 
 export type CornerInfoProps = {

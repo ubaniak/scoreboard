@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
@@ -40,9 +41,8 @@ func (a *App) TriggerIfEnabled() {
 	}
 }
 
-func (a *App) GetConfig(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(a.svc.cfg)
+func (a *App) GetConfig(w http.ResponseWriter, r *http.Request) {
+	presenters.NewHTTPPresenter[Config](r, w).WithData(a.svc.cfg).Present()
 }
 
 func (a *App) PutConfig(w http.ResponseWriter, r *http.Request) {
@@ -59,17 +59,16 @@ func (a *App) PutConfig(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *App) List(w http.ResponseWriter, _ *http.Request) {
+func (a *App) List(w http.ResponseWriter, r *http.Request) {
 	backups, err := a.svc.listBackups()
 	if err != nil {
-		http.Error(w, "failed to list backups: "+err.Error(), http.StatusInternalServerError)
+		presenters.NewHTTPPresenter[[]BackupEntry](r, w).WithError(err).Present()
 		return
 	}
 	if backups == nil {
 		backups = []BackupEntry{}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(backups)
+	presenters.NewHTTPPresenter[[]BackupEntry](r, w).WithData(backups).Present()
 }
 
 func (a *App) BackupNow(w http.ResponseWriter, _ *http.Request) {

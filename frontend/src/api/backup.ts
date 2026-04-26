@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { TokenBase } from "./entities";
+import { fetchClient } from "./fetchClient";
 
 export type BackupConfig = {
   enabled: boolean;
@@ -12,83 +13,75 @@ export type BackupEntry = {
   createdAt: string;
 };
 
+const keys = {
+  all: (token: string) => ["backup", token] as const,
+  config: (token: string) => [...keys.all(token), "config"] as const,
+  list: (token: string) => [...keys.all(token), "list"] as const,
+};
+
 export const useGetBackupConfig = ({ token }: TokenBase) =>
   useQuery({
-    queryKey: ["backup", "config", token],
-    queryFn: async (): Promise<BackupConfig> => {
-      const res = await fetch(`${baseUrl}/api/backup/config`, {
+    queryKey: keys.config(token),
+    queryFn: () =>
+      fetchClient<BackupConfig>(`${baseUrl}/api/backup/config`, {
         headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to load backup config");
-      return res.json();
-    },
+      }),
   });
 
 export const useMutateBackupConfig = ({ token }: TokenBase) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (config: BackupConfig) => {
-      const res = await fetch(`${baseUrl}/api/backup/config`, {
+    mutationFn: (config: BackupConfig) =>
+      fetchClient<void>(`${baseUrl}/api/backup/config`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(config),
-      });
-      if (!res.ok) throw new Error("Failed to save config");
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["backup", "config"] }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.config(token) }),
   });
 };
 
 export const useListBackups = ({ token }: TokenBase) =>
   useQuery({
-    queryKey: ["backup", "list", token],
-    queryFn: async (): Promise<BackupEntry[]> => {
-      const res = await fetch(`${baseUrl}/api/backup/list`, {
+    queryKey: keys.list(token),
+    queryFn: () =>
+      fetchClient<BackupEntry[]>(`${baseUrl}/api/backup/list`, {
         headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to list backups");
-      return res.json();
-    },
+      }),
   });
 
 export const useMutateTriggerBackup = ({ token }: TokenBase) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`${baseUrl}/api/backup/now`, {
+    mutationFn: () =>
+      fetchClient<void>(`${baseUrl}/api/backup/now`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Backup failed");
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["backup", "list"] }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.list(token) }),
   });
 };
 
 export const useMutateDeleteBackup = ({ token }: TokenBase) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (filename: string) => {
-      const res = await fetch(`${baseUrl}/api/backup/delete`, {
+    mutationFn: (filename: string) =>
+      fetchClient<void>(`${baseUrl}/api/backup/delete`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ filename }),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Delete failed");
-      }
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["backup", "list"] }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.list(token) }),
   });
 };
 
-export const useDownloadBackup = ({ token }: TokenBase) =>
+export const useMutateDownloadBackup = ({ token }: TokenBase) =>
   useMutation({
     mutationFn: async (filename: string) => {
-      const res = await fetch(`${baseUrl}/api/backup/download?filename=${encodeURIComponent(filename)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${baseUrl}/api/backup/download?filename=${encodeURIComponent(filename)}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -102,25 +95,19 @@ export const useDownloadBackup = ({ token }: TokenBase) =>
 
 export const useMutateRestoreBackup = ({ token }: TokenBase) =>
   useMutation({
-    mutationFn: async (filename: string) => {
-      const res = await fetch(`${baseUrl}/api/backup/restore`, {
+    mutationFn: (filename: string) =>
+      fetchClient<void>(`${baseUrl}/api/backup/restore`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ filename }),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Restore failed");
-      }
-    },
+      }),
   });
 
 export const useQuitApp = ({ token }: TokenBase) =>
   useMutation({
-    mutationFn: async () => {
-      await fetch(`${baseUrl}/api/backup/quit`, {
+    mutationFn: () =>
+      fetchClient<void>(`${baseUrl}/api/backup/quit`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      });
-    },
+      }),
   });

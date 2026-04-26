@@ -7,7 +7,7 @@ import type {
 } from "../../api/bouts";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
-import { CornerControls } from "../bout/cornerControls";
+import { CornerControls } from "../bout/CornerControls";
 import { Card } from "../card/card";
 import { RoundControls } from "./RoundControls";
 

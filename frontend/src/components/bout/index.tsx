@@ -10,7 +10,7 @@ import { Card } from "../card/card";
 import { RoundIndex } from "../round";
 import { Scores } from "../score/scores";
 import { Show } from "../show/show";
-import { DescribeBout } from "./describe";
+import { DescribeBout } from "./Describe";
 
 export type Controls = {
   onNextRoundState: () => void;

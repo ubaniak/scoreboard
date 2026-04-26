@@ -2,7 +2,7 @@ import { CloudUploadOutlined, DownloadOutlined, HistoryOutlined, PoweroffOutline
 import { App, Button, Collapse, Input, Popconfirm, Space, Switch, Timeline, Typography } from "antd";
 import { useState } from "react";
 import {
-  useDownloadBackup,
+  useMutateDownloadBackup,
   useGetBackupConfig,
   useListBackups,
   useMutateBackupConfig,
@@ -31,7 +31,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const triggerBackup = useMutateTriggerBackup({ token });
   const restoreBackup = useMutateRestoreBackup({ token });
   const deleteBackup = useMutateDeleteBackup({ token });
-  const downloadBackup = useDownloadBackup({ token });
+  const downloadBackup = useMutateDownloadBackup({ token });
   const quitApp = useQuitApp({ token });
 
   const cfg = configQuery.data;

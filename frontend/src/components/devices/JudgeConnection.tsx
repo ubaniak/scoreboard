@@ -1,22 +1,20 @@
 import { CopyOutlined, ReloadOutlined } from "@ant-design/icons";
 import { App, Button, List, QRCode, Space, Typography } from "antd";
-import { useGetBaseUrl } from "../../api/devices";
 import type { JudgeDevice } from "../../entities/device";
-import { useProfile } from "../../providers/login";
 import { Card } from "../card/card";
 import { DeviceStatusTag } from "../status/deviceStatusTag";
+
 const { Text } = Typography;
 
 export type JudgeConnectionProps = {
   onRefreshCode: (props: { role: string }) => void;
   devices: JudgeDevice[];
+  baseUrl?: string;
 };
 
 export const JudgeConnections = (props: JudgeConnectionProps) => {
   const { notification } = App.useApp();
-  const { token } = useProfile();
-  const { data: baseUrlData } = useGetBaseUrl({ token });
-  const url = `http://${baseUrlData}:8080`; //?role=judge${props.judgeNumber}`;
+  const url = props.baseUrl ? `http://${props.baseUrl}:8080` : "";
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -31,7 +29,7 @@ export const JudgeConnections = (props: JudgeConnectionProps) => {
     <Space orientation="vertical" size={16} align="center">
       <Card>
         <Space size={32}>
-          <QRCode value={url} size={140} />
+          <QRCode value={url || "http://localhost:8080"} size={140} />
           <div>
             <Text type="secondary">Judge App</Text>
             <div style={{ fontSize: 18, fontWeight: 500 }}>

@@ -4,8 +4,6 @@ import {
 } from "@ant-design/icons";
 import { Button, QRCode, Space, Tabs, Typography } from "antd";
 import type { JudgeDevice } from "../../entities/device";
-import { useGetBaseUrl } from "../../api/devices";
-import { useProfile } from "../../providers/login";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { JudgeConnections } from "./JudgeConnection";
 
@@ -14,13 +12,16 @@ const { Text } = Typography;
 type Props = {
   devices: JudgeDevice[];
   requiredJudges: number;
+  baseUrl?: string;
   onRefreshCode: (props: { role: string }) => void;
 };
 
-const ScorePanelTab = () => {
-  const { token } = useProfile();
-  const { data: baseUrlData } = useGetBaseUrl({ token });
-  const url = `http://${baseUrlData}:8080/scoreboard`;
+type ScorePanelTabProps = {
+  baseUrl?: string;
+};
+
+const ScorePanelTab = ({ baseUrl }: ScorePanelTabProps) => {
+  const url = baseUrl ? `http://${baseUrl}:8080/scoreboard` : "http://localhost:8080/scoreboard";
 
   return (
     <Space
@@ -29,10 +30,10 @@ const ScorePanelTab = () => {
       align="center"
       style={{ width: "100%" }}
     >
-      <QRCode value={url || "http://localhost:8080/scoreboard"} size={160} />
+      <QRCode value={url} size={160} />
       <Space orientation="vertical" size={2} align="center">
         <Text type="secondary">Scan to open the score panel display</Text>
-        <Text copyable>{url || "http://localhost:8080/scoreboard"}</Text>
+        <Text copyable>{url}</Text>
       </Space>
     </Space>
   );
@@ -41,6 +42,7 @@ const ScorePanelTab = () => {
 export const DeviceQuickLook = ({
   devices,
   requiredJudges,
+  baseUrl,
   onRefreshCode,
 }: Props) => {
   const connectedCount = devices.filter(
@@ -54,13 +56,17 @@ export const DeviceQuickLook = ({
       key: "judges",
       label: "Judges",
       children: (
-        <JudgeConnections devices={devices} onRefreshCode={onRefreshCode} />
+        <JudgeConnections
+          devices={devices}
+          baseUrl={baseUrl}
+          onRefreshCode={onRefreshCode}
+        />
       ),
     },
     {
       key: "scorePanel",
       label: "Score Panel",
-      children: <ScorePanelTab />,
+      children: <ScorePanelTab baseUrl={baseUrl} />,
     },
   ];
 
