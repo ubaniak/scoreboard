@@ -43,6 +43,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("gdrive.config.get", "/config", http.MethodGet, a.GetConfig, rbac.Admin)
 	sr.AddRoute("gdrive.config.put", "/config", http.MethodPut, a.PutConfig, rbac.Admin)
 	sr.AddRoute("gdrive.authurl", "/auth-url", http.MethodGet, a.GetAuthURL, rbac.Admin)
+	sr.AddRoute("gdrive.verify", "/verify", http.MethodPost, a.Verify, rbac.Admin)
 	sr.AddRoute("gdrive.disconnect", "/disconnect", http.MethodPost, a.Disconnect, rbac.Admin)
 	sr.AddRoute("gdrive.import", "/import", http.MethodPost, a.Import, rbac.Admin)
 	sr.AddRoute("gdrive.export", "/export/{cardId}", http.MethodPost, a.ExportCard, rbac.Admin)
@@ -86,6 +87,23 @@ func (a *App) GetAuthURL(w http.ResponseWriter, _ *http.Request) {
 	url := oc.AuthCodeURL("state")
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]string{"url": url})
+}
+
+func (a *App) Verify(w http.ResponseWriter, r *http.Request) {
+	var creds struct {
+		ClientID     string `json:"clientId"`
+		ClientSecret string `json:"clientSecret"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	if creds.ClientID == "" || creds.ClientSecret == "" {
+		http.Error(w, "missing credentials", http.StatusBadRequest)
+		return
+	}
+	_ = oauthConfig(creds.ClientID, creds.ClientSecret)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (a *App) Callback(w http.ResponseWriter, r *http.Request) {
@@ -170,11 +188,11 @@ func (a *App) ExportCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	svc := newDriveService(cfg, a.officials, a.clubs, a.athletes, a.bouts, a.cards, a.reports)
-	links, err := svc.ExportCard(r.Context(), uint(cardId))
+	result, err := svc.ExportCard(r.Context(), uint(cardId))
 	if err != nil {
 		http.Error(w, "export failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{"links": links})
+	_ = json.NewEncoder(w).Encode(result)
 }

@@ -41,6 +41,7 @@ type CardFinderCreator interface {
 type ReportBuilder interface {
 	FullReport(cardId uint) (*reportsPackage.ReportData, error)
 	PublicReport(cardId uint) (*reportsPackage.ReportData, error)
+	ConsistencyReport(cardId uint) (*reportsPackage.ConsistencyReport, error)
 }
 
 // ImportResult summarises what was upserted.
@@ -49,6 +50,19 @@ type ImportResult struct {
 	Athletes  int `json:"athletes"`
 	Officials int `json:"officials"`
 	Bouts     int `json:"bouts"`
+}
+
+// ExportedFile describes a single file uploaded to Drive.
+type ExportedFile struct {
+	Name string `json:"name"`
+	Link string `json:"link"`
+}
+
+// ExportCardResult describes a card export with folder and files.
+type ExportCardResult struct {
+	FolderName string         `json:"folderName"`
+	FolderLink string         `json:"folderLink"`
+	Files      []ExportedFile `json:"files"`
 }
 
 // driveService wraps calls to Google Sheets + Drive APIs.
@@ -343,46 +357,114 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 	return imported
 }
 
-// ExportCard generates CSV reports for a card and uploads them to Drive.
-func (s *driveService) ExportCard(ctx context.Context, cardId uint) ([]string, error) {
+// ExportCard generates reports for a card, creates a folder, and uploads them to Drive.
+func (s *driveService) ExportCard(ctx context.Context, cardId uint) (*ExportCardResult, error) {
 	svc, err := s.driveService(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var uploaded []string
-
 	fullRd, err := s.reports.FullReport(cardId)
 	if err != nil {
 		return nil, fmt.Errorf("build full report: %w", err)
 	}
-	var fullBuf bytes.Buffer
-	if err := reportsPackage.WriteFullCSV(&fullBuf, fullRd); err != nil {
-		return nil, fmt.Errorf("write full csv: %w", err)
-	}
-	fullName := fmt.Sprintf("full_report_%s_%s.csv", sanitiseName(fullRd.CardName), fullRd.CardDate)
-	if link, err := s.upload(ctx, svc, fullName, &fullBuf); err == nil {
-		uploaded = append(uploaded, link)
+
+	// Create folder named after card
+	folderName := sanitiseName(fullRd.CardName)
+	folderID, folderLink, err := s.createFolder(ctx, svc, folderName, s.cfg.FolderID)
+	if err != nil {
+		return nil, fmt.Errorf("create folder: %w", err)
 	}
 
+	result := &ExportCardResult{
+		FolderName: fullRd.CardName,
+		FolderLink: folderLink,
+		Files:      []ExportedFile{},
+	}
+
+	// Full Report CSV
+	var fullBuf bytes.Buffer
+	if err := reportsPackage.WriteFullCSV(&fullBuf, fullRd); err == nil {
+		fullName := fmt.Sprintf("full_report_%s_%s.csv", sanitiseName(fullRd.CardName), fullRd.CardDate)
+		if link, err := s.upload(ctx, svc, fullName, &fullBuf, folderID); err == nil {
+			result.Files = append(result.Files, ExportedFile{Name: fullName, Link: link})
+		}
+	}
+
+	// Full Report PDF
+	var fullPdfBuf bytes.Buffer
+	if err := reportsPackage.WriteFullPDF(&fullPdfBuf, fullRd); err == nil {
+		fullPdfName := fmt.Sprintf("full_report_%s_%s.pdf", sanitiseName(fullRd.CardName), fullRd.CardDate)
+		if link, err := s.upload(ctx, svc, fullPdfName, &fullPdfBuf, folderID); err == nil {
+			result.Files = append(result.Files, ExportedFile{Name: fullPdfName, Link: link})
+		}
+	}
+
+	// Public Report CSV
 	pubRd, err := s.reports.PublicReport(cardId)
 	if err == nil {
 		var pubBuf bytes.Buffer
 		if err := reportsPackage.WritePublicCSV(&pubBuf, pubRd); err == nil {
 			pubName := fmt.Sprintf("public_report_%s_%s.csv", sanitiseName(pubRd.CardName), pubRd.CardDate)
-			if link, err := s.upload(ctx, svc, pubName, &pubBuf); err == nil {
-				uploaded = append(uploaded, link)
+			if link, err := s.upload(ctx, svc, pubName, &pubBuf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: pubName, Link: link})
+			}
+		}
+
+		// Public Report PDF
+		var pubPdfBuf bytes.Buffer
+		if err := reportsPackage.WritePublicPDF(&pubPdfBuf, pubRd); err == nil {
+			pubPdfName := fmt.Sprintf("public_report_%s_%s.pdf", sanitiseName(pubRd.CardName), pubRd.CardDate)
+			if link, err := s.upload(ctx, svc, pubPdfName, &pubPdfBuf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: pubPdfName, Link: link})
 			}
 		}
 	}
 
-	return uploaded, nil
+	// Judge Consistency Report CSV
+	consRd, err := s.reports.ConsistencyReport(cardId)
+	if err == nil {
+		var consBuf bytes.Buffer
+		if err := reportsPackage.WriteConsistencyCSV(&consBuf, consRd); err == nil {
+			consName := fmt.Sprintf("consistency_report_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, consName, &consBuf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: consName, Link: link})
+			}
+		}
+
+		// Judge Consistency Report PDF
+		var consPdfBuf bytes.Buffer
+		if err := reportsPackage.WriteConsistencyPDF(&consPdfBuf, consRd); err == nil {
+			consPdfName := fmt.Sprintf("consistency_report_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, consPdfName, &consPdfBuf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: consPdfName, Link: link})
+			}
+		}
+	}
+
+	return result, nil
 }
 
-func (s *driveService) upload(ctx context.Context, svc *driveAPI.Service, name string, data *bytes.Buffer) (string, error) {
+func (s *driveService) createFolder(ctx context.Context, svc *driveAPI.Service, folderName, parentID string) (string, string, error) {
+	fm := &driveAPI.File{
+		Name:     folderName,
+		MimeType: "application/vnd.google-apps.folder",
+	}
+	if parentID != "" {
+		fm.Parents = []string{parentID}
+	}
+	f, err := svc.Files.Create(fm).Context(ctx).Do()
+	if err != nil {
+		return "", "", err
+	}
+	link := fmt.Sprintf("https://drive.google.com/drive/folders/%s", f.Id)
+	return f.Id, link, nil
+}
+
+func (s *driveService) upload(ctx context.Context, svc *driveAPI.Service, name string, data *bytes.Buffer, parentFolderID string) (string, error) {
 	fm := &driveAPI.File{Name: name}
-	if s.cfg.FolderID != "" {
-		fm.Parents = []string{s.cfg.FolderID}
+	if parentFolderID != "" {
+		fm.Parents = []string{parentFolderID}
 	}
 	f, err := svc.Files.Create(fm).Media(data).Context(ctx).Do()
 	if err != nil {

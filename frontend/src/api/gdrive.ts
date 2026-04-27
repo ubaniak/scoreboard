@@ -17,8 +17,15 @@ export type ImportResult = {
   bouts: number;
 };
 
+export type ExportedFile = {
+  name: string;
+  link: string;
+};
+
 export type ExportResult = {
-  links: string[];
+  folderName: string;
+  folderLink: string;
+  files: ExportedFile[];
 };
 
 export const useGetGDriveConfig = ({ token }: TokenBase) =>
@@ -120,5 +127,20 @@ export const useMutateGDriveExport = ({ token }: TokenBase) =>
         throw new Error(text || "Export failed");
       }
       return res.json();
+    },
+  });
+
+export const useMutateGDriveVerify = ({ token }: TokenBase) =>
+  useMutation({
+    mutationFn: async (credentials: { clientId: string; clientSecret: string }) => {
+      const res = await fetch(`${baseUrl}/api/gdrive/verify`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Verification failed");
+      }
     },
   });

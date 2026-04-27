@@ -59,12 +59,15 @@
 1. Start the scoreboard app: `./scoreboard`
 2. Log in as admin at `http://localhost:8080`
 3. Click the **Google Drive** tab (top navigation on the home page)
-4. Fill in:
+4. Click the **Configure** button
+5. In the form, enter:
    - **Client ID** — from Step 1
    - **Client Secret** — from Step 1
+6. Click **Verify Connection** to test the credentials (optional but recommended)
+7. Scroll down and fill in:
    - **Google Sheet ID** — from Step 2
    - **Drive Folder ID** — leave blank to upload to root, or paste a Drive folder ID
-5. Click **Save Config** — you should see "Config saved"
+8. Click **Save Config** — you should see "Config saved"
 
 ---
 
