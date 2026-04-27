@@ -33,7 +33,8 @@ for TARGET in "${TARGETS[@]}"; do
   fi
 
   echo "Building ${OS}/${ARCH}..."
-  GOOS="$OS" GOARCH="$ARCH" go build -o "${OUT_DIR}/${BIN}" ./cmd
+  # Disable CGO for cross-compilation to non-native targets
+  CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "${OUT_DIR}/${BIN}" ./cmd
 done
 
 echo ""
