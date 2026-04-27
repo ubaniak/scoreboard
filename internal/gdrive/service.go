@@ -116,13 +116,13 @@ func (s *driveService) driveService(ctx context.Context) (*driveAPI.Service, err
 	return driveAPI.NewService(ctx, option.WithHTTPClient(client))
 }
 
-// sheetRows returns rows (skipping header) for a named tab.
-func (s *driveService) sheetRows(ctx context.Context, tab string) (header []string, rows [][]string, err error) {
+// sheetRows returns rows (skipping header) for a named tab in a specific sheet.
+func (s *driveService) sheetRows(ctx context.Context, sheetID, tab string) (header []string, rows [][]string, err error) {
 	svc, err := s.sheetsService(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	resp, err := svc.Spreadsheets.Values.Get(s.cfg.SheetID, tab).Context(ctx).Do()
+	resp, err := svc.Spreadsheets.Values.Get(sheetID, tab).Context(ctx).Do()
 	if err != nil {
 		return nil, nil, fmt.Errorf("read sheet %q: %w", tab, err)
 	}
@@ -166,12 +166,12 @@ func cell(row []string, idx int) string {
 	return strings.TrimSpace(row[idx])
 }
 
-// Import reads the configured Google Sheet and upserts all entities.
-func (s *driveService) Import(ctx context.Context) (*ImportResult, error) {
+// Import reads a single Google Sheet and upserts all entities.
+func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResult, error) {
 	res := &ImportResult{}
 
 	// ── Clubs ────────────────────────────────────────────────────────────────
-	hdr, rows, err := s.sheetRows(ctx, "Clubs")
+	hdr, rows, err := s.sheetRows(ctx, sheetID, "Clubs")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		for _, row := range rows {
@@ -186,7 +186,7 @@ func (s *driveService) Import(ctx context.Context) (*ImportResult, error) {
 	}
 
 	// ── Athletes ─────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, "Athletes")
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Athletes")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		clubIdx := colIdx(hdr, "Club")
@@ -208,7 +208,7 @@ func (s *driveService) Import(ctx context.Context) (*ImportResult, error) {
 	}
 
 	// ── Officials ────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, "Officials")
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Officials")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		natIdx := colIdx(hdr, "Nationality")
@@ -232,12 +232,32 @@ func (s *driveService) Import(ctx context.Context) (*ImportResult, error) {
 	}
 
 	// ── Cards (bouts) ────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, "Cards")
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Cards")
 	if err == nil && len(rows) > 0 {
 		res.Bouts += s.importBouts(ctx, hdr, rows)
 	}
 
 	return res, nil
+}
+
+// ImportAll imports data from all configured sheets.
+func (s *driveService) ImportAll(ctx context.Context) (*ImportResult, error) {
+	if len(s.cfg.Sheets) == 0 {
+		return &ImportResult{}, fmt.Errorf("no sheets configured")
+	}
+
+	totalResult := &ImportResult{}
+	for _, sheet := range s.cfg.Sheets {
+		result, err := s.Import(ctx, sheet.SheetID)
+		if err != nil {
+			return nil, fmt.Errorf("import sheet %q (%s): %w", sheet.CardName, sheet.SheetID, err)
+		}
+		totalResult.Clubs += result.Clubs
+		totalResult.Athletes += result.Athletes
+		totalResult.Officials += result.Officials
+		totalResult.Bouts += result.Bouts
+	}
+	return totalResult, nil
 }
 
 func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]string) int {

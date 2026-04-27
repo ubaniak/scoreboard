@@ -145,12 +145,22 @@ func (a *App) Import(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to load config", http.StatusInternalServerError)
 		return
 	}
-	if cfg.SheetID == "" {
-		http.Error(w, "sheet ID not configured", http.StatusBadRequest)
+	if len(cfg.Sheets) == 0 {
+		http.Error(w, "no sheets configured", http.StatusBadRequest)
 		return
 	}
 	svc := newDriveService(cfg, a.officials, a.clubs, a.athletes, a.bouts, a.cards, a.reports)
-	result, err := svc.Import(r.Context())
+
+	sheetId := r.URL.Query().Get("sheetId")
+	var result *ImportResult
+	if sheetId != "" {
+		// Import from specific sheet
+		result, err = svc.Import(r.Context(), sheetId)
+	} else {
+		// Import from all sheets
+		result, err = svc.ImportAll(r.Context())
+	}
+
 	if err != nil {
 		http.Error(w, "import failed: "+err.Error(), http.StatusInternalServerError)
 		return

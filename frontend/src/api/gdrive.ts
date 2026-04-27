@@ -2,10 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { TokenBase } from "./entities";
 
+export type Sheet = {
+  cardName: string;
+  sheetId: string;
+};
+
 export type GDriveConfig = {
   clientId: string;
   clientSecret: string;
-  sheetId: string;
+  sheets: Sheet[];
   folderId: string;
   connected: boolean;
 };
@@ -86,8 +91,12 @@ export const useMutateGDriveDisconnect = ({ token }: TokenBase) => {
 
 export const useMutateGDriveImport = ({ token }: TokenBase) =>
   useMutation({
-    mutationFn: async (): Promise<ImportResult> => {
-      const res = await fetch(`${baseUrl}/api/gdrive/import`, {
+    mutationFn: async (sheetId?: string): Promise<ImportResult> => {
+      const url = new URL(`${baseUrl}/api/gdrive/import`, window.location.origin);
+      if (sheetId) {
+        url.searchParams.set("sheetId", sheetId);
+      }
+      const res = await fetch(url.toString(), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });

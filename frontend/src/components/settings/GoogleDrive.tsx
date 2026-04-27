@@ -8,6 +8,7 @@ import {
   FolderOpenOutlined,
   ImportOutlined,
   LinkOutlined,
+  PlusOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
 import {
@@ -19,10 +20,12 @@ import {
   Flex,
   Form,
   Input,
+  Modal,
   Select,
   Popconfirm,
   Space,
   Steps,
+  Table,
   Tree,
   Typography,
 } from "antd";
@@ -39,16 +42,141 @@ import {
   useMutateGDriveTemplate,
   useMutateGDriveVerify,
   type ExportResult,
+  type Sheet,
 } from "../../api/gdrive";
 import { useListCards } from "../../api/cards";
 import type { TokenBase } from "../../api/entities";
 
 const { Text, Title, Paragraph, Link } = Typography;
 
+const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: Sheet[]) => void }) => {
+  const [sheets, setSheets] = useState<Sheet[]>(value || []);
+  const [modal, setModal] = useState(false);
+  const [cardName, setCardName] = useState("");
+  const [sheetId, setSheetId] = useState("");
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+
+  const handleAdd = () => {
+    if (!cardName || !sheetId) return;
+    const newSheets = editIdx !== null
+      ? sheets.map((s, i) => i === editIdx ? { cardName, sheetId } : s)
+      : [...sheets, { cardName, sheetId }];
+    setSheets(newSheets);
+    onChange?.(newSheets);
+    setModal(false);
+    setCardName("");
+    setSheetId("");
+    setEditIdx(null);
+  };
+
+  const handleEdit = (idx: number) => {
+    const sheet = sheets[idx];
+    setCardName(sheet.cardName);
+    setSheetId(sheet.sheetId);
+    setEditIdx(idx);
+    setModal(true);
+  };
+
+  const handleDelete = (idx: number) => {
+    const newSheets = sheets.filter((_, i) => i !== idx);
+    setSheets(newSheets);
+    onChange?.(newSheets);
+  };
+
+  return (
+    <Space direction="vertical" style={{ width: "100%" }}>
+      <Table
+        size="small"
+        dataSource={sheets.map((s, i) => ({ ...s, key: i }))}
+        columns={[
+          { title: "Card Name", dataIndex: "cardName", key: "cardName" },
+          {
+            title: "Sheet ID",
+            dataIndex: "sheetId",
+            key: "sheetId",
+            render: (id: string) => <Text code ellipsis>{id}</Text>,
+          },
+          {
+            title: "",
+            key: "action",
+            width: 100,
+            render: (_, __, idx) => (
+              <Space size="small">
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => handleEdit(idx)}
+                >
+                  Edit
+                </Button>
+                <Popconfirm
+                  title="Delete sheet?"
+                  okText="Delete"
+                  cancelText="Cancel"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => handleDelete(idx)}
+                >
+                  <Button type="link" danger size="small">
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]}
+        pagination={false}
+        locale={{ emptyText: "No sheets configured" }}
+      />
+      <Button
+        type="dashed"
+        block
+        icon={<PlusOutlined />}
+        onClick={() => {
+          setCardName("");
+          setSheetId("");
+          setEditIdx(null);
+          setModal(true);
+        }}
+      >
+        Add Sheet
+      </Button>
+      <Modal
+        title={editIdx !== null ? "Edit Sheet" : "Add Sheet"}
+        open={modal}
+        onOk={handleAdd}
+        onCancel={() => {
+          setModal(false);
+          setCardName("");
+          setSheetId("");
+          setEditIdx(null);
+        }}
+        okButtonProps={{ disabled: !cardName || !sheetId }}
+      >
+        <Form layout="vertical">
+          <Form.Item label="Card Name" required>
+            <Input
+              placeholder="e.g., Card A, Card B"
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
+            />
+          </Form.Item>
+          <Form.Item label="Sheet ID" required>
+            <Input
+              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+              value={sheetId}
+              onChange={(e) => setSheetId(e.target.value)}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </Space>
+  );
+};
+
 type SetupGuideProps = {
   close: () => void;
-  initialValues: { clientId: string; clientSecret: string; sheetId: string; folderId: string };
-  onSave: (values: { clientId: string; clientSecret: string; sheetId: string; folderId: string }) => Promise<void>;
+  initialValues: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string };
+  onSave: (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => Promise<void>;
   onVerify: (clientId: string, clientSecret: string) => Promise<void>;
   onConnect: () => Promise<void>;
   onCreateTemplate: () => Promise<string>;
@@ -220,20 +348,15 @@ const SetupGuideContent = ({
               status: "process",
             },
             {
-              title: "Paste your Google Sheet ID and Drive Folder ID",
+              title: "Add Google Sheets for each card",
               description: (
                 <Space direction="vertical" size={16} style={{ width: "100%" }}>
                   <Space direction="vertical" size={2}>
-                    <Text>Find your Google Sheet ID in the spreadsheet URL:</Text>
-                    <Text code>https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit</Text>
-                    <Text type="secondary">The sheet must have tabs named exactly: <Text code>Athletes</Text>, <Text code>Officials</Text>, <Text code>Clubs</Text>, <Text code>Cards</Text>.</Text>
+                    <Text>Add one Google Sheet per card. Each sheet must have tabs named exactly: <Text code>Athletes</Text>, <Text code>Officials</Text>, <Text code>Clubs</Text>, <Text code>Cards</Text>.</Text>
+                    <Text type="secondary">Find your Google Sheet ID in the spreadsheet URL: <Text code>https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit</Text></Text>
                   </Space>
-                  <Form.Item
-                    label="Google Sheet ID"
-                    name="sheetId"
-                    extra="The ID from the spreadsheet URL: /spreadsheets/d/<ID>/edit"
-                  >
-                    <Input placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+                  <Form.Item label="Google Sheets" name="sheets">
+                    <SheetList />
                   </Form.Item>
                   <Space direction="vertical" size={2} style={{ width: "100%" }}>
                     <Text>Find your Drive Folder ID in the folder URL (optional):</Text>
@@ -289,6 +412,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
 
   const [exportCardId, setExportCardId] = useState<string | null>(null);
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
+  const [importSheetId, setImportSheetId] = useState<string | null>(null);
 
   const handleConnect = async () => {
     try {
@@ -308,7 +432,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
     }
   };
 
-  const handleSaveConfig = async (values: { clientId: string; clientSecret: string; sheetId: string; folderId: string }) => {
+  const handleSaveConfig = async (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => {
     try {
       await saveConfig.mutateAsync(values);
       message.success("Config saved");
@@ -329,10 +453,11 @@ export const GoogleDrive = ({ token }: TokenBase) => {
 
   const handleImport = async () => {
     try {
-      const result = await importData.mutateAsync();
+      const result = await importData.mutateAsync(importSheetId || undefined);
       message.success(
         `Imported: ${result.clubs} clubs, ${result.athletes} athletes, ${result.officials} officials, ${result.bouts} bouts`
       );
+      setImportSheetId(null);
     } catch (err) {
       message.error((err as Error).message || "Import failed");
     }
@@ -407,7 +532,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
                   initialValues={{
                     clientId: cfg?.clientId ?? "",
                     clientSecret: cfg?.clientSecret ?? "",
-                    sheetId: cfg?.sheetId ?? "",
+                    sheets: cfg?.sheets ?? [],
                     folderId: cfg?.folderId ?? "",
                   }}
                   onSave={handleSaveConfig}
@@ -484,10 +609,35 @@ export const GoogleDrive = ({ token }: TokenBase) => {
           >
             Upload Template
           </Button>
+          {(cfg?.sheets ?? []).length > 0 && (
+            <Select
+              placeholder={
+                (cfg?.sheets ?? []).length === 1
+                  ? cfg?.sheets?.[0].cardName
+                  : "Select a sheet to import"
+              }
+              style={{ width: 240 }}
+              value={importSheetId}
+              onChange={(v) => setImportSheetId(v)}
+              disabled={!connected}
+              showSearch
+              optionFilterProp="label"
+              allowClear
+              options={(cfg?.sheets ?? []).map((s) => ({
+                value: s.sheetId,
+                label: s.cardName,
+              }))}
+            />
+          )}
           <Button
             icon={<ImportOutlined />}
             loading={importData.isPending}
-            disabled={!connected || !cfg?.sheetId}
+            disabled={
+              !connected ||
+              !cfg?.sheets ||
+              cfg.sheets.length === 0 ||
+              !importSheetId
+            }
             onClick={handleImport}
           >
             Import Now

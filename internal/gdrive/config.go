@@ -13,12 +13,18 @@ import (
 	"github.com/ubaniak/scoreboard/internal/datadir"
 )
 
+// Sheet maps a card name to a Google Sheet ID.
+type Sheet struct {
+	CardName string `json:"cardName"`
+	SheetID  string `json:"sheetId"`
+}
+
 // Config is persisted to ~/.scoreboard/gdrive_config.json.
 type Config struct {
-	ClientID     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
-	SheetID      string `json:"sheetId"`
-	FolderID     string `json:"folderId"`
+	ClientID     string   `json:"clientId"`
+	ClientSecret string   `json:"clientSecret"`
+	Sheets       []Sheet  `json:"sheets"`
+	FolderID     string   `json:"folderId"`
 }
 
 // ConfigResponse is what the frontend receives — includes connected state.
