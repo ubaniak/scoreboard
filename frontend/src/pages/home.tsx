@@ -1,26 +1,25 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
 import { Avatar, Button, Input, Popconfirm, Space, Table, Tabs, type TableProps } from "antd";
+import { useMemo, useState } from "react";
 import { ImageUpload } from "../components/image/imageUpload";
-import { useState } from "react";
 import {
-  type Club,
-  useMutateCreateClub,
-  useMutateDeleteClub,
-  useMutateImportClubs,
-  useMutateUpdateClub,
-  useMutateUploadClubImage,
-  useMutateRemoveClubImage,
-  useListClubs,
-} from "../api/clubs";
+  useListAffiliations,
+  useMutateCreateAffiliation,
+  useMutateDeleteAffiliation,
+  useMutateImportAffiliations,
+  useMutateRemoveAffiliationImage,
+  useMutateUpdateAffiliation,
+  useMutateUploadAffiliationImage,
+} from "../api/affiliations";
 import {
   type Athlete,
+  useListAthletes,
   useMutateCreateAthlete,
   useMutateDeleteAthlete,
   useMutateImportAthletes,
+  useMutateRemoveAthleteImage,
   useMutateUpdateAthlete,
   useMutateUploadAthleteImage,
-  useMutateRemoveAthleteImage,
-  useListAthletes,
 } from "../api/athletes";
 import {
   useGetOfficials,
@@ -44,19 +43,17 @@ import {
 import { ActionMenu } from "../components/actionMenu/actionMenu";
 import { CardIndex } from "../components/cards";
 import { ImportCSV } from "../components/shared/ImportCSV";
-import { AddClub } from "../components/clubs/AddClub";
-import { EditClub } from "../components/clubs/EditClub";
 import { AddAthlete } from "../components/athletes/AddAthlete";
 import { EditAthlete } from "../components/athletes/EditAthlete";
+import { AffiliationIndex } from "../components/affiliations";
 import { TableLayout } from "../layouts/table";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
-type ClubOption = { value: number; label: string };
+type Option = { value: number; label: string };
 
 export const HomePage = () => {
   const { token } = useProfile();
-  const [clubSearch, setClubSearch] = useState("");
   const [athleteSearch, setAthleteSearch] = useState("");
 
   const officialsQuery = useGetOfficials({ token });
@@ -73,13 +70,13 @@ export const HomePage = () => {
   const removeCardImage = useMutateRemoveCardImage({ token });
   const importCard = useMutateImportCard({ token });
 
-  const clubsQuery = useListClubs({ token });
-  const createClub = useMutateCreateClub({ token });
-  const updateClub = useMutateUpdateClub({ token });
-  const deleteClub = useMutateDeleteClub({ token });
-  const importClubs = useMutateImportClubs({ token });
-  const uploadClubImage = useMutateUploadClubImage({ token });
-  const removeClubImage = useMutateRemoveClubImage({ token });
+  const affiliationsQuery = useListAffiliations({ token });
+  const createAffiliation = useMutateCreateAffiliation({ token });
+  const updateAffiliation = useMutateUpdateAffiliation({ token });
+  const deleteAffiliation = useMutateDeleteAffiliation({ token });
+  const uploadAffiliationImage = useMutateUploadAffiliationImage({ token });
+  const removeAffiliationImage = useMutateRemoveAffiliationImage({ token });
+  const importAffiliations = useMutateImportAffiliations({ token });
 
   const athletesQuery = useListAthletes({ token });
   const createAthlete = useMutateCreateAthlete({ token });
@@ -89,38 +86,19 @@ export const HomePage = () => {
   const uploadAthleteImage = useMutateUploadAthleteImage({ token });
   const removeAthleteImage = useMutateRemoveAthleteImage({ token });
 
-  const clubOptions: ClubOption[] = (clubsQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }));
-
-  const clubColumns: TableProps<Club>["columns"] = [
-    {
-      title: "Name", key: "name",
-      render: (_, record) => (
-        <Space>
-          <Avatar src={record.imageUrl} size="small">{record.name[0]}</Avatar>
-          {record.name}
-        </Space>
-      ),
-    },
-    { title: "Location", dataIndex: "location", key: "location" },
-    {
-      title: "Actions", key: "action",
-      render: (_, record) => (
-        <Space>
-          <ActionMenu
-            trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload club image" }}
-            content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={record.imageUrl} onUpload={(file) => uploadClubImage.mutate({ id: record.id, file })} onRemove={() => removeClubImage.mutate(record.id)} /> }}
-          />
-          <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit club" }}
-            content={{ title: "Edit Club", body: (close) => <EditClub club={record} onClose={close} onSubmit={(vals) => updateClub.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
-          />
-          <Popconfirm title="Delete this club?" onConfirm={() => deleteClub.mutate(record.id)} okText="Delete" cancelText="Cancel">
-            <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete club" />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const allAffiliations = useMemo(() => affiliationsQuery.data ?? [], [affiliationsQuery.data]);
+  const clubOptions: Option[] = useMemo(
+    () => allAffiliations.filter((a) => a.type === "club").map((a) => ({ value: a.id, label: a.name })),
+    [allAffiliations],
+  );
+  const provinceOptions: Option[] = useMemo(
+    () => allAffiliations.filter((a) => a.type === "province").map((a) => ({ value: a.id, label: a.name })),
+    [allAffiliations],
+  );
+  const nationOptions: Option[] = useMemo(
+    () => allAffiliations.filter((a) => a.type === "nation").map((a) => ({ value: a.id, label: a.name })),
+    [allAffiliations],
+  );
 
   const athleteColumns: TableProps<Athlete>["columns"] = [
     {
@@ -133,7 +111,11 @@ export const HomePage = () => {
       ),
     },
     { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
+    { title: "Gender", dataIndex: "gender", key: "gender", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
+    { title: "Experience", dataIndex: "experience", key: "experience", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
     { title: "Club", dataIndex: "clubName", key: "clubName" },
+    { title: "Province", dataIndex: "provinceName", key: "provinceName" },
+    { title: "Nation", dataIndex: "nationName", key: "nationName" },
     {
       title: "Actions", key: "action",
       render: (_, record) => (
@@ -144,7 +126,19 @@ export const HomePage = () => {
           />
           <ActionMenu
             trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit athlete" }}
-            content={{ title: "Edit Athlete", body: (close) => <EditAthlete athlete={record} clubs={clubOptions} onClose={close} onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })} /> }}
+            content={{
+              title: "Edit Athlete",
+              body: (close) => (
+                <EditAthlete
+                  athlete={record}
+                  clubs={clubOptions}
+                  provinces={provinceOptions}
+                  nations={nationOptions}
+                  onClose={close}
+                  onSubmit={(vals) => updateAthlete.mutateAsync({ id: record.id, toUpdate: vals })}
+                />
+              ),
+            }}
           />
           <Popconfirm title="Delete this athlete?" onConfirm={() => deleteAthlete.mutate(record.id)} okText="Delete" cancelText="Cancel">
             <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete athlete" />
@@ -170,28 +164,19 @@ export const HomePage = () => {
         style={{ marginTop: 16 }}
         items={[
           {
-            key: "clubs",
-            label: `Clubs (${clubsQuery.data?.length ?? 0})`,
+            key: "affiliations",
+            label: `Affiliations (${allAffiliations.length})`,
             children: (
-              <TableLayout
-                actions={
-                  <>
-                    <ActionMenu
-                      trigger={{ text: "Import" }}
-                      content={{ title: "Import Clubs", body: (close) => <ImportCSV onClose={close} onImport={(f) => importClubs.mutateAsync(f)} hint="Required columns: name. Optional: location" template={{ filename: "clubs-template.csv", content: "name,location\nCity Boxing Club,New York\nWestside Boxing,Los Angeles\nEastside BC," }} /> }}
-                    />
-                    <ActionMenu
-                      trigger={{ text: "Add" }}
-                      content={{ title: "Add Club", body: (close) => <AddClub onClose={close} onSubmit={(vals) => createClub.mutateAsync(vals)} /> }}
-                    />
-                  </>
-                }
-              >
-                <>
-                  <Input.Search aria-label="Search clubs" placeholder="Search clubs…" value={clubSearch} onChange={(e) => setClubSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
-                  <Table rowKey="id" dataSource={(clubsQuery.data ?? []).filter((c) => `${c.name} ${c.location}`.toLowerCase().includes(clubSearch.toLowerCase()))} columns={clubColumns} loading={clubsQuery.isLoading} pagination={false} />
-                </>
-              </TableLayout>
+              <AffiliationIndex
+                affiliations={allAffiliations}
+                loading={affiliationsQuery.isLoading}
+                onCreate={(vals) => createAffiliation.mutateAsync(vals)}
+                onUpdate={(args) => updateAffiliation.mutateAsync(args)}
+                onDelete={(id) => deleteAffiliation.mutate(id)}
+                onUploadImage={(args) => uploadAffiliationImage.mutateAsync(args)}
+                onRemoveImage={(id) => removeAffiliationImage.mutate(id)}
+                onImport={(file) => importAffiliations.mutateAsync(file)}
+              />
             ),
           },
           {
@@ -203,18 +188,42 @@ export const HomePage = () => {
                   <>
                     <ActionMenu
                       trigger={{ text: "Import" }}
-                      content={{ title: "Import Athletes", body: (close) => <ImportCSV onClose={close} onImport={(f) => importAthletes.mutateAsync(f)} hint="Required columns: name. Optional: dateOfBirth, clubId" template={{ filename: "athletes-template.csv", content: "name,dateOfBirth,clubId\nJane Smith,2005-03-15,\nJohn Doe,2007-08-22,\nAlice Brown,," }} /> }}
+                      content={{
+                        title: "Import Athletes",
+                        body: (close) => (
+                          <ImportCSV
+                            onClose={close}
+                            onImport={(f) => importAthletes.mutateAsync(f)}
+                            hint="Required: name. Optional: dateOfBirth, ageCategory, gender, experience, clubAffiliationId, provinceAffiliationId, nationAffiliationId"
+                            template={{
+                              filename: "athletes-template.csv",
+                              content: "name,dateOfBirth,gender,experience,clubAffiliationId,provinceAffiliationId,nationAffiliationId\nJane Smith,2005-03-15,female,open,,,\nJohn Doe,2007-08-22,male,novice,,,",
+                            }}
+                          />
+                        ),
+                      }}
                     />
                     <ActionMenu
                       trigger={{ text: "Add" }}
-                      content={{ title: "Add Athlete", body: (close) => <AddAthlete clubs={clubOptions} onClose={close} onSubmit={(vals) => createAthlete.mutateAsync(vals)} /> }}
+                      content={{
+                        title: "Add Athlete",
+                        body: (close) => (
+                          <AddAthlete
+                            clubs={clubOptions}
+                            provinces={provinceOptions}
+                            nations={nationOptions}
+                            onClose={close}
+                            onSubmit={(vals) => createAthlete.mutateAsync(vals)}
+                          />
+                        ),
+                      }}
                     />
                   </>
                 }
               >
                 <>
                   <Input.Search aria-label="Search athletes" placeholder="Search athletes…" value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
-                  <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
+                  <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""} ${a.provinceName ?? ""} ${a.nationName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
                 </>
               </TableLayout>
             ),
@@ -226,6 +235,8 @@ export const HomePage = () => {
               <OfficialIndex
                 loading={officialsQuery.isLoading}
                 officials={officialsQuery.data}
+                provinces={provinceOptions}
+                nations={nationOptions}
                 onCreateOfficial={(values) => createOfficial.mutateAsync(values)}
                 onEditOfficial={(values) => updateOfficial.mutateAsync(values)}
                 onDeleteOfficial={(id) => deleteOfficial.mutate(id)}

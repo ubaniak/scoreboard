@@ -1,8 +1,9 @@
-import { Button, DatePicker, Form, Input, Select, Space, Typography } from "antd";
+import { Button, DatePicker, Form, Input, Segmented, Select, Space, Typography } from "antd";
 import type { Dayjs } from "dayjs";
 import { ageCategoryFromDOB } from "../../utils/ageCategory";
+import type { CreateAthleteProps } from "../../api/athletes";
 
-type ClubOption = { value: number; label: string };
+type Option = { value: number; label: string };
 
 const AGE_CATEGORY_OPTIONS = [
   { value: "u13", label: "U13" },
@@ -14,21 +15,14 @@ const AGE_CATEGORY_OPTIONS = [
 ];
 
 type AddAthleteProps = {
-  clubs: ClubOption[];
+  clubs: Option[];
+  provinces: Option[];
+  nations: Option[];
   onClose: (promise?: Promise<unknown>) => void;
-  onSubmit: (v: {
-    name: string;
-    ageCategory: string;
-    nationality: string;
-    clubId?: number;
-    provinceName?: string;
-    provinceImageUrl?: string;
-    nationName?: string;
-    nationImageUrl?: string;
-  }) => Promise<unknown>;
+  onSubmit: (v: CreateAthleteProps) => Promise<unknown>;
 };
 
-export const AddAthlete = ({ clubs, onClose, onSubmit }: AddAthleteProps) => {
+export const AddAthlete = ({ clubs, provinces, nations, onClose, onSubmit }: AddAthleteProps) => {
   const [form] = Form.useForm();
 
   const handleDOBChange = (date: Dayjs | null) => {
@@ -38,22 +32,61 @@ export const AddAthlete = ({ clubs, onClose, onSubmit }: AddAthleteProps) => {
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={(v) => {
-      onClose(onSubmit(v).then(() => form.resetFields()));
-    }}>
-      <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={(v) => {
+        onClose(
+          onSubmit({
+            name: v.name,
+            ageCategory: v.ageCategory,
+            gender: v.gender,
+            experience: v.experience,
+            clubAffiliationId: v.clubAffiliationId,
+            provinceAffiliationId: v.provinceAffiliationId,
+            nationAffiliationId: v.nationAffiliationId,
+          }).then(() => form.resetFields()),
+        );
+      }}
+    >
+      <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
       <Form.Item label="Date of Birth" name="dateOfBirth" extra={<Typography.Text type="secondary" style={{ fontSize: 12 }}>Auto-fills age category</Typography.Text>}>
         <DatePicker format="YYYY-MM-DD" onChange={handleDOBChange} style={{ width: "100%" }} />
       </Form.Item>
-      <Form.Item label="Age Category" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
+      <Form.Item label="Age Category" name="ageCategory" rules={[{ required: true }]}>
         <Select options={AGE_CATEGORY_OPTIONS} placeholder="Select age category..." />
       </Form.Item>
-      <Form.Item label="Nationality" name="nationality" rules={[{ required: true, message: "Nationality is required" }]}><Input /></Form.Item>
-      <Form.Item label="Club" name="clubId" rules={[{ required: true, message: "Club is required" }]}>
-        <Select options={clubs} allowClear placeholder="Select club..." />
+      <Form.Item label="Gender" name="gender" rules={[{ required: true }]}>
+        <Segmented
+          size="large"
+          shape="round"
+          options={[
+            { value: "male", label: "Male" },
+            { value: "female", label: "Female" },
+          ]}
+        />
       </Form.Item>
-      <Form.Item label="Province" name="provinceName"><Input placeholder="e.g., Ontario" /></Form.Item>
-      <Form.Item label="Nation" name="nationName"><Input placeholder="e.g., Canada" /></Form.Item>
+      <Form.Item label="Experience" name="experience" rules={[{ required: true }]}>
+        <Segmented
+          size="large"
+          shape="round"
+          options={[
+            { value: "novice", label: "Novice" },
+            { value: "open", label: "Open" },
+          ]}
+        />
+      </Form.Item>
+      <Form.Item label="Club" name="clubAffiliationId">
+        <Select options={clubs} allowClear showSearch optionFilterProp="label" placeholder="Select club..." />
+      </Form.Item>
+      <Form.Item label="Province" name="provinceAffiliationId">
+        <Select options={provinces} allowClear showSearch optionFilterProp="label" placeholder="Select province..." />
+      </Form.Item>
+      <Form.Item label="Nation" name="nationAffiliationId">
+        <Select options={nations} allowClear showSearch optionFilterProp="label" placeholder="Select nation..." />
+      </Form.Item>
       <Space>
         <Button type="text" onClick={() => onClose()}>Cancel</Button>
         <Button type="primary" htmlType="submit">Submit</Button>

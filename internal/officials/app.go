@@ -66,14 +66,16 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type ListOfficialResponse struct {
-	ID                 uint   `json:"id"`
-	Name               string `json:"name"`
-	Nationality        string `json:"nationality,omitempty"`
-	Gender             string `json:"gender,omitempty"`
-	YearOfBirth        int    `json:"yearOfBirth,omitempty"`
-	RegistrationNumber string `json:"registrationNumber,omitempty"`
-	Province           string `json:"province,omitempty"`
-	Nation             string `json:"nation,omitempty"`
+	ID                    uint   `json:"id"`
+	Name                  string `json:"name"`
+	Nationality           string `json:"nationality,omitempty"`
+	Gender                string `json:"gender,omitempty"`
+	YearOfBirth           int    `json:"yearOfBirth,omitempty"`
+	RegistrationNumber    string `json:"registrationNumber,omitempty"`
+	ProvinceAffiliationID *uint  `json:"provinceAffiliationId,omitempty"`
+	Province              string `json:"province,omitempty"`
+	NationAffiliationID   *uint  `json:"nationAffiliationId,omitempty"`
+	Nation                string `json:"nation,omitempty"`
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
@@ -87,14 +89,16 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	response := make([]ListOfficialResponse, len(officials))
 	for i, o := range officials {
 		response[i] = ListOfficialResponse{
-			ID:                 o.ID,
-			Name:               o.Name,
-			Nationality:        o.Nationality,
-			Gender:             o.Gender,
-			YearOfBirth:        o.YearOfBirth,
-			RegistrationNumber: o.RegistrationNumber,
-			Province:           o.Province,
-			Nation:             o.Nation,
+			ID:                    o.ID,
+			Name:                  o.Name,
+			Nationality:           o.Nationality,
+			Gender:                o.Gender,
+			YearOfBirth:           o.YearOfBirth,
+			RegistrationNumber:    o.RegistrationNumber,
+			ProvinceAffiliationID: o.ProvinceAffiliationID,
+			Province:              o.Province,
+			NationAffiliationID:   o.NationAffiliationID,
+			Nation:                o.Nation,
 		}
 	}
 

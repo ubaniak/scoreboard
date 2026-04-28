@@ -72,7 +72,8 @@ func (s *Sqlite) resolveAffiliationNames(athletes []Athlete) ([]entities.Athlete
 			ID:                    a.ID,
 			Name:                  a.Name,
 			AgeCategory:           a.AgeCategory,
-			Nationality:           a.Nationality,
+			Gender:                a.Gender,
+			Experience:            a.Experience,
 			ClubAffiliationID:     a.ClubAffiliationID,
 			ProvinceAffiliationID: a.ProvinceAffiliationID,
 			NationAffiliationID:   a.NationAffiliationID,
@@ -105,7 +106,8 @@ func (s *Sqlite) Create(athlete *entities.Athlete) error {
 	m := &Athlete{
 		Name:                  athlete.Name,
 		AgeCategory:           athlete.AgeCategory,
-		Nationality:           athlete.Nationality,
+		Gender:                athlete.Gender,
+		Experience:            athlete.Experience,
 		ClubAffiliationID:     athlete.ClubAffiliationID,
 		ProvinceAffiliationID: athlete.ProvinceAffiliationID,
 		NationAffiliationID:   athlete.NationAffiliationID,
@@ -155,8 +157,11 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	if toUpdate.AgeCategory != nil {
 		row.AgeCategory = *toUpdate.AgeCategory
 	}
-	if toUpdate.Nationality != nil {
-		row.Nationality = *toUpdate.Nationality
+	if toUpdate.Gender != nil {
+		row.Gender = *toUpdate.Gender
+	}
+	if toUpdate.Experience != nil {
+		row.Experience = *toUpdate.Experience
 	}
 	if toUpdate.ClubAffiliationID != nil {
 		row.ClubAffiliationID = *toUpdate.ClubAffiliationID

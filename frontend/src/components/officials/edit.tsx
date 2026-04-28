@@ -1,9 +1,13 @@
-import { Button, Form, Input, InputNumber, Segmented, Space, type FormProps } from "antd";
+import { Button, Form, Input, InputNumber, Segmented, Select, Space, type FormProps } from "antd";
 import type { Official } from "../../entities/cards";
 import type { UpdateOfficialProps } from "../../api/officials";
 
+type Option = { value: number; label: string };
+
 export type EditOfficialProps = {
   official: Official;
+  provinces: Option[];
+  nations: Option[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (vals: {
     toUpdate: UpdateOfficialProps;
@@ -26,8 +30,8 @@ export const EditOfficial = (props: EditOfficialProps) => {
         gender: props.official.gender,
         yearOfBirth: props.official.yearOfBirth,
         registrationNumber: props.official.registrationNumber,
-        province: props.official.province,
-        nation: props.official.nation,
+        provinceAffiliationId: props.official.provinceAffiliationId,
+        nationAffiliationId: props.official.nationAffiliationId,
       }}
       style={{ maxWidth: 600 }}
       onFinish={onFinish}
@@ -54,20 +58,16 @@ export const EditOfficial = (props: EditOfficialProps) => {
       <Form.Item<UpdateOfficialProps> label="Reg. Number" name="registrationNumber">
         <Input />
       </Form.Item>
-      <Form.Item<UpdateOfficialProps> label="Province" name="province">
-        <Input />
+      <Form.Item<UpdateOfficialProps> label="Province" name="provinceAffiliationId">
+        <Select options={props.provinces} allowClear showSearch optionFilterProp="label" placeholder="Select province..." />
       </Form.Item>
-      <Form.Item<UpdateOfficialProps> label="Nation" name="nation">
-        <Input />
+      <Form.Item<UpdateOfficialProps> label="Nation" name="nationAffiliationId">
+        <Select options={props.nations} allowClear showSearch optionFilterProp="label" placeholder="Select nation..." />
       </Form.Item>
       <Form.Item label={null}>
         <Space>
-          <Button type="text" onClick={() => props.onClose()}>
-            Cancel
-          </Button>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
+          <Button type="text" onClick={() => props.onClose()}>Cancel</Button>
+          <Button type="primary" htmlType="submit">Submit</Button>
         </Space>
       </Form.Item>
     </Form>

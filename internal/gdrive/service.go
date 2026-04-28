@@ -23,6 +23,8 @@ type OfficialCreator interface {
 
 type ClubCreator interface {
 	FindOrCreateByName(name string) (uint, error)
+	FindOrCreateProvince(name string) (uint, error)
+	FindOrCreateNation(name string) (uint, error)
 }
 
 type AthleteCreator interface {
@@ -47,6 +49,8 @@ type ReportBuilder interface {
 // ImportResult summarises what was upserted.
 type ImportResult struct {
 	Clubs     int `json:"clubs"`
+	Provinces int `json:"provinces"`
+	Nations   int `json:"nations"`
 	Athletes  int `json:"athletes"`
 	Officials int `json:"officials"`
 	Bouts     int `json:"bouts"`
@@ -170,8 +174,35 @@ func cell(row []string, idx int) string {
 func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResult, error) {
 	res := &ImportResult{}
 
-	// ── Clubs ────────────────────────────────────────────────────────────────
-	hdr, rows, err := s.sheetRows(ctx, sheetID, "Clubs")
+	// ── Affiliations (single sheet, name + type) ─────────────────────────────
+	hdr, rows, err := s.sheetRows(ctx, sheetID, "Affiliations")
+	if err == nil && len(rows) > 0 {
+		nameIdx := colIdx(hdr, "Name")
+		typeIdx := colIdx(hdr, "Type")
+		for _, row := range rows {
+			name := cell(row, nameIdx)
+			if name == "" {
+				continue
+			}
+			switch strings.ToLower(cell(row, typeIdx)) {
+			case "province":
+				if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
+					res.Provinces++
+				}
+			case "nation":
+				if _, err := s.clubs.FindOrCreateNation(name); err == nil {
+					res.Nations++
+				}
+			default:
+				if _, err := s.clubs.FindOrCreateByName(name); err == nil {
+					res.Clubs++
+				}
+			}
+		}
+	}
+
+	// ── Clubs (legacy single-type sheet) ─────────────────────────────────────
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Clubs")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		for _, row := range rows {
@@ -181,6 +212,36 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 			}
 			if _, err := s.clubs.FindOrCreateByName(name); err == nil {
 				res.Clubs++
+			}
+		}
+	}
+
+	// ── Provinces ────────────────────────────────────────────────────────────
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Provinces")
+	if err == nil && len(rows) > 0 {
+		nameIdx := colIdx(hdr, "Name")
+		for _, row := range rows {
+			name := cell(row, nameIdx)
+			if name == "" {
+				continue
+			}
+			if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
+				res.Provinces++
+			}
+		}
+	}
+
+	// ── Nations ──────────────────────────────────────────────────────────────
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Nations")
+	if err == nil && len(rows) > 0 {
+		nameIdx := colIdx(hdr, "Name")
+		for _, row := range rows {
+			name := cell(row, nameIdx)
+			if name == "" {
+				continue
+			}
+			if _, err := s.clubs.FindOrCreateNation(name); err == nil {
+				res.Nations++
 			}
 		}
 	}
@@ -253,6 +314,8 @@ func (s *driveService) ImportAll(ctx context.Context) (*ImportResult, error) {
 			return nil, fmt.Errorf("import sheet %q (%s): %w", sheet.CardName, sheet.SheetID, err)
 		}
 		totalResult.Clubs += result.Clubs
+		totalResult.Provinces += result.Provinces
+		totalResult.Nations += result.Nations
 		totalResult.Athletes += result.Athletes
 		totalResult.Officials += result.Officials
 		totalResult.Bouts += result.Bouts
@@ -512,6 +575,7 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			Title: "Scoreboard Import Template",
 		},
 		Sheets: []*sheetsAPI.Sheet{
+			{Properties: &sheetsAPI.SheetProperties{Title: "Affiliations"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Clubs"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Athletes"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Officials"}},
@@ -531,6 +595,15 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 	}
 
 	tabs := []tabData{
+		{
+			name: "Affiliations",
+			rows: [][]any{
+				{"Name", "Type"},
+				{"City Boxing", "club"},
+				{"Auckland", "province"},
+				{"New Zealand", "nation"},
+			},
+		},
 		{
 			name: "Clubs",
 			rows: [][]any{

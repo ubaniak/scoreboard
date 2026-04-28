@@ -43,31 +43,49 @@ type dbClub struct {
 
 func (dbClub) TableName() string { return "clubs" }
 
+type dbAffiliation struct {
+	gorm.Model
+	Name     string
+	Type     string
+	ImageUrl string
+}
+
+func (dbAffiliation) TableName() string { return "affiliations" }
+
 type dbAthlete struct {
 	gorm.Model
-	Name             string
-	AgeCategory      string
+	Name                  string
+	AgeCategory           string
+	Gender                string
+	Experience            string
+	ClubAffiliationID     *uint
+	ProvinceAffiliationID *uint
+	NationAffiliationID   *uint
+	ImageUrl              string
+	// Old columns kept for migration:
 	Nationality      string
 	ClubID           *uint
 	ProvinceName     string
 	ProvinceImageUrl string
 	NationName       string
 	NationImageUrl   string
-	ImageUrl         string
 }
 
 func (dbAthlete) TableName() string { return "athletes" }
 
 type dbOfficial struct {
 	gorm.Model
-	CardID             uint
-	Name               string
-	Nationality        string
-	Gender             string
-	YearOfBirth        int
-	RegistrationNumber string
-	Province           string
-	Nation             string
+	CardID                uint
+	Name                  string
+	Nationality           string
+	Gender                string
+	YearOfBirth           int
+	RegistrationNumber    string
+	ProvinceAffiliationID *uint
+	NationAffiliationID   *uint
+	// Old columns kept for migration:
+	Province string
+	Nation   string
 }
 
 func (dbOfficial) TableName() string { return "officials" }
@@ -151,16 +169,17 @@ func (dbScore) TableName() string { return "scores" }
 // ── export payload ────────────────────────────────────────────────────────────
 
 type exportPayload struct {
-	Version    int           `json:"version"`
-	ExportedAt time.Time     `json:"exportedAt"`
-	Clubs      []dbClub      `json:"clubs"`
-	Athletes   []dbAthlete   `json:"athletes"`
-	Officials  []dbOfficial  `json:"officials"`
-	Cards      []dbCard      `json:"cards"`
-	Bouts      []dbBout      `json:"bouts"`
-	Rounds     []dbRound     `json:"rounds"`
-	RoundFouls []dbRoundFoul `json:"roundFouls"`
-	Scores     []dbScore     `json:"scores"`
+	Version      int             `json:"version"`
+	ExportedAt   time.Time       `json:"exportedAt"`
+	Affiliations []dbAffiliation `json:"affiliations"`
+	Clubs        []dbClub        `json:"clubs"`
+	Athletes     []dbAthlete     `json:"athletes"`
+	Officials    []dbOfficial    `json:"officials"`
+	Cards        []dbCard        `json:"cards"`
+	Bouts        []dbBout        `json:"bouts"`
+	Rounds       []dbRound       `json:"rounds"`
+	RoundFouls   []dbRoundFoul   `json:"roundFouls"`
+	Scores       []dbScore       `json:"scores"`
 }
 
 // Export streams a ZIP containing data.json and all uploaded images.

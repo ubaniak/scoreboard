@@ -6,6 +6,8 @@ type UseCase interface {
 	Create(name string, affiliationType entities.AffiliationType) error
 	FindOrCreate(name string, affiliationType entities.AffiliationType) (uint, error)
 	FindOrCreateByName(name string) (uint, error) // convenience method for clubs
+	FindOrCreateProvince(name string) (uint, error)
+	FindOrCreateNation(name string) (uint, error)
 	List() ([]entities.Affiliation, error)
 	ListByType(affiliationType entities.AffiliationType) ([]entities.Affiliation, error)
 	Get(id uint) (*entities.Affiliation, error)
@@ -49,6 +51,14 @@ func (u *useCaseImpl) FindOrCreate(name string, affiliationType entities.Affilia
 
 func (u *useCaseImpl) FindOrCreateByName(name string) (uint, error) {
 	return u.FindOrCreate(name, entities.AffiliationTypeClub)
+}
+
+func (u *useCaseImpl) FindOrCreateProvince(name string) (uint, error) {
+	return u.FindOrCreate(name, entities.AffiliationTypeProvince)
+}
+
+func (u *useCaseImpl) FindOrCreateNation(name string) (uint, error) {
+	return u.FindOrCreate(name, entities.AffiliationTypeNation)
 }
 
 func (u *useCaseImpl) List() ([]entities.Affiliation, error) {

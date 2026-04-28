@@ -23,7 +23,9 @@ export type Official = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  provinceAffiliationId?: number;
   province?: string;
+  nationAffiliationId?: number;
   nation?: string;
 };
 
