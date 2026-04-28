@@ -41,56 +41,56 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 }
 
 type AthleteResponse struct {
-	ID               uint   `json:"id"`
-	Name             string `json:"name"`
-	AgeCategory      string `json:"ageCategory,omitempty"`
-	Nationality      string `json:"nationality,omitempty"`
-	ClubID           *uint  `json:"clubId,omitempty"`
-	ClubName         string `json:"clubName,omitempty"`
-	ProvinceName     string `json:"provinceName,omitempty"`
-	ProvinceImageUrl string `json:"provinceImageUrl,omitempty"`
-	NationName       string `json:"nationName,omitempty"`
-	NationImageUrl   string `json:"nationImageUrl,omitempty"`
-	ImageUrl         string `json:"imageUrl,omitempty"`
+	ID                   uint   `json:"id"`
+	Name                 string `json:"name"`
+	AgeCategory          string `json:"ageCategory,omitempty"`
+	Nationality          string `json:"nationality,omitempty"`
+	ClubAffiliationID    *uint  `json:"clubAffiliationId,omitempty"`
+	ClubName             string `json:"clubName,omitempty"`
+	ProvinceAffiliationID *uint  `json:"provinceAffiliationId,omitempty"`
+	ProvinceName         string `json:"provinceName,omitempty"`
+	ProvinceImageUrl     string `json:"provinceImageUrl,omitempty"`
+	NationAffiliationID  *uint  `json:"nationAffiliationId,omitempty"`
+	NationName           string `json:"nationName,omitempty"`
+	NationImageUrl       string `json:"nationImageUrl,omitempty"`
+	ImageUrl             string `json:"imageUrl,omitempty"`
 }
 
 func toResponse(a entities.Athlete) AthleteResponse {
 	return AthleteResponse{
-		ID:               a.ID,
-		Name:             a.Name,
-		AgeCategory:      a.AgeCategory,
-		Nationality:      a.Nationality,
-		ClubID:           a.ClubID,
-		ClubName:         a.ClubName,
-		ProvinceName:     a.ProvinceName,
-		ProvinceImageUrl: a.ProvinceImageUrl,
-		NationName:       a.NationName,
-		NationImageUrl:   a.NationImageUrl,
-		ImageUrl:         a.ImageUrl,
+		ID:                    a.ID,
+		Name:                  a.Name,
+		AgeCategory:           a.AgeCategory,
+		Nationality:           a.Nationality,
+		ClubAffiliationID:     a.ClubAffiliationID,
+		ClubName:              a.ClubName,
+		ProvinceAffiliationID: a.ProvinceAffiliationID,
+		ProvinceName:          a.ProvinceName,
+		ProvinceImageUrl:      a.ProvinceImageUrl,
+		NationAffiliationID:   a.NationAffiliationID,
+		NationName:            a.NationName,
+		NationImageUrl:        a.NationImageUrl,
+		ImageUrl:              a.ImageUrl,
 	}
 }
 
 type CreateAthleteRequest struct {
-	Name             string `json:"name"`
-	AgeCategory      string `json:"ageCategory"`
-	Nationality      string `json:"nationality"`
-	ClubID           *uint  `json:"clubId"`
-	ProvinceName     string `json:"provinceName,omitempty"`
-	ProvinceImageUrl string `json:"provinceImageUrl,omitempty"`
-	NationName       string `json:"nationName,omitempty"`
-	NationImageUrl   string `json:"nationImageUrl,omitempty"`
+	Name                  string `json:"name"`
+	AgeCategory           string `json:"ageCategory"`
+	Nationality           string `json:"nationality"`
+	ClubAffiliationID     *uint  `json:"clubAffiliationId"`
+	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint  `json:"nationAffiliationId"`
 }
 
 type UpdateAthleteRequest struct {
-	Name             *string `json:"name"`
-	AgeCategory      *string `json:"ageCategory"`
-	Nationality      *string `json:"nationality"`
-	ClubID           *uint   `json:"clubId"`
-	ClearClub        bool    `json:"clearClub"`
-	ProvinceName     *string `json:"provinceName"`
-	ProvinceImageUrl *string `json:"provinceImageUrl"`
-	NationName       *string `json:"nationName"`
-	NationImageUrl   *string `json:"nationImageUrl"`
+	Name                  *string `json:"name"`
+	AgeCategory           *string `json:"ageCategory"`
+	Nationality           *string `json:"nationality"`
+	ClubAffiliationID     *uint   `json:"clubAffiliationId"`
+	ClearClubAffiliation  bool    `json:"clearClubAffiliation"`
+	ProvinceAffiliationID *uint   `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint   `json:"nationAffiliationId"`
 }
 
 func (a *App) List(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +114,7 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.AgeCategory, req.Nationality, req.ClubID, req.ProvinceName, req.ProvinceImageUrl, req.NationName, req.NationImageUrl)
+	err := a.useCase.Create(req.Name, req.AgeCategory, req.Nationality, req.ClubAffiliationID, req.ProvinceAffiliationID, req.NationAffiliationID)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -133,18 +133,20 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	toUpdate := &entities.UpdateAthlete{
-		Name:             req.Name,
-		AgeCategory:      req.AgeCategory,
-		Nationality:      req.Nationality,
-		ProvinceName:     req.ProvinceName,
-		ProvinceImageUrl: req.ProvinceImageUrl,
-		NationName:       req.NationName,
-		NationImageUrl:   req.NationImageUrl,
+		Name:        req.Name,
+		AgeCategory: req.AgeCategory,
+		Nationality: req.Nationality,
 	}
-	if req.ClearClub {
-		toUpdate.ClubID = new(*uint) // &nil — clears the club
-	} else if req.ClubID != nil {
-		toUpdate.ClubID = &req.ClubID
+	if req.ClearClubAffiliation {
+		toUpdate.ClubAffiliationID = new(*uint) // &nil — clears the club
+	} else if req.ClubAffiliationID != nil {
+		toUpdate.ClubAffiliationID = &req.ClubAffiliationID
+	}
+	if req.ProvinceAffiliationID != nil {
+		toUpdate.ProvinceAffiliationID = &req.ProvinceAffiliationID
+	}
+	if req.NationAffiliationID != nil {
+		toUpdate.NationAffiliationID = &req.NationAffiliationID
 	}
 
 	err = a.useCase.Update(id, toUpdate)
@@ -249,7 +251,7 @@ func ageCategoryFromDOB(dob string) string {
 }
 
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: dateOfBirth (YYYY-MM-DD), ageCategory, nationality, clubId, provinceName, provinceImageUrl, nationName, nationImageUrl
+// Required columns: name. Optional: dateOfBirth (YYYY-MM-DD), ageCategory, nationality, clubAffiliationId, provinceAffiliationId, nationAffiliationId
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -298,30 +300,30 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if i, ok := colIndex["nationality"]; ok && i < len(row) {
 			nationality = row[i]
 		}
-		provinceName := ""
-		if i, ok := colIndex["provinceName"]; ok && i < len(row) {
-			provinceName = row[i]
-		}
-		provinceImageUrl := ""
-		if i, ok := colIndex["provinceImageUrl"]; ok && i < len(row) {
-			provinceImageUrl = row[i]
-		}
-		nationName := ""
-		if i, ok := colIndex["nationName"]; ok && i < len(row) {
-			nationName = row[i]
-		}
-		nationImageUrl := ""
-		if i, ok := colIndex["nationImageUrl"]; ok && i < len(row) {
-			nationImageUrl = row[i]
-		}
-		var clubID *uint
-		if i, ok := colIndex["clubId"]; ok && i < len(row) && row[i] != "" {
+
+		var clubAffiliationID *uint
+		if i, ok := colIndex["clubAffiliationId"]; ok && i < len(row) && row[i] != "" {
 			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
 				id := uint(v)
-				clubID = &id
+				clubAffiliationID = &id
 			}
 		}
-		if err := a.useCase.Create(name, ageCategory, nationality, clubID, provinceName, provinceImageUrl, nationName, nationImageUrl); err != nil {
+		var provinceAffiliationID *uint
+		if i, ok := colIndex["provinceAffiliationId"]; ok && i < len(row) && row[i] != "" {
+			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
+				id := uint(v)
+				provinceAffiliationID = &id
+			}
+		}
+		var nationAffiliationID *uint
+		if i, ok := colIndex["nationAffiliationId"]; ok && i < len(row) && row[i] != "" {
+			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
+				id := uint(v)
+				nationAffiliationID = &id
+			}
+		}
+
+		if err := a.useCase.Create(name, ageCategory, nationality, clubAffiliationID, provinceAffiliationID, nationAffiliationID); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

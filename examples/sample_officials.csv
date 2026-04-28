@@ -1,0 +1,5 @@
+name,nationality,gender,yearOfBirth,registrationNumber,provinceAffiliationId,nationAffiliationId
+James Brown,Canadian,M,1980,OFF001,4,7
+Patricia Davis,Canadian,F,1985,OFF002,4,7
+Robert Miller,American,M,1975,OFF003,,8
+Lisa Anderson,Canadian,F,1990,OFF004,4,7

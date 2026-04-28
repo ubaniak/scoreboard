@@ -10,6 +10,20 @@ export type Club = {
   imageUrl?: string;
 };
 
+type AffiliationResponse = {
+  id: number;
+  name: string;
+  type: string;
+  imageUrl?: string;
+};
+
+const toClub = (a: AffiliationResponse): Club => ({
+  id: a.id,
+  name: a.name,
+  location: "",
+  imageUrl: a.imageUrl,
+});
+
 const keys = {
   all: (token: string) => ["clubs", token] as const,
   list: (token: string) => [...keys.all(token), "list"] as const,
@@ -19,13 +33,18 @@ export const useListClubs = (props: TokenBase) => {
   return useQuery({
     queryKey: keys.list(props.token),
     enabled: !!props.token,
-    queryFn: () =>
-      fetchClient<Club[]>(`${baseUrl}/api/clubs`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${props.token}`,
+    queryFn: async () => {
+      const data = await fetchClient<AffiliationResponse[]>(
+        `${baseUrl}/api/affiliations?type=club`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
         },
-      }),
+      );
+      return data.map(toClub);
+    },
   });
 };
 
@@ -35,13 +54,13 @@ export const useMutateCreateClub = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateClubProps) =>
-      fetchClient(`${baseUrl}/api/clubs`, {
+      fetchClient(`${baseUrl}/api/affiliations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${props.token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ name: body.name, type: "club" }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
@@ -55,13 +74,13 @@ export const useMutateUpdateClub = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, toUpdate }: { id: number; toUpdate: UpdateClubProps }) =>
-      fetchClient(`${baseUrl}/api/clubs/${id}`, {
+      fetchClient(`${baseUrl}/api/affiliations/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${props.token}`,
         },
-        body: JSON.stringify(toUpdate),
+        body: JSON.stringify({ name: toUpdate.name }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
@@ -75,7 +94,8 @@ export const useMutateImportClubs = (props: TokenBase) => {
     mutationFn: (file: File) => {
       const form = new FormData();
       form.append("file", file);
-      return fetchClient(`${baseUrl}/api/clubs/import`, {
+      form.append("type", "club");
+      return fetchClient(`${baseUrl}/api/affiliations/import`, {
         method: "POST",
         headers: { Authorization: `Bearer ${props.token}` },
         body: form,
@@ -93,7 +113,7 @@ export const useMutateUploadClubImage = (props: TokenBase) => {
     mutationFn: ({ id, file }: { id: number; file: File }) => {
       const form = new FormData();
       form.append("image", file);
-      return fetchClient(`${baseUrl}/api/clubs/${id}/image`, {
+      return fetchClient(`${baseUrl}/api/affiliations/${id}/image`, {
         method: "POST",
         headers: { Authorization: `Bearer ${props.token}` },
         body: form,
@@ -109,7 +129,7 @@ export const useMutateRemoveClubImage = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) =>
-      fetchClient(`${baseUrl}/api/clubs/${id}/image`, {
+      fetchClient(`${baseUrl}/api/affiliations/${id}/image`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${props.token}` },
       }),
@@ -123,7 +143,7 @@ export const useMutateDeleteClub = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) =>
-      fetchClient(`${baseUrl}/api/clubs/${id}`, {
+      fetchClient(`${baseUrl}/api/affiliations/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

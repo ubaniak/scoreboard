@@ -8,9 +8,9 @@ import (
 )
 
 type UseCase interface {
-	Create(name, ageCategory, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error
+	Create(name, ageCategory, nationality string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) error
 	FindOrCreateByName(name, clubName string) (uint, error)
-	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
+	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -26,7 +26,7 @@ func NewUseCase(storage Storage) UseCase {
 	return &useCase{storage: storage}
 }
 
-func (uc *useCase) FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error) {
+func (uc *useCase) FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error) {
 	matches, err := uc.storage.FindByName(name)
 	if err != nil {
 		return 0, err
@@ -34,7 +34,7 @@ func (uc *useCase) FindOrCreateByNameAndClub(name string, clubID *uint) (uint, e
 	if len(matches) > 0 {
 		return matches[0].ID, nil
 	}
-	if err := uc.storage.Create(&entities.Athlete{Name: name, ClubID: clubID}); err != nil {
+	if err := uc.storage.Create(&entities.Athlete{Name: name, ClubAffiliationID: clubAffiliationID}); err != nil {
 		return 0, err
 	}
 	created, err := uc.storage.FindByName(name)
@@ -71,16 +71,14 @@ func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
 	return created[len(created)-1].ID, nil
 }
 
-func (uc *useCase) Create(name, ageCategory, nationality string, clubID *uint, provinceName, provinceImageUrl, nationName, nationImageUrl string) error {
+func (uc *useCase) Create(name, ageCategory, nationality string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) error {
 	return uc.storage.Create(&entities.Athlete{
-		Name:             name,
-		AgeCategory:      ageCategory,
-		Nationality:      nationality,
-		ClubID:           clubID,
-		ProvinceName:     provinceName,
-		ProvinceImageUrl: provinceImageUrl,
-		NationName:       nationName,
-		NationImageUrl:   nationImageUrl,
+		Name:                  name,
+		AgeCategory:           ageCategory,
+		Nationality:           nationality,
+		ClubAffiliationID:     clubAffiliationID,
+		ProvinceAffiliationID: provinceAffiliationID,
+		NationAffiliationID:   nationAffiliationID,
 	})
 }
 

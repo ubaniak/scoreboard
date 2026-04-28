@@ -1,0 +1,5 @@
+name,ageCategory,nationality,clubAffiliationId,provinceAffiliationId,nationAffiliationId
+John Smith,elite,Canadian,1,4,7
+Jane Doe,u19,Canadian,2,4,7
+Mike Johnson,u17,American,3,,8
+Sarah Williams,u15,Canadian,,4,7

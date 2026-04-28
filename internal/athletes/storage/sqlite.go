@@ -13,8 +13,8 @@ type Sqlite struct {
 	db *gorm.DB
 }
 
-// ClubRow is a minimal struct for the club name lookup.
-type ClubRow struct {
+// AffiliationRow is a minimal struct for affiliation name lookup.
+type AffiliationRow struct {
 	ID       uint
 	Name     string
 	ImageUrl string
@@ -33,29 +33,35 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 	return &Sqlite{db: db}, nil
 }
 
-func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error) {
-	// Collect distinct club IDs
-	clubIDSet := map[uint]struct{}{}
+func (s *Sqlite) resolveAffiliationNames(athletes []Athlete) ([]entities.Athlete, error) {
+	// Collect distinct affiliation IDs
+	affiliationIDSet := map[uint]struct{}{}
 	for _, a := range athletes {
-		if a.ClubID != nil {
-			clubIDSet[*a.ClubID] = struct{}{}
+		if a.ClubAffiliationID != nil {
+			affiliationIDSet[*a.ClubAffiliationID] = struct{}{}
+		}
+		if a.ProvinceAffiliationID != nil {
+			affiliationIDSet[*a.ProvinceAffiliationID] = struct{}{}
+		}
+		if a.NationAffiliationID != nil {
+			affiliationIDSet[*a.NationAffiliationID] = struct{}{}
 		}
 	}
 
-	type clubInfo struct {
+	type affiliationInfo struct {
 		name     string
 		imageUrl string
 	}
-	clubs := map[uint]clubInfo{}
-	if len(clubIDSet) > 0 {
-		ids := make([]uint, 0, len(clubIDSet))
-		for id := range clubIDSet {
+	affiliations := map[uint]affiliationInfo{}
+	if len(affiliationIDSet) > 0 {
+		ids := make([]uint, 0, len(affiliationIDSet))
+		for id := range affiliationIDSet {
 			ids = append(ids, id)
 		}
-		var rows []ClubRow
-		if err := s.db.Table("clubs").Select("id, name, image_url").Where("id IN ? AND deleted_at IS NULL", ids).Find(&rows).Error; err == nil {
+		var rows []AffiliationRow
+		if err := s.db.Table("affiliations").Select("id, name, image_url").Where("id IN ? AND deleted_at IS NULL", ids).Find(&rows).Error; err == nil {
 			for _, r := range rows {
-				clubs[r.ID] = clubInfo{name: r.Name, imageUrl: r.ImageUrl}
+				affiliations[r.ID] = affiliationInfo{name: r.Name, imageUrl: r.ImageUrl}
 			}
 		}
 	}
@@ -63,21 +69,31 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 	result := make([]entities.Athlete, len(athletes))
 	for i, a := range athletes {
 		e := entities.Athlete{
-			ID:               a.ID,
-			Name:             a.Name,
-			AgeCategory:      a.AgeCategory,
-			Nationality:      a.Nationality,
-			ClubID:           a.ClubID,
-			ProvinceName:     a.ProvinceName,
-			ProvinceImageUrl: a.ProvinceImageUrl,
-			NationName:       a.NationName,
-			NationImageUrl:   a.NationImageUrl,
-			ImageUrl:         a.ImageUrl,
+			ID:                    a.ID,
+			Name:                  a.Name,
+			AgeCategory:           a.AgeCategory,
+			Nationality:           a.Nationality,
+			ClubAffiliationID:     a.ClubAffiliationID,
+			ProvinceAffiliationID: a.ProvinceAffiliationID,
+			NationAffiliationID:   a.NationAffiliationID,
+			ImageUrl:              a.ImageUrl,
 		}
-		if a.ClubID != nil {
-			if info, ok := clubs[*a.ClubID]; ok {
+		if a.ClubAffiliationID != nil {
+			if info, ok := affiliations[*a.ClubAffiliationID]; ok {
 				e.ClubName = info.name
 				e.ClubImageUrl = info.imageUrl
+			}
+		}
+		if a.ProvinceAffiliationID != nil {
+			if info, ok := affiliations[*a.ProvinceAffiliationID]; ok {
+				e.ProvinceName = info.name
+				e.ProvinceImageUrl = info.imageUrl
+			}
+		}
+		if a.NationAffiliationID != nil {
+			if info, ok := affiliations[*a.NationAffiliationID]; ok {
+				e.NationName = info.name
+				e.NationImageUrl = info.imageUrl
 			}
 		}
 		result[i] = e
@@ -87,14 +103,12 @@ func (s *Sqlite) resolveClubNames(athletes []Athlete) ([]entities.Athlete, error
 
 func (s *Sqlite) Create(athlete *entities.Athlete) error {
 	m := &Athlete{
-		Name:             athlete.Name,
-		AgeCategory:      athlete.AgeCategory,
-		Nationality:      athlete.Nationality,
-		ClubID:           athlete.ClubID,
-		ProvinceName:     athlete.ProvinceName,
-		ProvinceImageUrl: athlete.ProvinceImageUrl,
-		NationName:       athlete.NationName,
-		NationImageUrl:   athlete.NationImageUrl,
+		Name:                  athlete.Name,
+		AgeCategory:           athlete.AgeCategory,
+		Nationality:           athlete.Nationality,
+		ClubAffiliationID:     athlete.ClubAffiliationID,
+		ProvinceAffiliationID: athlete.ProvinceAffiliationID,
+		NationAffiliationID:   athlete.NationAffiliationID,
 	}
 	return s.db.Create(m).Error
 }
@@ -104,7 +118,7 @@ func (s *Sqlite) FindByName(name string) ([]entities.Athlete, error) {
 	if err := s.db.Where("LOWER(name) = LOWER(?)", name).Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	return s.resolveClubNames(rows)
+	return s.resolveAffiliationNames(rows)
 }
 
 func (s *Sqlite) List() ([]entities.Athlete, error) {
@@ -112,7 +126,7 @@ func (s *Sqlite) List() ([]entities.Athlete, error) {
 	if err := s.db.Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	return s.resolveClubNames(rows)
+	return s.resolveAffiliationNames(rows)
 }
 
 func (s *Sqlite) Get(id uint) (*entities.Athlete, error) {
@@ -123,7 +137,7 @@ func (s *Sqlite) Get(id uint) (*entities.Athlete, error) {
 		}
 		return nil, err
 	}
-	results, err := s.resolveClubNames([]Athlete{row})
+	results, err := s.resolveAffiliationNames([]Athlete{row})
 	if err != nil || len(results) == 0 {
 		return nil, err
 	}
@@ -144,20 +158,14 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	if toUpdate.Nationality != nil {
 		row.Nationality = *toUpdate.Nationality
 	}
-	if toUpdate.ClubID != nil {
-		row.ClubID = *toUpdate.ClubID
+	if toUpdate.ClubAffiliationID != nil {
+		row.ClubAffiliationID = *toUpdate.ClubAffiliationID
 	}
-	if toUpdate.ProvinceName != nil {
-		row.ProvinceName = *toUpdate.ProvinceName
+	if toUpdate.ProvinceAffiliationID != nil {
+		row.ProvinceAffiliationID = *toUpdate.ProvinceAffiliationID
 	}
-	if toUpdate.ProvinceImageUrl != nil {
-		row.ProvinceImageUrl = *toUpdate.ProvinceImageUrl
-	}
-	if toUpdate.NationName != nil {
-		row.NationName = *toUpdate.NationName
-	}
-	if toUpdate.NationImageUrl != nil {
-		row.NationImageUrl = *toUpdate.NationImageUrl
+	if toUpdate.NationAffiliationID != nil {
+		row.NationAffiliationID = *toUpdate.NationAffiliationID
 	}
 	return s.db.Save(&row).Error
 }

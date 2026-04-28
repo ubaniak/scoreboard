@@ -2,9 +2,9 @@ package storage
 
 import "gorm.io/gorm"
 
-type Club struct {
+type Affiliation struct {
 	gorm.Model
 	Name     string `gorm:"not null"`
-	Location string
+	Type     string `gorm:"not null;index"`
 	ImageUrl string
 }

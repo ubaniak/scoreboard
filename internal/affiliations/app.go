@@ -1,4 +1,4 @@
-package clubs
+package affiliations
 
 import (
 	"encoding/csv"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ubaniak/scoreboard/internal/clubs/entities"
+	"github.com/ubaniak/scoreboard/internal/affiliations/entities"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
@@ -28,59 +28,66 @@ func NewApp(useCase UseCase) *App {
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
-	sr := rb.AddSubroute("clubs")
-	sr.AddRoute("clubs.list", "", http.MethodGet, a.List, rbac.Admin)
-	sr.AddRoute("clubs.create", "", http.MethodPost, a.Create, rbac.Admin)
-	sr.AddRoute("clubs.import", "/import", http.MethodPost, a.ImportCSV, rbac.Admin)
-	sr.AddRoute("clubs.update", "/{id}", http.MethodPut, a.Update, rbac.Admin)
-	sr.AddRoute("clubs.delete", "/{id}", http.MethodDelete, a.Delete, rbac.Admin)
-	sr.AddRoute("clubs.image", "/{id}/image", http.MethodPost, a.UploadImage, rbac.Admin)
-	sr.AddRoute("clubs.image.delete", "/{id}/image", http.MethodDelete, a.RemoveImage, rbac.Admin)
+	sr := rb.AddSubroute("affiliations")
+	sr.AddRoute("affiliations.list", "", http.MethodGet, a.List, rbac.Admin)
+	sr.AddRoute("affiliations.create", "", http.MethodPost, a.Create, rbac.Admin)
+	sr.AddRoute("affiliations.import", "/import", http.MethodPost, a.ImportCSV, rbac.Admin)
+	sr.AddRoute("affiliations.update", "/{id}", http.MethodPut, a.Update, rbac.Admin)
+	sr.AddRoute("affiliations.delete", "/{id}", http.MethodDelete, a.Delete, rbac.Admin)
+	sr.AddRoute("affiliations.image", "/{id}/image", http.MethodPost, a.UploadImage, rbac.Admin)
+	sr.AddRoute("affiliations.image.delete", "/{id}/image", http.MethodDelete, a.RemoveImage, rbac.Admin)
 }
 
-type ClubResponse struct {
+type AffiliationResponse struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
-	Location string `json:"location,omitempty"`
+	Type     string `json:"type"`
 	ImageUrl string `json:"imageUrl,omitempty"`
 }
 
-func toResponse(c entities.Club) ClubResponse {
-	return ClubResponse{ID: c.ID, Name: c.Name, Location: c.Location, ImageUrl: c.ImageUrl}
+func toResponse(a entities.Affiliation) AffiliationResponse {
+	return AffiliationResponse{ID: a.ID, Name: a.Name, Type: string(a.Type), ImageUrl: a.ImageUrl}
 }
 
-type CreateClubRequest struct {
-	Name     string `json:"name"`
-	Location string `json:"location"`
+type CreateAffiliationRequest struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
-type UpdateClubRequest struct {
-	Name     *string `json:"name"`
-	Location *string `json:"location"`
+type UpdateAffiliationRequest struct {
+	Name *string `json:"name"`
+	Type *string `json:"type"`
 }
 
 func (a *App) List(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[[]ClubResponse](r, w)
-	clubs, err := a.useCase.List()
+	presenter := presenters.NewHTTPPresenter[[]AffiliationResponse](r, w)
+	affType := r.URL.Query().Get("type")
+	var affiliations []entities.Affiliation
+	var err error
+	if affType != "" {
+		affiliations, err = a.useCase.ListByType(entities.AffiliationType(affType))
+	} else {
+		affiliations, err = a.useCase.List()
+	}
 	if err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-	resp := make([]ClubResponse, len(clubs))
-	for i, c := range clubs {
-		resp[i] = toResponse(c)
+	resp := make([]AffiliationResponse, len(affiliations))
+	for i, aff := range affiliations {
+		resp[i] = toResponse(aff)
 	}
 	presenter.WithData(resp).Present()
 }
 
 func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
-	var req CreateClubRequest
+	var req CreateAffiliationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.Location)
+	err := a.useCase.Create(req.Name, entities.AffiliationType(req.Type))
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -92,12 +99,19 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	var req UpdateClubRequest
+	var req UpdateAffiliationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-	err = a.useCase.Update(id, &entities.UpdateClub{Name: req.Name, Location: req.Location})
+
+	toUpdate := &entities.UpdateAffiliation{Name: req.Name}
+	if req.Type != nil {
+		t := entities.AffiliationType(*req.Type)
+		toUpdate.Type = &t
+	}
+
+	err = a.useCase.Update(id, toUpdate)
 	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
 }
 
@@ -139,7 +153,7 @@ func (a *App) UploadImage(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	dir := filepath.Join(uploadsDir, "clubs")
+	dir := filepath.Join(uploadsDir, "affiliations")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		presenter.WithError(err).Present()
 		return
@@ -155,7 +169,7 @@ func (a *App) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("/uploads/clubs/%d%s", id, ext)
+	url := fmt.Sprintf("/uploads/affiliations/%d%s", id, ext)
 	presenter.WithError(a.useCase.SetImageUrl(id, url)).Present()
 }
 
@@ -171,7 +185,7 @@ func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
 }
 
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: location
+// Required columns: name, type. Optional: none
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -204,14 +218,15 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(errors.New("CSV missing required column: name")).Present()
 		return
 	}
+	if _, ok := colIndex["type"]; !ok {
+		presenter.WithError(errors.New("CSV missing required column: type")).Present()
+		return
+	}
 
 	for _, row := range records[1:] {
 		name := row[colIndex["name"]]
-		location := ""
-		if i, ok := colIndex["location"]; ok && i < len(row) {
-			location = row[i]
-		}
-		if err := a.useCase.Create(name, location); err != nil {
+		affType := row[colIndex["type"]]
+		if err := a.useCase.Create(name, entities.AffiliationType(affType)); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

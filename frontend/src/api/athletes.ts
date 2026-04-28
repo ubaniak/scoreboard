@@ -8,10 +8,12 @@ export type Athlete = {
   name: string;
   ageCategory: string;
   nationality?: string;
-  clubId?: number;
+  clubAffiliationId?: number;
   clubName?: string;
+  provinceAffiliationId?: number;
   provinceName?: string;
   provinceImageUrl?: string;
+  nationAffiliationId?: number;
   nationName?: string;
   nationImageUrl?: string;
   imageUrl?: string;
@@ -40,11 +42,9 @@ export type CreateAthleteProps = {
   name: string;
   ageCategory: string;
   nationality: string;
-  clubId?: number;
-  provinceName?: string;
-  provinceImageUrl?: string;
-  nationName?: string;
-  nationImageUrl?: string;
+  clubAffiliationId?: number;
+  provinceAffiliationId?: number;
+  nationAffiliationId?: number;
 };
 
 export const useMutateCreateAthlete = (props: TokenBase) => {
@@ -69,12 +69,10 @@ export type UpdateAthleteProps = {
   name?: string;
   ageCategory?: string;
   nationality?: string;
-  clubId?: number;
-  clearClub?: boolean;
-  provinceName?: string;
-  provinceImageUrl?: string;
-  nationName?: string;
-  nationImageUrl?: string;
+  clubAffiliationId?: number;
+  clearClubAffiliation?: boolean;
+  provinceAffiliationId?: number;
+  nationAffiliationId?: number;
 };
 
 export const useMutateUpdateAthlete = (props: TokenBase) => {

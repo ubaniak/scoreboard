@@ -34,13 +34,13 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 }
 
 type CreateOfficialRequest struct {
-	Name               string `json:"name"`
-	Nationality        string `json:"nationality"`
-	Gender             string `json:"gender"`
-	YearOfBirth        int    `json:"yearOfBirth"`
-	RegistrationNumber string `json:"registrationNumber"`
-	Province           string `json:"province"`
-	Nation             string `json:"nation"`
+	Name                  string `json:"name"`
+	Nationality           string `json:"nationality"`
+	Gender                string `json:"gender"`
+	YearOfBirth           int    `json:"yearOfBirth"`
+	RegistrationNumber    string `json:"registrationNumber"`
+	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint  `json:"nationAffiliationId"`
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -54,13 +54,13 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.Create(&entities.Official{
-		Name:               createReq.Name,
-		Nationality:        createReq.Nationality,
-		Gender:             createReq.Gender,
-		YearOfBirth:        createReq.YearOfBirth,
-		RegistrationNumber: createReq.RegistrationNumber,
-		Province:           createReq.Province,
-		Nation:             createReq.Nation,
+		Name:                  createReq.Name,
+		Nationality:           createReq.Nationality,
+		Gender:                createReq.Gender,
+		YearOfBirth:           createReq.YearOfBirth,
+		RegistrationNumber:    createReq.RegistrationNumber,
+		ProvinceAffiliationID: createReq.ProvinceAffiliationID,
+		NationAffiliationID:   createReq.NationAffiliationID,
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
@@ -102,13 +102,13 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateOfficialRequest struct {
-	Name               string `json:"name"`
-	Nationality        string `json:"nationality"`
-	Gender             string `json:"gender"`
-	YearOfBirth        int    `json:"yearOfBirth"`
-	RegistrationNumber string `json:"registrationNumber"`
-	Province           string `json:"province"`
-	Nation             string `json:"nation"`
+	Name                  string `json:"name"`
+	Nationality           string `json:"nationality"`
+	Gender                string `json:"gender"`
+	YearOfBirth           int    `json:"yearOfBirth"`
+	RegistrationNumber    string `json:"registrationNumber"`
+	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint  `json:"nationAffiliationId"`
 }
 
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
@@ -129,13 +129,13 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.Update(id, &entities.Official{
-		Name:               req.Name,
-		Nationality:        req.Nationality,
-		Gender:             req.Gender,
-		YearOfBirth:        req.YearOfBirth,
-		RegistrationNumber: req.RegistrationNumber,
-		Province:           req.Province,
-		Nation:             req.Nation,
+		Name:                  req.Name,
+		Nationality:           req.Nationality,
+		Gender:                req.Gender,
+		YearOfBirth:           req.YearOfBirth,
+		RegistrationNumber:    req.RegistrationNumber,
+		ProvinceAffiliationID: req.ProvinceAffiliationID,
+		NationAffiliationID:   req.NationAffiliationID,
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
@@ -210,11 +210,17 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if i, ok := colIndex["registrationNumber"]; ok && i < len(row) {
 			o.RegistrationNumber = row[i]
 		}
-		if i, ok := colIndex["province"]; ok && i < len(row) {
-			o.Province = row[i]
+		if i, ok := colIndex["provinceAffiliationId"]; ok && i < len(row) && row[i] != "" {
+			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
+				id := uint(v)
+				o.ProvinceAffiliationID = &id
+			}
 		}
-		if i, ok := colIndex["nation"]; ok && i < len(row) {
-			o.Nation = row[i]
+		if i, ok := colIndex["nationAffiliationId"]; ok && i < len(row) && row[i] != "" {
+			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
+				id := uint(v)
+				o.NationAffiliationID = &id
+			}
 		}
 		officials = append(officials, o)
 	}

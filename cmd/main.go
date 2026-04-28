@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/ubaniak/scoreboard/internal/app"
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
+	"github.com/ubaniak/scoreboard/internal/affiliations"
 	"github.com/ubaniak/scoreboard/internal/athletes"
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	"github.com/ubaniak/scoreboard/internal/backup"
@@ -32,7 +34,6 @@ import (
 	"github.com/ubaniak/scoreboard/internal/auth"
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/cards"
-	"github.com/ubaniak/scoreboard/internal/clubs"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
 	currentEntities "github.com/ubaniak/scoreboard/internal/current/entities"
@@ -45,6 +46,7 @@ import (
 	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/setup"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 )
 
@@ -157,13 +159,13 @@ func main() {
 	}
 	cardUseCase := cards.NewUseCase(cardStorage)
 
-	// -- clubs
-	clubStorage, err := clubs.NewSqlite(db)
+	// -- affiliations
+	affiliationStorage, err := affiliations.NewSqlite(db)
 	if err != nil {
 		panic(err)
 	}
-	clubUseCase := clubs.NewUseCase(clubStorage)
-	clubApp := clubs.NewApp(clubUseCase)
+	affiliationUseCase := affiliations.NewUseCase(affiliationStorage)
+	affiliationApp := affiliations.NewApp(affiliationUseCase)
 
 	// -- athletes
 	athleteStorage, err := athletes.NewSqlite(db)
@@ -200,7 +202,7 @@ func main() {
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
 	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
-	cardApp.WithImport(officialUsecCase, clubUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
+	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
@@ -211,7 +213,13 @@ func main() {
 	apiRegister.Add(loginApp)
 	apiRegister.Add(cardApp)
 	apiRegister.Add(deviceApp)
-	apiRegister.Add(clubApp)
+
+	// -- setup (public, no auth)
+	setupUseCase := setup.NewUseCase(authUseCase, deviceUseCase)
+	setupApp := setup.NewApp(setupUseCase)
+	apiRegister.Add(setupApp)
+
+	apiRegister.Add(affiliationApp)
 	apiRegister.Add(athleteApp)
 	apiRegister.Add(officialApp)
 	apiRegister.Add(auditLogApp)
@@ -228,10 +236,15 @@ func main() {
 	apiRegister.Add(backupApp)
 	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
 
-	gdriveApp := gdrive.NewApp(officialUsecCase, clubUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
+	gdriveApp := gdrive.NewApp(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
 	apiRegister.Add(gdriveApp)
 
 	apiRegister.Register(rb)
+
+	// Run migrations for affiliation refactor
+	if err := runAffiliationMigration(db); err != nil {
+		log.Println("WARNING: Affiliation migration failed:", err)
+	}
 
 	allowedOrigins := []string{
 		"http://localhost:8080",
@@ -245,6 +258,162 @@ func main() {
 	srv := startServer(r, allowedOrigins, uploadsDir)
 
 	runApp(srv, deviceUseCase)
+}
+
+func runAffiliationMigration(db *gorm.DB) error {
+	// Check if affiliations table has data - if yes, migration already ran
+	var count int64
+	if err := db.Table("affiliations").Count(&count).Error; err != nil {
+		// Table might not exist yet due to AutoMigrate, that's OK
+		return nil
+	}
+	if count > 0 {
+		// Migration already completed
+		return nil
+	}
+
+	// Migrate clubs to affiliations
+	type Club struct {
+		ID       uint   `gorm:"primaryKey"`
+		Name     string
+		Location string
+		ImageUrl string
+		DeletedAt *time.Time
+	}
+
+	var clubs []Club
+	if err := db.Where("deleted_at IS NULL").Find(&clubs).Error; err == nil {
+		for _, club := range clubs {
+			affiliation := map[string]interface{}{
+				"name":       club.Name,
+				"type":       "club",
+				"image_url":  club.ImageUrl,
+				"created_at": time.Now(),
+				"updated_at": time.Now(),
+			}
+			if err := db.Table("affiliations").Create(affiliation).Error; err != nil {
+				return fmt.Errorf("failed to migrate club %d: %w", club.ID, err)
+			}
+			// Update athlete club_affiliation_id
+			var newAffID uint
+			if err := db.Table("affiliations").Select("id").Where("name = ? AND type = ?", club.Name, "club").Last(&newAffID).Error; err == nil {
+				db.Table("athletes").Where("club_id = ?", club.ID).Update("club_affiliation_id", newAffID)
+			}
+		}
+	}
+
+	// Migrate athlete province/nation to affiliations
+	type Athlete struct {
+		ID               uint   `gorm:"primaryKey"`
+		ProvinceName     string
+		ProvinceImageUrl string
+		NationName       string
+		NationImageUrl   string
+	}
+
+	var athletes []Athlete
+	if err := db.Where("deleted_at IS NULL").Find(&athletes).Error; err == nil {
+		for _, athlete := range athletes {
+			// Create province affiliation if needed
+			if athlete.ProvinceName != "" {
+				var existing struct{ ID uint }
+				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", athlete.ProvinceName, "province").Limit(1).Scan(&existing).RowsAffected == 0 {
+					// Create new province affiliation
+					prov := map[string]interface{}{
+						"name":       athlete.ProvinceName,
+						"type":       "province",
+						"image_url":  athlete.ProvinceImageUrl,
+						"created_at": time.Now(),
+						"updated_at": time.Now(),
+					}
+					db.Table("affiliations").Create(prov)
+				}
+				// Link athlete to province affiliation
+				var provAffID uint
+				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", athlete.ProvinceName, "province").Limit(1).Scan(&provAffID)
+				if provAffID > 0 {
+					db.Table("athletes").Where("id = ?", athlete.ID).Update("province_affiliation_id", provAffID)
+				}
+			}
+
+			// Create nation affiliation if needed
+			if athlete.NationName != "" {
+				var existing struct{ ID uint }
+				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", athlete.NationName, "nation").Limit(1).Scan(&existing).RowsAffected == 0 {
+					// Create new nation affiliation
+					nation := map[string]interface{}{
+						"name":       athlete.NationName,
+						"type":       "nation",
+						"image_url":  athlete.NationImageUrl,
+						"created_at": time.Now(),
+						"updated_at": time.Now(),
+					}
+					db.Table("affiliations").Create(nation)
+				}
+				// Link athlete to nation affiliation
+				var nationAffID uint
+				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", athlete.NationName, "nation").Limit(1).Scan(&nationAffID)
+				if nationAffID > 0 {
+					db.Table("athletes").Where("id = ?", athlete.ID).Update("nation_affiliation_id", nationAffID)
+				}
+			}
+		}
+	}
+
+	// Migrate official province/nation to affiliations
+	type Official struct {
+		ID       uint   `gorm:"primaryKey"`
+		Province string
+		Nation   string
+		DeletedAt *time.Time
+	}
+
+	var officials []Official
+	if err := db.Where("deleted_at IS NULL").Find(&officials).Error; err == nil {
+		for _, official := range officials {
+			// Create province affiliation if needed
+			if official.Province != "" {
+				var existing struct{ ID uint }
+				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Province, "province").Limit(1).Scan(&existing).RowsAffected == 0 {
+					prov := map[string]interface{}{
+						"name":       official.Province,
+						"type":       "province",
+						"created_at": time.Now(),
+						"updated_at": time.Now(),
+					}
+					db.Table("affiliations").Create(prov)
+				}
+				// Link official to province affiliation
+				var provAffID uint
+				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Province, "province").Limit(1).Scan(&provAffID)
+				if provAffID > 0 {
+					db.Table("officials").Where("id = ?", official.ID).Update("province_affiliation_id", provAffID)
+				}
+			}
+
+			// Create nation affiliation if needed
+			if official.Nation != "" {
+				var existing struct{ ID uint }
+				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Nation, "nation").Limit(1).Scan(&existing).RowsAffected == 0 {
+					nation := map[string]interface{}{
+						"name":       official.Nation,
+						"type":       "nation",
+						"created_at": time.Now(),
+						"updated_at": time.Now(),
+					}
+					db.Table("affiliations").Create(nation)
+				}
+				// Link official to nation affiliation
+				var nationAffID uint
+				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Nation, "nation").Limit(1).Scan(&nationAffID)
+				if nationAffID > 0 {
+					db.Table("officials").Where("id = ?", official.ID).Update("nation_affiliation_id", nationAffID)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string) *http.Server {
@@ -323,6 +492,13 @@ func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string) *htt
 
 	// Serve uploaded images from disk
 	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadsDir))))
+
+	// Unmatched /api/* → JSON 404 (do NOT fall through to SPA index.html)
+	r.PathPrefix("/api/").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error":"not found","path":"` + req.URL.Path + `"}`))
+	})
 
 	// Use the custom handler for all non-API paths
 	r.PathPrefix("/").Handler(http.HandlerFunc(spaHandler))
