@@ -31,7 +31,6 @@ func (uc *useCase) ExportData() (*exportPayload, error) {
 	}
 	for _, q := range []func() error{
 		func() error { return uc.db.Find(&p.Affiliations).Error },
-		func() error { return uc.db.Find(&p.Clubs).Error },
 		func() error { return uc.db.Find(&p.Athletes).Error },
 		func() error { return uc.db.Find(&p.Officials).Error },
 		func() error { return uc.db.Find(&p.Cards).Error },
@@ -51,7 +50,7 @@ func (uc *useCase) Restore(p *exportPayload) error {
 	return uc.db.Transaction(func(tx *gorm.DB) error {
 		for _, table := range []string{
 			"scores", "round_fouls", "rounds", "bouts",
-			"officials", "cards", "athletes", "clubs", "affiliations",
+			"officials", "cards", "athletes", "affiliations",
 		} {
 			if err := tx.Exec("DELETE FROM " + table).Error; err != nil {
 				return fmt.Errorf("clear %s: %w", table, err)
@@ -61,11 +60,6 @@ func (uc *useCase) Restore(p *exportPayload) error {
 		for i := range p.Affiliations {
 			if err := tx.Create(&p.Affiliations[i]).Error; err != nil {
 				return fmt.Errorf("insert affiliation %d: %w", p.Affiliations[i].ID, err)
-			}
-		}
-		for i := range p.Clubs {
-			if err := tx.Create(&p.Clubs[i]).Error; err != nil {
-				return fmt.Errorf("insert club %d: %w", p.Clubs[i].ID, err)
 			}
 		}
 		for i := range p.Athletes {

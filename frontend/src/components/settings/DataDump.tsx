@@ -1,12 +1,14 @@
 import { App, Button, Divider, Flex, Typography, Upload } from "antd";
 import { DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import type { RcFile } from "antd/es/upload";
+import { useQueryClient } from "@tanstack/react-query";
 import { useExportData, useImportData } from "../../api/settings";
 import type { TokenBase } from "../../api/entities";
 import { AutoBackup } from "./AutoBackup";
 
 export const DataDump = ({ token }: TokenBase) => {
   const { message } = App.useApp();
+  const queryClient = useQueryClient();
   const exportData = useExportData({ token });
   const importData = useImportData({ token });
 
@@ -22,7 +24,8 @@ export const DataDump = ({ token }: TokenBase) => {
   const handleImport = async (file: RcFile) => {
     try {
       await importData.mutateAsync(file as unknown as File);
-      message.success("Data imported successfully — please refresh the page");
+      await queryClient.invalidateQueries();
+      message.success("Data imported successfully");
     } catch (err) {
       message.error((err as Error).message || "Import failed");
     }

@@ -34,15 +34,6 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 // ── local GORM models that mirror the existing tables ────────────────────────
 
-type dbClub struct {
-	gorm.Model
-	Name     string
-	Location string
-	ImageUrl string
-}
-
-func (dbClub) TableName() string { return "clubs" }
-
 type dbAffiliation struct {
 	gorm.Model
 	Name     string
@@ -172,7 +163,6 @@ type exportPayload struct {
 	Version      int             `json:"version"`
 	ExportedAt   time.Time       `json:"exportedAt"`
 	Affiliations []dbAffiliation `json:"affiliations"`
-	Clubs        []dbClub        `json:"clubs"`
 	Athletes     []dbAthlete     `json:"athletes"`
 	Officials    []dbOfficial    `json:"officials"`
 	Cards        []dbCard        `json:"cards"`
