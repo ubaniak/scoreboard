@@ -1,3 +1,5 @@
+import { colors, cornerColor, space, tracking, type } from "../../theme";
+
 type AthleteCornerProps = {
   corner: "red" | "blue";
   name: string;
@@ -5,21 +7,19 @@ type AthleteCornerProps = {
   imageUrl?: string;
 };
 
-const COLORS = { red: "#fca5a5", blue: "#93c5fd" };
-
 export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCornerProps) => {
-  const color = COLORS[corner];
+  const color = cornerColor(corner);
   const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (
     <div style={{ textAlign: "center", flex: 1 }}>
       <div
         style={{
-          fontSize: 12,
-          letterSpacing: 4,
-          opacity: 0.5,
+          fontSize: type.caption,
+          letterSpacing: tracking.caps,
+          color: colors.textFaint,
           textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: space.sm,
         }}
       >
         {label}
@@ -28,27 +28,37 @@ export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCorne
         <img
           src={imageUrl}
           alt={name}
-          width={96}
-          height={96}
+          width={128}
+          height={128}
           style={{
-            width: 96,
-            height: 96,
+            width: 128,
+            height: 128,
             borderRadius: "50%",
             objectFit: "cover",
-            border: `3px solid ${color}`,
-            marginBottom: 12,
+            border: `4px solid ${color}`,
+            marginBottom: space.md,
           }}
         />
       )}
-      <div style={{ fontSize: 44, fontWeight: 800, color }}>{name || "—"}</div>
+      <div
+        style={{
+          fontSize: 64,
+          fontWeight: 900,
+          color,
+          lineHeight: 1.05,
+          textShadow: `0 2px 18px ${color}33`,
+        }}
+      >
+        {name || "—"}
+      </div>
       {clubName && (
         <div
           style={{
-            fontSize: 13,
-            letterSpacing: 2,
-            opacity: 0.55,
+            fontSize: 14,
+            letterSpacing: tracking.caps,
+            color: colors.textMuted,
             textTransform: "uppercase",
-            marginTop: 6,
+            marginTop: space.sm,
           }}
         >
           {clubName}

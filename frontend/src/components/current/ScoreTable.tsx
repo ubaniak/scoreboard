@@ -1,3 +1,6 @@
+import { Fragment } from "react";
+import { colors, type, tracking } from "../../theme";
+
 type OfficialAffiliation = {
   province?: string;
   nation?: string;
@@ -35,8 +38,8 @@ export const ScoreTable = ({
     return `Judge ${i + 1}`;
   };
 
-  const sep = "1px solid rgba(255,255,255,0.15)";
-  const subSep = "1px solid rgba(255,255,255,0.08)";
+  const sep = `2px solid ${colors.border}`;
+  const subSep = `1px solid ${colors.borderSubtle}`;
 
   const scoreVal = (r: number, j: number, corner: "red" | "blue") => {
     const s = (scores[r] ?? [])[j];
@@ -53,24 +56,26 @@ export const ScoreTable = ({
   );
   const hasDeductions = totalRedDeductions > 0 || totalBlueDeductions > 0;
 
+  const captionStyle = {
+    fontSize: type.caption,
+    letterSpacing: tracking.caps,
+    textTransform: "uppercase" as const,
+    fontWeight: 400,
+    color: colors.textFaint,
+  };
+
   return (
-    <div style={{ width: "60%", overflowX: "auto" }}>
+    <div style={{ minWidth: 480, maxWidth: "90%", overflowX: "auto" }}>
       <table
-        style={{ width: "100%", borderCollapse: "collapse", color: "white" }}
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          color: colors.text,
+        }}
       >
         <thead>
           <tr>
-            <th
-              style={{
-                padding: "8px 16px",
-                textAlign: "left",
-                fontSize: 11,
-                letterSpacing: 3,
-                opacity: 0.4,
-                textTransform: "uppercase",
-                fontWeight: 400,
-              }}
-            />
+            <th style={{ padding: "8px 16px", ...captionStyle, textAlign: "left" }} />
             {judgeIndices.map((i) => (
               <th
                 key={i}
@@ -78,12 +83,8 @@ export const ScoreTable = ({
                 style={{
                   padding: "8px 0",
                   textAlign: "center",
-                  fontSize: 11,
-                  letterSpacing: 3,
-                  opacity: 0.5,
-                  textTransform: "uppercase",
-                  fontWeight: 400,
                   borderBottom: subSep,
+                  ...captionStyle,
                 }}
               >
                 {judgeLabel(i)}
@@ -93,14 +94,13 @@ export const ScoreTable = ({
           <tr>
             <th />
             {judgeIndices.map((i) => (
-              <>
+              <Fragment key={i}>
                 <th
-                  key={`${i}_red`}
                   style={{
                     padding: "4px 12px",
                     textAlign: "center",
-                    fontSize: 12,
-                    color: "#fca5a5",
+                    fontSize: type.caption,
+                    color: colors.red,
                     fontWeight: 600,
                     borderBottom: subSep,
                   }}
@@ -108,19 +108,18 @@ export const ScoreTable = ({
                   Red
                 </th>
                 <th
-                  key={`${i}_blue`}
                   style={{
                     padding: "4px 12px",
                     textAlign: "center",
-                    fontSize: 12,
-                    color: "#93c5fd",
+                    fontSize: type.caption,
+                    color: colors.blue,
                     fontWeight: 600,
                     borderBottom: subSep,
                   }}
                 >
                   Blue
                 </th>
-              </>
+              </Fragment>
             ))}
           </tr>
         </thead>
@@ -129,78 +128,69 @@ export const ScoreTable = ({
             <tr key={r}>
               <td
                 style={{
-                  padding: "10px 16px",
-                  fontSize: 12,
-                  opacity: 0.55,
-                  letterSpacing: 2,
+                  padding: "12px 16px",
+                  fontSize: type.caption,
+                  color: colors.textMuted,
+                  letterSpacing: tracking.caps,
                   textTransform: "uppercase",
                 }}
               >
                 Round {r}
               </td>
               {judgeIndices.map((i) => (
-                <>
-                  <td
-                    key={`${i}_red`}
-                    style={{ padding: "10px 12px", textAlign: "center" }}
-                  >
+                <Fragment key={i}>
+                  <td style={{ padding: "12px", textAlign: "center" }}>
                     <span
                       style={{
-                        color: "#fca5a5",
+                        color: colors.red,
                         fontFamily: "monospace",
                         fontWeight: 700,
-                        fontSize: 18,
+                        fontSize: 22,
                       }}
                     >
                       {scoreVal(r, i, "red")}
                     </span>
                   </td>
-                  <td
-                    key={`${i}_blue`}
-                    style={{ padding: "10px 12px", textAlign: "center" }}
-                  >
+                  <td style={{ padding: "12px", textAlign: "center" }}>
                     <span
                       style={{
-                        color: "#93c5fd",
+                        color: colors.blue,
                         fontFamily: "monospace",
                         fontWeight: 700,
-                        fontSize: 18,
+                        fontSize: 22,
                       }}
                     >
                       {scoreVal(r, i, "blue")}
                     </span>
                   </td>
-                </>
+                </Fragment>
               ))}
             </tr>
           ))}
 
           {hasDeductions && (
-            <tr style={{ borderTop: sep }}>
+            <tr style={{ borderTop: subSep }}>
               <td
                 style={{
                   padding: "8px 16px",
-                  fontSize: 11,
-                  opacity: 0.45,
-                  letterSpacing: 2,
+                  fontSize: type.caption,
+                  color: colors.textFaint,
+                  letterSpacing: tracking.caps,
                   textTransform: "uppercase",
                 }}
               >
                 Deductions
               </td>
               {judgeIndices.map((i) => (
-                <>
-                  <td
-                    key={`${i}_red`}
-                    style={{ padding: "8px 12px", textAlign: "center" }}
-                  >
+                <Fragment key={i}>
+                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
                     {totalRedDeductions > 0 ? (
                       <span
                         style={{
-                          color: "rgba(252,165,165,0.5)",
+                          color: colors.redMuted,
                           fontFamily: "monospace",
                           fontWeight: 600,
-                          fontSize: 14,
+                          fontSize: 16,
                         }}
                       >
                         -{totalRedDeductions}
@@ -209,17 +199,14 @@ export const ScoreTable = ({
                       <span style={{ opacity: 0.25, fontSize: 14 }}>–</span>
                     )}
                   </td>
-                  <td
-                    key={`${i}_blue`}
-                    style={{ padding: "8px 12px", textAlign: "center" }}
-                  >
+                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
                     {totalBlueDeductions > 0 ? (
                       <span
                         style={{
-                          color: "rgba(147,197,253,0.5)",
+                          color: colors.blueMuted,
                           fontFamily: "monospace",
                           fontWeight: 600,
-                          fontSize: 14,
+                          fontSize: 16,
                         }}
                       >
                         -{totalBlueDeductions}
@@ -228,18 +215,18 @@ export const ScoreTable = ({
                       <span style={{ opacity: 0.25, fontSize: 14 }}>–</span>
                     )}
                   </td>
-                </>
+                </Fragment>
               ))}
             </tr>
           )}
 
-          <tr style={{ borderTop: sep }}>
+          <tr style={{ borderTop: sep, background: "rgba(255,255,255,0.04)" }}>
             <td
               style={{
-                padding: "10px 16px",
-                fontSize: 12,
+                padding: "16px",
+                fontSize: type.body,
                 fontWeight: 700,
-                letterSpacing: 2,
+                letterSpacing: tracking.caps,
                 textTransform: "uppercase",
               }}
             >
@@ -259,48 +246,14 @@ export const ScoreTable = ({
               const redWins = redSum > blueSum;
               const blueWins = blueSum > redSum;
               return (
-                <>
-                  <td
-                    key={`${i}_red`}
-                    style={{ padding: "10px 12px", textAlign: "center" }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <span
-                        style={{
-                          color: "#fca5a5",
-                          fontFamily: "monospace",
-                          fontWeight: 900,
-                          fontSize: 22,
-                        }}
-                      >
-                        {redSum}
-                      </span>
-                      {redWins && (
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#fca5a5" }} />
-                      )}
-                    </div>
+                <Fragment key={i}>
+                  <td style={{ padding: "16px 12px", textAlign: "center" }}>
+                    <WinnerCell value={redSum} color={colors.red} winner={redWins} />
                   </td>
-                  <td
-                    key={`${i}_blue`}
-                    style={{ padding: "10px 12px", textAlign: "center" }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <span
-                        style={{
-                          color: "#93c5fd",
-                          fontFamily: "monospace",
-                          fontWeight: 900,
-                          fontSize: 22,
-                        }}
-                      >
-                        {blueSum}
-                      </span>
-                      {blueWins && (
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#93c5fd" }} />
-                      )}
-                    </div>
+                  <td style={{ padding: "16px 12px", textAlign: "center" }}>
+                    <WinnerCell value={blueSum} color={colors.blue} winner={blueWins} />
                   </td>
-                </>
+                </Fragment>
               );
             })}
           </tr>
@@ -309,3 +262,51 @@ export const ScoreTable = ({
     </div>
   );
 };
+
+const WinnerCell = ({
+  value,
+  color,
+  winner,
+}: {
+  value: number;
+  color: string;
+  winner: boolean;
+}) => (
+  <div
+    style={{
+      display: "inline-flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 6,
+      padding: winner ? "8px 16px" : "8px 12px",
+      borderRadius: 8,
+      background: winner ? `${color}1F` : "transparent",
+      boxShadow: winner ? `inset 0 0 0 2px ${color}` : "none",
+    }}
+  >
+    <span
+      style={{
+        color,
+        fontFamily: "monospace",
+        fontWeight: 900,
+        fontSize: 32,
+        lineHeight: 1,
+      }}
+    >
+      {value}
+    </span>
+    {winner && (
+      <span
+        style={{
+          color,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.25em",
+          textTransform: "uppercase",
+        }}
+      >
+        Winner
+      </span>
+    )}
+  </div>
+);

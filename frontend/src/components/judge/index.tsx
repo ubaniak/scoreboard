@@ -27,19 +27,19 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
   const [submittedRound, setSubmittedRound] = useState<number | null>(null);
   const [pickedWinner, setPickedWinner] = useState<"red" | "blue" | null>(null);
 
-  // const boutId = props.current?.bout?.id;
-  const [boutId, setBoutId] = useState<string | undefined>(
-    props.current?.bout?.id,
-  );
+  const boutId = props.current?.bout?.id;
   const roundNumber = props.current?.round?.roundNumber;
+  const boutStatus = props.current?.bout?.status;
   const submitted = submittedRound !== null && submittedRound === roundNumber;
 
-  // Reset per-bout state when a new bout starts
-  if (boutId !== props.current?.bout?.id) {
+  // Reset per-bout state when a new bout starts. React-recommended pattern
+  // for resetting state on prop change (https://react.dev/reference/react/useState#storing-information-from-previous-renders).
+  const [prevBoutId, setPrevBoutId] = useState<string | undefined>(boutId);
+  if (boutId !== prevBoutId) {
+    setPrevBoutId(boutId);
     setSelectedName(null);
     setSubmittedRound(null);
     setPickedWinner(null);
-    setBoutId(props.current?.bout?.id);
   }
 
   useEffect(() => {
@@ -79,13 +79,15 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     );
   }
 
-  // After picking overall winner → show submitted screen
   if (pickedWinner) {
     return <SubmittedScreen role={props.role} judgeName={selectedName} />;
   }
 
-  // Show overall winner picker immediately after judge submits round 3
-  if (submittedRound === 3 && roundNumber === 3) {
+  // Bout is awaiting an overall-winner decision (judge submitted final round)
+  const awaitingDecision =
+    boutStatus === "waiting_for_decision" && submittedRound === roundNumber;
+
+  if (awaitingDecision) {
     return (
       <WaitingScreen
         role={props.role}

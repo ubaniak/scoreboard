@@ -1,4 +1,5 @@
 import type { Current } from "../../entities/current";
+import { colors, space, tracking, type } from "../../theme";
 import { AthleteCorner } from "./AthleteCorner";
 import { Curtain } from "./Curtain";
 import { DecisionBanner } from "./DecisionBanner";
@@ -16,11 +17,17 @@ export const BoutView = ({ current }: BoutViewProps) => {
   const showAthleteImages = card?.showAthleteImages ?? false;
   const showClubImages = card?.showClubImages ?? false;
 
-  return (
-    <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: "#0b0f1a" }}>
+  const captionStyle = {
+    fontSize: 11,
+    letterSpacing: tracking.caps,
+    color: colors.textFaint,
+    textTransform: "uppercase" as const,
+  };
 
-      {/* Scores panel — sits behind the curtains */}
+  return (
+    <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: colors.bg }}>
       <div
+        aria-live="polite"
         style={{
           position: "absolute",
           inset: 0,
@@ -28,9 +35,9 @@ export const BoutView = ({ current }: BoutViewProps) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          color: "white",
-          padding: "80px 48px calc(48px + env(safe-area-inset-bottom))",
-          gap: 32,
+          color: colors.text,
+          padding: `80px ${space.xxl}px calc(${space.xxl}px + env(safe-area-inset-bottom))`,
+          gap: space.xl,
         }}
       >
         {bout?.winner && (
@@ -42,7 +49,14 @@ export const BoutView = ({ current }: BoutViewProps) => {
           />
         )}
 
-        <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <AthleteCorner
             corner="red"
             name={bout?.redCorner ?? "—"}
@@ -50,11 +64,13 @@ export const BoutView = ({ current }: BoutViewProps) => {
             imageUrl={bout?.redAthleteImageUrl}
           />
 
-          <div style={{ textAlign: "center", padding: "0 32px" }}>
-            <div style={{ fontSize: 11, letterSpacing: 3, opacity: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Bout</div>
-            <div style={{ fontSize: 28, fontWeight: 900 }}>{bout?.boutNumber ?? "—"}</div>
+          <div style={{ textAlign: "center", padding: `0 ${space.xl}px`, opacity: 0.85 }}>
+            <div style={{ ...captionStyle, marginBottom: 6 }}>Bout</div>
+            <div style={{ fontSize: type.h2, fontWeight: 900, lineHeight: 1 }}>
+              {bout?.boutNumber ?? "—"}
+            </div>
             {bout?.boutType && (
-              <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.5, textTransform: "capitalize", marginTop: 4 }}>
+              <div style={{ ...captionStyle, marginTop: 6, textTransform: "capitalize" }}>
                 {bout.boutType}
               </div>
             )}
@@ -93,7 +109,6 @@ export const BoutView = ({ current }: BoutViewProps) => {
         clubImageUrl={showClubImages ? bout?.blueClubImageUrl : undefined}
       />
 
-      {/* Card name — top overlay */}
       {card?.name && (
         <div
           style={{
@@ -102,11 +117,11 @@ export const BoutView = ({ current }: BoutViewProps) => {
             left: 0,
             right: 0,
             textAlign: "center",
-            fontSize: 15,
-            color: "white",
-            letterSpacing: 4,
+            fontSize: 18,
+            color: colors.text,
+            letterSpacing: tracking.caps,
             textTransform: "uppercase",
-            opacity: 0.85,
+            opacity: 0.6,
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
             zIndex: 10,
           }}
