@@ -1,6 +1,8 @@
 import { Breadcrumb, Layout, Space, Typography } from "antd";
 import type { ItemType } from "antd/es/breadcrumb/Breadcrumb";
 import { Content, Header } from "antd/es/layout/layout";
+import { ThemeToggle } from "../components/shared/ThemeToggle";
+import { useTheme } from "../theme";
 const { Title, Text } = Typography;
 
 export type PageLayoutProps = {
@@ -12,8 +14,9 @@ export type PageLayoutProps = {
 };
 
 export const PageLayout = (props: PageLayoutProps) => {
+  const { colors } = useTheme();
   return (
-    <Layout style={{ minHeight: "100vh", background: "#0b0f1a" }}>
+    <Layout style={{ minHeight: "100vh", background: colors.bg }}>
       <a
         href="#main-content"
         className="skip-link"
@@ -30,8 +33,8 @@ export const PageLayout = (props: PageLayoutProps) => {
       </a>
       <Header
         style={{
-          background: "#131929",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          background: colors.bgElevated,
+          borderBottom: `1px solid ${colors.borderSubtle}`,
           padding: "0 16px",
           position: "sticky",
           top: 0,
@@ -61,7 +64,10 @@ export const PageLayout = (props: PageLayoutProps) => {
             </Space>
           </Space>
 
-          <Space wrap>{props.action}</Space>
+          <Space wrap>
+            {props.action}
+            <ThemeToggle />
+          </Space>
         </div>
       </Header>
       <Content style={{ padding: 16 }}>

@@ -13,6 +13,8 @@ import {
 } from "@tanstack/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import { TimerProvider } from "./providers/timer";
+import { ThemeProvider } from "./providers/theme";
+import { useTheme } from "./theme";
 import { ApiError } from "./api/fetchClient";
 import "./App.css";
 import { getEmitter, registerEmitter } from "./events/events";
@@ -120,28 +122,35 @@ const queryClient = new QueryClient({
     },
 });
 
+const ThemedApp = () => {
+  const { mode, colors } = useTheme();
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          colorBgBase: colors.bg,
+        },
+      }}
+    >
+      <AntApp>
+        <QueryClientProvider client={queryClient}>
+          <TimerProvider>
+            <ErrorBoundary>
+              <RouterProvider router={router}></RouterProvider>
+            </ErrorBoundary>
+          </TimerProvider>
+        </QueryClientProvider>
+      </AntApp>
+    </ConfigProvider>
+  );
+};
+
 function App() {
   return (
-    <>
-      <ConfigProvider
-        theme={{
-          algorithm: theme.darkAlgorithm,
-          token: {
-            colorBgBase: "#0b0f1a",
-          },
-        }}
-      >
-        <AntApp>
-          <QueryClientProvider client={queryClient}>
-            <TimerProvider>
-              <ErrorBoundary>
-                <RouterProvider router={router}></RouterProvider>
-              </ErrorBoundary>
-            </TimerProvider>
-          </QueryClientProvider>
-        </AntApp>
-      </ConfigProvider>
-    </>
+    <ThemeProvider>
+      <ThemedApp />
+    </ThemeProvider>
   );
 }
 

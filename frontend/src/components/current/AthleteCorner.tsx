@@ -1,4 +1,4 @@
-import { colors, cornerColor, space, tracking, type } from "../../theme";
+import { cornerColor, space, tracking, type, useTheme } from "../../theme";
 
 type AthleteCornerProps = {
   corner: "red" | "blue";
@@ -8,7 +8,8 @@ type AthleteCornerProps = {
 };
 
 export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCornerProps) => {
-  const color = cornerColor(corner);
+  const { colors } = useTheme();
+  const color = cornerColor(corner, colors);
   const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (

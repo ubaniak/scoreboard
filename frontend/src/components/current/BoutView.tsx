@@ -1,5 +1,5 @@
 import type { Current } from "../../entities/current";
-import { colors, space, tracking, type } from "../../theme";
+import { space, tracking, type, useTheme } from "../../theme";
 import { AthleteCorner } from "./AthleteCorner";
 import { Curtain } from "./Curtain";
 import { DecisionBanner } from "./DecisionBanner";
@@ -11,6 +11,7 @@ type BoutViewProps = {
 };
 
 export const BoutView = ({ current }: BoutViewProps) => {
+  const { colors } = useTheme();
   const { bout, round, card, scores, warnings } = current;
   const showScores = !!scores && Object.keys(scores).length > 0;
 

@@ -4,10 +4,12 @@ import { LoginProvider } from "../providers/login";
 import { ApiErrorHandler } from "../components/error/apiErrorHandler";
 import { GlobalErrorHandler } from "../components/error/globalErrorHandler";
 import { useSetupStatus } from "../api/setup";
+import { useTheme } from "../theme";
 
 export const AppLayout = () => {
   const { data: setupStatus } = useSetupStatus();
   const navigate = useNavigate();
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (setupStatus?.required) {
@@ -19,7 +21,7 @@ export const AppLayout = () => {
     <LoginProvider>
       <GlobalErrorHandler />
       <ApiErrorHandler />
-      <div style={{ minHeight: "100vh", background: "#0b0f1a" }}>
+      <div style={{ minHeight: "100vh", background: colors.bg }}>
         <Outlet />
       </div>
     </LoginProvider>

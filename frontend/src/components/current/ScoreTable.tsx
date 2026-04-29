@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { colors, type, tracking } from "../../theme";
+import { type, tracking, useTheme } from "../../theme";
 
 type OfficialAffiliation = {
   province?: string;
@@ -19,6 +19,7 @@ export const ScoreTable = ({
   showOfficialAffiliation = "none",
   officials = [],
 }: ScoreTableProps) => {
+  const { colors } = useTheme();
   const roundNumbers = Object.keys(scores)
     .map(Number)
     .sort((a, b) => a - b);
@@ -220,7 +221,7 @@ export const ScoreTable = ({
             </tr>
           )}
 
-          <tr style={{ borderTop: sep, background: "rgba(255,255,255,0.04)" }}>
+          <tr style={{ borderTop: sep, background: colors.borderSubtle }}>
             <td
               style={{
                 padding: "16px",
