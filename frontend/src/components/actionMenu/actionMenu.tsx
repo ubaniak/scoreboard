@@ -33,12 +33,15 @@ export const ActionMenu = (props: ActionMenuProps) => {
   }, [props.menuOpen]);
 
   const close: CloseAction = (promise?: Promise<unknown>) => {
-    if (!promise) {
+    const isThenable =
+      !!promise &&
+      typeof (promise as { then?: unknown }).then === "function";
+    if (!isThenable) {
       setOpen(false);
       return;
     }
     setLoading(true);
-    promise
+    (promise as Promise<unknown>)
       .then(() => setOpen(false))
       .catch(() => {})
       .finally(() => setLoading(false));

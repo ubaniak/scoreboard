@@ -1,6 +1,7 @@
 import { Breadcrumb, Layout, Space, Typography } from "antd";
 import type { ItemType } from "antd/es/breadcrumb/Breadcrumb";
 import { Content, Header } from "antd/es/layout/layout";
+import { SettingsButton } from "../components/settings/SettingsButton";
 import { ThemeToggle } from "../components/shared/ThemeToggle";
 import { useTheme } from "../theme";
 const { Title, Text } = Typography;
@@ -66,6 +67,7 @@ export const PageLayout = (props: PageLayoutProps) => {
 
           <Space wrap>
             {props.action}
+            <SettingsButton />
             <ThemeToggle />
           </Space>
         </div>

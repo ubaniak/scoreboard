@@ -21,6 +21,7 @@ export type BoutsIndexParams = {
   }) => Promise<unknown>;
   onImport: (file: File) => Promise<unknown>;
   onDeleteBout?: (boutId: string) => void;
+  auditLogs?: React.ReactNode;
 };
 export const BoutsIndex = (props: BoutsIndexParams) => {
   return (
@@ -62,6 +63,9 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
         onEditBout={(values) => props.onEditBout(values)}
         onDeleteBout={props.onDeleteBout}
       />
+      {props.auditLogs && (
+        <div style={{ marginTop: 24 }}>{props.auditLogs}</div>
+      )}
     </TableLayout>
   );
 };

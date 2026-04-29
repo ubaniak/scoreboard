@@ -29,8 +29,6 @@ import {
   useMutateUpdateOfficial,
 } from "../api/officials";
 import { OfficialIndex } from "../components/officials";
-import { DataDump } from "../components/settings/DataDump";
-import { GoogleDrive } from "../components/settings/GoogleDrive";
 import {
   useListCards,
   useMutateCreateCards,
@@ -243,16 +241,6 @@ export const HomePage = () => {
                 onImport={(file) => importOfficials.mutateAsync(file)}
               />
             ),
-          },
-          {
-            key: "settings",
-            label: "Settings",
-            children: <DataDump token={token} />,
-          },
-          {
-            key: "google-drive",
-            label: "Google Drive",
-            children: <GoogleDrive token={token} />,
           },
         ]}
       />

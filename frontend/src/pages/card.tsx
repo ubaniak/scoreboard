@@ -1,5 +1,4 @@
 import { useParams } from "@tanstack/react-router";
-import { Tabs } from "antd";
 import { useListAthletes } from "../api/athletes";
 import { useGetAuditLogs } from "../api/auditLogs";
 import {
@@ -97,46 +96,30 @@ export const CardPage = () => {
         </div>
       }
     >
-      <Tabs
-        items={[
-          {
-            key: "bouts",
-            label: "Bouts",
-            children: (
-              <>
-                {card.data && (
-                  <CardControls
-                  card={card.data}
-                  onSetJudges={onSetJudges}
-                  onPatch={(patch) =>
-                    updateCard.mutate({
-                      id: { cardId: String(card.data!.id) },
-                      toUpdate: patch as never,
-                    })
-                  }
-                />
-                )}
-                <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
-                <BoutsIndex
-                  loading={bouts.isLoading}
-                  card={card.data}
-                  bouts={bouts.data}
-                  officials={officials.data}
-                  athletes={athletes.data}
-                  onAddBout={(values) => addBout.mutateAsync(values)}
-                  onEditBout={(values) => updateBout.mutateAsync(values)}
-                  onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
-                  onImport={(file) => importBouts.mutateAsync(file)}
-                />
-              </>
-            ),
-          },
-          {
-            key: "audit",
-            label: "Audit log",
-            children: <CardAuditTimeline logs={auditLogs.data ?? []} />,
-          },
-        ]}
+      {card.data && (
+        <CardControls
+          card={card.data}
+          onSetJudges={onSetJudges}
+          onPatch={(patch) =>
+            updateCard.mutate({
+              id: { cardId: String(card.data!.id) },
+              toUpdate: patch as never,
+            })
+          }
+        />
+      )}
+      <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
+      <BoutsIndex
+        loading={bouts.isLoading}
+        card={card.data}
+        bouts={bouts.data}
+        officials={officials.data}
+        athletes={athletes.data}
+        onAddBout={(values) => addBout.mutateAsync(values)}
+        onEditBout={(values) => updateBout.mutateAsync(values)}
+        onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
+        onImport={(file) => importBouts.mutateAsync(file)}
+        auditLogs={<CardAuditTimeline logs={auditLogs.data ?? []} />}
       />
     </PageLayout>
   );

@@ -187,6 +187,79 @@ type SetupGuideProps = {
   connected: boolean;
 };
 
+const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
+  {
+    title: "Create a Google Cloud project",
+    description: (
+      <Text>
+        Go to{" "}
+        <Link href="https://console.cloud.google.com" target="_blank">
+          console.cloud.google.com
+        </Link>{" "}
+        and create a new project (or pick an existing one).
+      </Text>
+    ),
+  },
+  {
+    title: "Enable the APIs",
+    description: (
+      <Space direction="vertical" size={2}>
+        <Text>
+          In your project, go to <Text strong>APIs &amp; Services → Library</Text> and
+          enable:
+        </Text>
+        <Text>
+          <Text code>Google Sheets API</Text> — for importing data
+        </Text>
+        <Text>
+          <Text code>Google Drive API</Text> — for exporting reports
+        </Text>
+      </Space>
+    ),
+  },
+  {
+    title: "Set up the OAuth Consent Screen",
+    description: (
+      <Space direction="vertical" size={2}>
+        <Text>
+          Go to <Text strong>APIs &amp; Services → OAuth consent screen</Text>.
+        </Text>
+        <Text>
+          Choose <Text strong>External</Text> as user type, fill in your app name and
+          email, then save.
+        </Text>
+        <Text type="secondary">
+          This is a one-time setup required before creating credentials.
+        </Text>
+      </Space>
+    ),
+  },
+  {
+    title: "Create OAuth credentials",
+    description: (
+      <Space direction="vertical" size={2}>
+        <Text>
+          Go to{" "}
+          <Text strong>
+            APIs &amp; Services → Credentials → Create Credentials → OAuth client ID
+          </Text>
+          .
+        </Text>
+        <Text>
+          Application type: <Text strong>Web application</Text>.
+        </Text>
+        <Text>
+          Under <Text strong>Authorised redirect URIs</Text> add exactly:
+        </Text>
+        <Text code>http://localhost:8080/api/gdrive/callback</Text>
+        <Text>
+          Copy the <Text strong>Client ID</Text> and <Text strong>Client Secret</Text>.
+        </Text>
+      </Space>
+    ),
+  },
+];
+
 const SetupGuideContent = ({
   close,
   initialValues,
@@ -201,28 +274,36 @@ const SetupGuideContent = ({
   connected,
 }: SetupGuideProps) => {
   const { message } = App.useApp();
-  const [form] = Form.useForm();
-  const [verifyStatus, setVerifyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [clientId, setClientId] = useState(initialValues.clientId);
+  const [clientSecret, setClientSecret] = useState(initialValues.clientSecret);
+  const [sheets, setSheets] = useState<Sheet[]>(initialValues.sheets);
+  const [folderId, setFolderId] = useState(initialValues.folderId);
+  const [verifyStatus, setVerifyStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
+
+  const credsReady = !!clientId && !!clientSecret;
 
   const handleVerify = async () => {
+    if (!credsReady) {
+      setVerifyStatus("error");
+      return;
+    }
     try {
-      const clientId = form.getFieldValue('clientId');
-      const clientSecret = form.getFieldValue('clientSecret');
-      if (!clientId || !clientSecret) {
-        setVerifyStatus('error');
-        return;
-      }
       await onVerify(clientId, clientSecret);
-      setVerifyStatus('success');
+      setVerifyStatus("success");
     } catch {
-      setVerifyStatus('error');
+      setVerifyStatus("error");
     }
   };
 
   const handleSave = async () => {
-    const values = await form.validateFields();
-    await onSave(values);
-    close();
+    try {
+      await onSave({ clientId, clientSecret, sheets, folderId });
+      close();
+    } catch {
+      // toast handled upstream
+    }
   };
 
   const handleUploadTemplate = async () => {
@@ -234,163 +315,123 @@ const SetupGuideContent = ({
     }
   };
 
+  const stepItems = [
+    ...SETUP_INSTRUCTIONS,
+    {
+      title: "Paste credentials",
+      description: (
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Text>Paste your Client ID and Client Secret from Google Cloud Console.</Text>
+          <Input
+            placeholder="Client ID"
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+          />
+          <Input.Password
+            placeholder="Client Secret"
+            value={clientSecret}
+            onChange={(e) => setClientSecret(e.target.value)}
+          />
+          <Space wrap>
+            <Button onClick={handleVerify} loading={verifying} disabled={!credsReady}>
+              Verify Connection
+            </Button>
+            {verifyStatus === "success" && (
+              <Badge status="success" text="Verified" />
+            )}
+            {verifyStatus === "error" && (
+              <Badge status="error" text="Verification failed" />
+            )}
+            <Button
+              type="primary"
+              icon={<LinkOutlined />}
+              loading={connecting}
+              onClick={onConnect}
+              disabled={!credsReady}
+            >
+              Connect to Google
+            </Button>
+          </Space>
+        </Space>
+      ),
+    },
+    {
+      title: "Upload template or prepare your sheet",
+      description: (
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Text>
+            <Text strong>Option A:</Text> Auto-create a Google Sheet with the correct
+            structure.
+          </Text>
+          <Button
+            icon={<FileAddOutlined />}
+            loading={creatingTemplate}
+            disabled={!connected}
+            onClick={handleUploadTemplate}
+          >
+            Upload Template
+          </Button>
+          <Text>
+            <Text strong>Option B:</Text> Create your own sheet with tabs named exactly:{" "}
+            <Text code>Athletes</Text>, <Text code>Officials</Text>,{" "}
+            <Text code>Clubs</Text>, <Text code>Cards</Text>.
+          </Text>
+        </Space>
+      ),
+    },
+    {
+      title: "Add Google Sheets for each card",
+      description: (
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Text type="secondary">
+            Find Google Sheet ID in URL:{" "}
+            <Text code>
+              https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit
+            </Text>
+          </Text>
+          <SheetList value={sheets} onChange={setSheets} />
+          <Text type="secondary" style={{ marginTop: 8 }}>
+            Drive Folder ID (optional). Find in URL:{" "}
+            <Text code>
+              https://drive.google.com/drive/folders/<Text strong>FOLDER_ID</Text>
+            </Text>
+            . Leave blank to upload to root.
+          </Text>
+          <Input
+            placeholder="1A2B3C4D5E6F7G8H9I"
+            value={folderId}
+            onChange={(e) => setFolderId(e.target.value)}
+          />
+        </Space>
+      ),
+    },
+    {
+      title: "Save config",
+      description: (
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Text>
+            Click <Text strong>Save Config</Text> below to persist credentials and
+            sheet mappings.
+          </Text>
+          <Space>
+            <Button type="primary" onClick={handleSave} loading={saving}>
+              Save Config
+            </Button>
+            <Button onClick={() => close()} disabled={saving}>
+              Cancel
+            </Button>
+          </Space>
+        </Space>
+      ),
+    },
+  ];
+
   return (
-    <Space direction="vertical" style={{ width: "100%" }}>
-      <Form form={form} layout="vertical" initialValues={initialValues}>
-        <Steps
-          direction="vertical"
-          size="small"
-          items={[
-            {
-              title: "Create a Google Cloud project",
-              description: (
-                <Space direction="vertical" size={2}>
-                  <Text>Go to <Link href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</Link> and create a new project (or pick an existing one).</Text>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Enable the APIs",
-              description: (
-                <Space direction="vertical" size={2}>
-                  <Text>In your project, go to <Text strong>APIs &amp; Services → Library</Text> and enable:</Text>
-                  <Text><Text code>Google Sheets API</Text> — for importing data</Text>
-                  <Text><Text code>Google Drive API</Text> — for exporting reports</Text>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Set up the OAuth Consent Screen",
-              description: (
-                <Space direction="vertical" size={2}>
-                  <Text>Go to <Text strong>APIs &amp; Services → OAuth consent screen</Text>.</Text>
-                  <Text>Choose <Text strong>External</Text> as user type, fill in your app name and email, then save.</Text>
-                  <Text type="secondary">This is a one-time setup required before creating credentials.</Text>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Create OAuth credentials",
-              description: (
-                <Space direction="vertical" size={2}>
-                  <Text>Go to <Text strong>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</Text>.</Text>
-                  <Text>Application type: <Text strong>Web application</Text>.</Text>
-                  <Text>Under <Text strong>Authorised redirect URIs</Text> add exactly:</Text>
-                  <Text code>http://localhost:8080/api/gdrive/callback</Text>
-                  <Text>Copy the <Text strong>Client ID</Text> and <Text strong>Client Secret</Text>.</Text>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Paste credentials below",
-              description: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                  <Space direction="vertical" size={2}>
-                    <Text>Paste your Client ID and Client Secret from Google Cloud Console:</Text>
-                  </Space>
-                  <Form.Item label="Client ID" name="clientId">
-                    <Input placeholder="from Google Cloud Console" />
-                  </Form.Item>
-                  <Form.Item label="Client Secret" name="clientSecret">
-                    <Input.Password placeholder="from Google Cloud Console" />
-                  </Form.Item>
-                  <Form.Item label=" ">
-                    <Space direction="vertical" style={{ width: "100%" }}>
-                      <Space>
-                        <Button
-                          onClick={handleVerify}
-                          loading={verifying}
-                        >
-                          Verify Connection
-                        </Button>
-                        {verifyStatus === 'success' && <Badge status="success" text="Verified" />}
-                        {verifyStatus === 'error' && <Badge status="error" text="Verification failed" />}
-                      </Space>
-                      <Button
-                        type="primary"
-                        icon={<LinkOutlined />}
-                        loading={connecting}
-                        onClick={onConnect}
-                        disabled={!form.getFieldValue('clientId') || !form.getFieldValue('clientSecret')}
-                      >
-                        Connect to Google
-                      </Button>
-                    </Space>
-                  </Form.Item>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Upload template or prepare your sheet",
-              description: (
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space direction="vertical" size={2}>
-                    <Text><Text strong>Option A:</Text> Auto-create a Google Sheet with the correct structure:</Text>
-                  </Space>
-                  <Button
-                    icon={<FileAddOutlined />}
-                    loading={creatingTemplate}
-                    disabled={!connected}
-                    onClick={handleUploadTemplate}
-                  >
-                    Upload Template
-                  </Button>
-                  <Space direction="vertical" size={2}>
-                    <Text><Text strong>Option B:</Text> Create your own sheet with tabs named exactly: <Text code>Athletes</Text>, <Text code>Officials</Text>, <Text code>Clubs</Text>, <Text code>Cards</Text>.</Text>
-                  </Space>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Add Google Sheets for each card",
-              description: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                  <Space direction="vertical" size={2}>
-                    <Text>Add one Google Sheet per card. Each sheet must have tabs named exactly: <Text code>Athletes</Text>, <Text code>Officials</Text>, <Text code>Clubs</Text>, <Text code>Cards</Text>.</Text>
-                    <Text type="secondary">Find your Google Sheet ID in the spreadsheet URL: <Text code>https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit</Text></Text>
-                  </Space>
-                  <Form.Item label="Google Sheets" name="sheets">
-                    <SheetList />
-                  </Form.Item>
-                  <Space direction="vertical" size={2} style={{ width: "100%" }}>
-                    <Text>Find your Drive Folder ID in the folder URL (optional):</Text>
-                    <Text code>https://drive.google.com/drive/folders/<Text strong>FOLDER_ID</Text></Text>
-                    <Text type="secondary">Leave blank to upload to root.</Text>
-                  </Space>
-                  <Form.Item
-                    label="Drive Folder ID (optional)"
-                    name="folderId"
-                    extra="Leave blank to upload to root. Get the ID from the folder URL."
-                  >
-                    <Input placeholder="1A2B3C4D5E6F7G8H9I" />
-                  </Form.Item>
-                </Space>
-              ),
-              status: "process",
-            },
-            {
-              title: "Save config and connect",
-              description: (
-                <Text>Click <Text strong>Save Config</Text> below, then <Text strong>Connect to Google</Text>. A browser tab opens — sign in and grant access. You'll be redirected back here.</Text>
-              ),
-              status: "process",
-            },
-          ]}
-        />
-      </Form>
-      <Space style={{ marginTop: 16 }}>
-        <Button type="primary" onClick={handleSave} loading={saving}>
-          Save Config
-        </Button>
-        <Button onClick={close}>Cancel</Button>
-      </Space>
-    </Space>
+    <Steps
+      direction="vertical"
+      size="small"
+      items={stepItems.map((s) => ({ ...s, status: "process" as const }))}
+    />
   );
 };
 
