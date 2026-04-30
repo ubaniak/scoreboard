@@ -20,4 +20,5 @@ type Bout struct {
 	BoutType       string
 	RedAthleteID   *uint
 	BlueAthleteID  *uint
+	RoundEndedOn   *int
 }

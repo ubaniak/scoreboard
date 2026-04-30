@@ -110,6 +110,7 @@ type GetBoutResponse struct {
 	BoutType       string             `json:"boutType"`
 	RedAthleteID   *uint              `json:"redAthleteId,omitempty"`
 	BlueAthleteID  *uint              `json:"blueAthleteId,omitempty"`
+	RoundEndedOn   *int               `json:"roundEndedOn,omitempty"`
 }
 
 func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
@@ -141,6 +142,7 @@ func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, ro
 		BoutType:       string(entity.BoutType),
 		RedAthleteID:   entity.RedAthleteID,
 		BlueAthleteID:  entity.BlueAthleteID,
+		RoundEndedOn:   entity.RoundEndedOn,
 	}
 }
 

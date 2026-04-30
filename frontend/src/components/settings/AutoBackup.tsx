@@ -142,6 +142,10 @@ export const AutoBackup = ({ token }: TokenBase) => {
         <Text>{cfg?.enabled ? "Enabled — backs up when each bout starts" : "Disabled"}</Text>
       </Space>
 
+      <Text type="secondary" style={{ fontSize: 12 }}>
+        Only the latest 4 backups are retained; older backups are deleted automatically.
+      </Text>
+
       <div style={{ marginTop: 8 }}>
         <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>
           Backup directory

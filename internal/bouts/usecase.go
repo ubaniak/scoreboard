@@ -136,7 +136,12 @@ func (uc *useCase) Delete(cardId, id uint) error {
 }
 
 func (uc *useCase) MakeDecision(cardId, boutId uint, winner, decision, comment string) error {
-	err := uc.Update(cardId, boutId, &entities.UpdateBout{Decision: &decision, Winner: &winner})
+	update := &entities.UpdateBout{Decision: &decision, Winner: &winner}
+	if currentRound, err := uc.roundUseCase.Current(boutId); err == nil && currentRound != nil {
+		roundNumber := currentRound.RoundNumber
+		update.RoundEndedOn = &roundNumber
+	}
+	err := uc.Update(cardId, boutId, update)
 	if err != nil {
 		return err
 	}

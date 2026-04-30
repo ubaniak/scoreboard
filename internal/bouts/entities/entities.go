@@ -117,6 +117,7 @@ type Bout struct {
 	BoutType       BoutType
 	RedAthleteID   *uint
 	BlueAthleteID  *uint
+	RoundEndedOn   *int
 }
 
 type UpdateBout struct {
@@ -134,4 +135,5 @@ type UpdateBout struct {
 	BoutType       *BoutType
 	RedAthleteID   **uint
 	BlueAthleteID  **uint
+	RoundEndedOn   *int
 }

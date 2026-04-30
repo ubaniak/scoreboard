@@ -116,7 +116,27 @@ func (uc *useCase) CreateBackup() error {
 		})
 	}
 
+	if err := zw.Close(); err != nil {
+		return err
+	}
+	if err := out.Close(); err != nil {
+		return err
+	}
+
+	uc.pruneOldBackups(maxBackups)
 	return nil
+}
+
+const maxBackups = 4
+
+func (uc *useCase) pruneOldBackups(keep int) {
+	entries, err := uc.ListBackups()
+	if err != nil {
+		return
+	}
+	for i := keep; i < len(entries); i++ {
+		_ = os.Remove(filepath.Join(uc.cfg.BackupDir, entries[i].Filename))
+	}
 }
 
 func (uc *useCase) BackupFilePath(filename string) (string, error) {

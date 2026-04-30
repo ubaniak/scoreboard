@@ -19,6 +19,8 @@ const winnerLabel = (winner: string) => {
   return winner;
 };
 
+const roundEndedOnLabel = (n?: number) => (n ? `Round ${n}` : "");
+
 function downloadBlob(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -62,6 +64,7 @@ export function downloadFullCsv(card: Card, bout: Bout, scores: ScoresByRound) {
   lines.push(csvRow(["Status", bout.status]));
   lines.push(csvRow(["Winner", winnerLabel(bout.winner)]));
   lines.push(csvRow(["Decision", decisionLabels[bout.decision] ?? bout.decision]));
+  lines.push(csvRow(["Round Ended On", roundEndedOnLabel(bout.roundEndedOn)]));
   lines.push(csvRow(["Comments", (bout.comments ?? []).join(" | ")]));
   lines.push("");
 
@@ -131,6 +134,7 @@ export function downloadPublicCsv(card: Card, bout: Bout) {
       "Glove Size",
       "Winner",
       "Decision",
+      "Round Ended On",
     ])
   );
   lines.push(
@@ -147,6 +151,7 @@ export function downloadPublicCsv(card: Card, bout: Bout) {
       bout.gloveSize,
       winnerLabel(bout.winner),
       decisionLabels[bout.decision] ?? bout.decision,
+      roundEndedOnLabel(bout.roundEndedOn),
     ])
   );
 
@@ -223,6 +228,7 @@ function resultHtml(bout: Bout) {
       <span class="label">Winner</span>
       <span class="value ${bout.winner === "red" ? "red" : bout.winner === "blue" ? "blue" : ""}">${winner}</span>
       <span class="label">Decision</span><span class="value">${decision}</span>
+      ${bout.roundEndedOn ? `<span class="label">Round Ended On</span><span class="value">${roundEndedOnLabel(bout.roundEndedOn)}</span>` : ""}
     </div>
   </div>`;
 }
@@ -316,6 +322,7 @@ const fullBoutRow = (bout: Bout) =>
     bout.status,
     winnerLabel(bout.winner),
     decisionLabels[bout.decision] ?? bout.decision,
+    roundEndedOnLabel(bout.roundEndedOn),
     (bout.comments ?? []).join(" | "),
   ]);
 
@@ -330,6 +337,7 @@ const publicBoutRow = (bout: Bout) =>
     bout.weightClass,
     winnerLabel(bout.winner),
     decisionLabels[bout.decision] ?? bout.decision,
+    roundEndedOnLabel(bout.roundEndedOn),
   ]);
 
 export function downloadCardFullCsv(card: Card, bouts: Bout[]) {
@@ -341,7 +349,7 @@ export function downloadCardFullCsv(card: Card, bouts: Bout[]) {
     csvRow([
       "Bout #", "Red Corner", "Blue Corner", "Age Category", "Gender",
       "Experience", "Weight Class", "Glove Size", "Round Length (min)",
-      "# Rounds", "# Judges", "Referee", "Status", "Winner", "Decision", "Comments",
+      "# Rounds", "# Judges", "Referee", "Status", "Winner", "Decision", "Round Ended On", "Comments",
     ])
   );
   for (const bout of bouts) lines.push(fullBoutRow(bout));
@@ -356,7 +364,7 @@ export function downloadCardPublicCsv(card: Card, bouts: Bout[]) {
   lines.push(
     csvRow([
       "Bout #", "Red Corner", "Blue Corner", "Age Category", "Gender",
-      "Experience", "Weight Class", "Winner", "Decision",
+      "Experience", "Weight Class", "Winner", "Decision", "Round Ended On",
     ])
   );
   for (const bout of bouts) lines.push(publicBoutRow(bout));
@@ -368,9 +376,9 @@ function cardBoutsTableHtml(bouts: Bout[], full: boolean) {
     ? `<th>Bout #</th><th>Red Corner</th><th>Blue Corner</th><th>Age Cat.</th>
        <th>Gender</th><th>Experience</th><th>Weight</th><th>Gloves</th>
        <th>Rnd Len</th><th>Rounds</th><th>Judges</th><th>Status</th>
-       <th>Winner</th><th>Decision</th><th>Comments</th>`
+       <th>Winner</th><th>Decision</th><th>Ended On</th><th>Comments</th>`
     : `<th>Bout #</th><th>Red Corner</th><th>Blue Corner</th><th>Age Cat.</th>
-       <th>Gender</th><th>Experience</th><th>Weight</th><th>Winner</th><th>Decision</th>`;
+       <th>Gender</th><th>Experience</th><th>Weight</th><th>Winner</th><th>Decision</th><th>Ended On</th>`;
 
   const rows = bouts
     .map((b) => {
@@ -388,6 +396,7 @@ function cardBoutsTableHtml(bouts: Bout[], full: boolean) {
           <td>${b.status}</td>
           <td class="${winnerClass}">${winner}</td>
           <td>${decision}</td>
+          <td>${roundEndedOnLabel(b.roundEndedOn)}</td>
           <td>${(b.comments ?? []).join(", ")}</td>
         </tr>`;
       }
@@ -399,6 +408,7 @@ function cardBoutsTableHtml(bouts: Bout[], full: boolean) {
         <td>${b.weightClass}</td>
         <td class="${winnerClass}">${winner}</td>
         <td>${decision}</td>
+        <td>${roundEndedOnLabel(b.roundEndedOn)}</td>
       </tr>`;
     })
     .join("");

@@ -60,6 +60,7 @@ export type Bout = {
   boutType: BoutType;
   redAthleteId?: number;
   blueAthleteId?: number;
+  roundEndedOn?: number;
 };
 
 export type RoundStatus =
