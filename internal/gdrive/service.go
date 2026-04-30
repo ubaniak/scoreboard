@@ -12,6 +12,7 @@ import (
 	sheetsAPI "google.golang.org/api/sheets/v4"
 
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	cardEntities "github.com/ubaniak/scoreboard/internal/cards/entities"
 	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
 )
 
@@ -39,6 +40,7 @@ type BoutCreator interface {
 
 type CardFinderCreator interface {
 	FindOrCreateByName(name, date string) (uint, error)
+	Get(id uint) (*cardEntities.Card, error)
 }
 
 type ReportBuilder interface {
@@ -415,6 +417,12 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 		bouts := cardBouts[key]
 		cardID, err := s.cards.FindOrCreateByName(key.name, key.date)
 		if err != nil {
+			continue
+		}
+		if existing, err := s.cards.Get(cardID); err == nil && existing != nil &&
+			existing.Status != cardEntities.CardStatusUpComing {
+			// Card already in progress, completed, or cancelled. Skip to avoid
+			// inserting duplicate bouts alongside the live ones.
 			continue
 		}
 		if numJudges, err := s.bouts.GetNumberOfJudges(cardID); err == nil {
