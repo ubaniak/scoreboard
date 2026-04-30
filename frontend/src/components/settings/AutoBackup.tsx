@@ -1,4 +1,4 @@
-import { CloudUploadOutlined, DownloadOutlined, HistoryOutlined, PoweroffOutlined } from "@ant-design/icons";
+import { CloudUploadOutlined, DownloadOutlined, FolderOpenOutlined, HistoryOutlined, PoweroffOutlined } from "@ant-design/icons";
 import { App, Button, Collapse, Input, Popconfirm, Space, Switch, Timeline, Typography } from "antd";
 import { useState } from "react";
 import {
@@ -7,6 +7,7 @@ import {
   useListBackups,
   useMutateBackupConfig,
   useMutateDeleteBackup,
+  useMutatePickBackupDir,
   useMutateRestoreBackup,
   useMutateTriggerBackup,
   useQuitApp,
@@ -32,6 +33,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
   const restoreBackup = useMutateRestoreBackup({ token });
   const deleteBackup = useMutateDeleteBackup({ token });
   const downloadBackup = useMutateDownloadBackup({ token });
+  const pickDir = useMutatePickBackupDir({ token });
   const quitApp = useQuitApp({ token });
 
   const cfg = configQuery.data;
@@ -56,6 +58,19 @@ export const AutoBackup = ({ token }: TokenBase) => {
       message.success("Backup directory saved");
     } catch {
       message.error("Failed to save backup directory");
+    }
+  };
+
+  const handleBrowse = async () => {
+    if (!cfg) return;
+    try {
+      const path = await pickDir.mutateAsync();
+      if (!path) return;
+      await saveConfig.mutateAsync({ ...cfg, backupDir: path });
+      setDirDraft(undefined);
+      message.success("Backup directory saved");
+    } catch {
+      message.error("Failed to pick directory");
     }
   };
 
@@ -137,6 +152,13 @@ export const AutoBackup = ({ token }: TokenBase) => {
             onChange={(e) => setDirDraft(e.target.value)}
             placeholder="~/.scoreboard/backup"
           />
+          <Button
+            icon={<FolderOpenOutlined />}
+            onClick={handleBrowse}
+            loading={pickDir.isPending}
+          >
+            Browse
+          </Button>
           <Button
             onClick={handleSaveDir}
             disabled={dirDraft === undefined}

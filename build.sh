@@ -40,8 +40,13 @@ for TARGET in "${TARGETS[@]}"; do
   fi
 
   echo "Building ${OS}/${ARCH}..."
-  # Disable CGO for cross-compilation to non-native targets
-  CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -o "${OUT_DIR}/${BIN}" ./cmd
+  # darwin native build needs CGO (systray + native dialog); other targets cross-compile without CGO
+  if [ "$OS" = "darwin" ]; then
+    CGO=1
+  else
+    CGO=0
+  fi
+  CGO_ENABLED=$CGO GOOS="$OS" GOARCH="$ARCH" go build -o "${OUT_DIR}/${BIN}" ./cmd
 done
 
 echo ""

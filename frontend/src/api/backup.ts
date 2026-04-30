@@ -103,6 +103,20 @@ export const useMutateRestoreBackup = ({ token }: TokenBase) =>
       }),
   });
 
+export const useMutatePickBackupDir = ({ token }: TokenBase) =>
+  useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/api/backup/pick-dir`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 204) return null;
+      if (!res.ok) throw new Error("Picker failed");
+      const json = await res.json();
+      return (json?.data?.path ?? json?.path ?? null) as string | null;
+    },
+  });
+
 export const useQuitApp = ({ token }: TokenBase) =>
   useMutation({
     mutationFn: () =>

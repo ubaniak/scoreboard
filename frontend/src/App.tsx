@@ -27,6 +27,7 @@ import { JudgePage } from "./pages/judge";
 import { LoginPage } from "./pages/login";
 import { ScoreboardPage } from "./pages/scoreboard";
 import { SetupPage } from "./pages/setup";
+import { SettingsPage } from "./pages/settings";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -73,6 +74,11 @@ const routeTree = rootRoute.addChildren([
       getParentRoute: () => protectedLayoutRoute,
       path: "/judge",
       component: JudgePage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/settings",
+      component: SettingsPage,
     }),
   ]),
   scoreboardRoute,

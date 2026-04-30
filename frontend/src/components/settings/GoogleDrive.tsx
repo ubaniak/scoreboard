@@ -1,4 +1,5 @@
 import {
+  ArrowLeftOutlined,
   CheckCircleOutlined,
   CloudUploadOutlined,
   DisconnectOutlined,
@@ -31,7 +32,6 @@ import {
 } from "antd";
 import type { TreeDataNode } from "antd";
 import { useState } from "react";
-import { ActionMenu } from "../actionMenu/actionMenu";
 import {
   useGetGDriveAuthUrl,
   useGetGDriveConfig,
@@ -427,11 +427,13 @@ const SetupGuideContent = ({
   ];
 
   return (
-    <Steps
-      direction="vertical"
-      size="small"
-      items={stepItems.map((s) => ({ ...s, status: "process" as const }))}
-    />
+    <div style={{ maxHeight: 800, overflowY: "auto", paddingRight: 8 }}>
+      <Steps
+        direction="vertical"
+        size="small"
+        items={stepItems.map((s) => ({ ...s, status: "process" as const }))}
+      />
+    </div>
   );
 };
 
@@ -454,6 +456,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
   const [exportCardId, setExportCardId] = useState<string | null>(null);
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   const [importSheetId, setImportSheetId] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const handleConnect = async () => {
     try {
@@ -546,6 +549,39 @@ export const GoogleDrive = ({ token }: TokenBase) => {
     ];
   };
 
+  if (setupOpen) {
+    return (
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Flex align="center" gap={8}>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => setSetupOpen(false)}
+          />
+          <Title level={5} style={{ margin: 0 }}>How to set up Google Drive</Title>
+        </Flex>
+        <SetupGuideContent
+          close={() => setSetupOpen(false)}
+          initialValues={{
+            clientId: cfg?.clientId ?? "",
+            clientSecret: cfg?.clientSecret ?? "",
+            sheets: cfg?.sheets ?? [],
+            folderId: cfg?.folderId ?? "",
+          }}
+          onSave={handleSaveConfig}
+          onVerify={handleVerifyCredentials}
+          onConnect={handleConnect}
+          onCreateTemplate={() => createTemplate.mutateAsync()}
+          saving={saveConfig.isPending}
+          verifying={verifyCredentials.isPending}
+          connecting={getAuthUrl.isPending}
+          creatingTemplate={createTemplate.isPending}
+          connected={connected}
+        />
+      </Space>
+    );
+  }
+
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
 
@@ -560,36 +596,12 @@ export const GoogleDrive = ({ token }: TokenBase) => {
           )}
         </Flex>
         <Space>
-          <ActionMenu
-            trigger={{
-              icon: <QuestionCircleOutlined />,
-              text: "Setup guide",
-            }}
-            content={{
-              title: "How to set up Google Drive",
-              body: (close) => (
-                <SetupGuideContent
-                  close={close}
-                  initialValues={{
-                    clientId: cfg?.clientId ?? "",
-                    clientSecret: cfg?.clientSecret ?? "",
-                    sheets: cfg?.sheets ?? [],
-                    folderId: cfg?.folderId ?? "",
-                  }}
-                  onSave={handleSaveConfig}
-                  onVerify={handleVerifyCredentials}
-                  onConnect={handleConnect}
-                  onCreateTemplate={() => createTemplate.mutateAsync()}
-                  saving={saveConfig.isPending}
-                  verifying={verifyCredentials.isPending}
-                  connecting={getAuthUrl.isPending}
-                  creatingTemplate={createTemplate.isPending}
-                  connected={connected}
-                />
-              ),
-            }}
-            width={640}
-          />
+          <Button
+            icon={<QuestionCircleOutlined />}
+            onClick={() => setSetupOpen(true)}
+          >
+            Setup guide
+          </Button>
           {connected && (
             <Popconfirm
               title="Disconnect from Google Drive?"

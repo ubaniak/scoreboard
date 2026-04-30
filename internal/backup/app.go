@@ -27,6 +27,20 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("backup.delete", "/delete", http.MethodPost, a.Delete, rbac.Admin)
 	sr.AddRoute("backup.download", "/download", http.MethodGet, a.Download, rbac.Admin)
 	sr.AddRoute("backup.quit", "/quit", http.MethodPost, a.Quit, rbac.Admin)
+	sr.AddRoute("backup.pickdir", "/pick-dir", http.MethodPost, a.PickDir, rbac.Admin)
+}
+
+func (a *App) PickDir(w http.ResponseWriter, r *http.Request) {
+	dir, cancelled, err := pickDirectory()
+	if err != nil {
+		http.Error(w, "picker failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if cancelled {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	presenters.NewHTTPPresenter[map[string]string](r, w).WithData(map[string]string{"path": dir}).Present()
 }
 
 // TriggerIfEnabled is called by the bouts hook when a bout starts.
