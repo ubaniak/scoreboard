@@ -635,6 +635,16 @@ func (h *App) ScoreReady(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	bout, _, _, err := h.useCase.Get(cardId, boutId)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if bout.BoutType != entities.BoutTypeScored {
+		presenter.WithError(fmt.Errorf("cannot score %s bout", bout.BoutType)).Present()
+		return
+	}
+
 	role, ok := rbac.GetRoleFromCtx(r.Context())
 	if !ok {
 		presenter.WithError(errors.New("unknown role")).Present()
@@ -697,6 +707,16 @@ func (h *App) Score(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	bout, _, _, err := h.useCase.Get(cardId, boutId)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if bout.BoutType != entities.BoutTypeScored {
+		presenter.WithError(fmt.Errorf("cannot score %s bout", bout.BoutType)).Present()
+		return
+	}
+
 	role, ok := rbac.GetRoleFromCtx(r.Context())
 	if !ok {
 		presenter.WithError(errors.New("unknown role")).Present()
@@ -753,6 +773,16 @@ func (h *App) ScoreComplete(w http.ResponseWriter, r *http.Request) {
 	roundNumber, err := muxutils.ParseVars[int](vars, "roundNumber")
 	if err != nil {
 		presenter.WithError(err).Present()
+		return
+	}
+
+	bout, _, _, err := h.useCase.Get(cardId, boutId)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	if bout.BoutType != entities.BoutTypeScored {
+		presenter.WithError(fmt.Errorf("cannot score %s bout", bout.BoutType)).Present()
 		return
 	}
 

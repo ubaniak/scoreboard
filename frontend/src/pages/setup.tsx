@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { App, Button, Space, Steps, Typography } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutateSetup, useSetupStatus } from "../api/setup";
 
 const { Title, Text, Paragraph } = Typography;
@@ -12,24 +12,36 @@ export const SetupPage = () => {
   const { mutateAsync: doSetup, isPending } = useMutateSetup();
   const [adminCode, setAdminCode] = useState<string | null>(null);
 
-  if (status && !status.required) {
-    navigate({ to: "/login" });
-    return null;
-  }
+  useEffect(() => {
+    if (status && !status.required && !adminCode) {
+      navigate({ to: "/login" });
+    }
+  }, [status, adminCode, navigate]);
 
   const handleInit = async () => {
     try {
       const result = await doSetup();
+      try {
+        await navigator.clipboard.writeText(result.code);
+        message.success("Admin code copied to clipboard");
+      } catch {
+        message.warning("Admin code generated — copy failed, use the button below");
+      }
       setAdminCode(result.code);
     } catch {
       message.error("Setup failed — please restart the application and try again");
     }
   };
 
-  const handleCopyAndLogin = () => {
+  const handleCopyAndLogin = async () => {
     if (adminCode) {
-      navigator.clipboard.writeText(adminCode);
-      message.success("Code copied");
+      try {
+        await navigator.clipboard.writeText(adminCode);
+        message.success("Code copied");
+      } catch {
+        message.error("Copy failed");
+        return;
+      }
     }
     navigate({ to: "/login" });
   };
