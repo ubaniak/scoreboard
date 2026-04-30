@@ -602,8 +602,20 @@ type importBoutAdapter struct {
 	cardUC cards.UseCase
 }
 
+func (a *importBoutAdapter) Create(cardId uint, bout *boutEntities.Bout) error {
+	return a.uc.Create(cardId, bout)
+}
+
 func (a *importBoutAdapter) CreateBulk(cardId uint, boutsSlice []*boutEntities.Bout) error {
 	return a.uc.CreateBulk(cardId, boutsSlice)
+}
+
+func (a *importBoutAdapter) Update(cardId, id uint, bout *boutEntities.UpdateBout) error {
+	return a.uc.Update(cardId, id, bout)
+}
+
+func (a *importBoutAdapter) List(cardId uint) ([]*boutEntities.Bout, error) {
+	return a.uc.List(cardId)
 }
 
 func (a *importBoutAdapter) GetNumberOfJudges(cardId uint) (int, error) {

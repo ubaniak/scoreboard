@@ -34,7 +34,10 @@ type AthleteCreator interface {
 }
 
 type BoutCreator interface {
+	Create(cardId uint, bout *boutEntities.Bout) error
 	CreateBulk(cardId uint, bouts []*boutEntities.Bout) error
+	Update(cardId, id uint, bout *boutEntities.UpdateBout) error
+	List(cardId uint) ([]*boutEntities.Bout, error)
 	GetNumberOfJudges(cardId uint) (int, error)
 }
 
@@ -435,8 +438,37 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 		for _, b := range bouts {
 			b.CardID = cardID
 		}
-		if err := s.bouts.CreateBulk(cardID, bouts); err == nil {
-			imported += len(bouts)
+
+		existingByNumber := map[int]*boutEntities.Bout{}
+		if existing, err := s.bouts.List(cardID); err == nil {
+			for _, b := range existing {
+				existingByNumber[b.BoutNumber] = b
+			}
+		}
+
+		for _, b := range bouts {
+			if prev, ok := existingByNumber[b.BoutNumber]; ok {
+				upd := &boutEntities.UpdateBout{
+					Gender:        &b.Gender,
+					GloveSize:     &b.GloveSize,
+					RoundLength:   &b.RoundLength,
+					AgeCategory:   &b.AgeCategory,
+					Experience:    &b.Experience,
+					BoutType:      &b.BoutType,
+					RedAthleteID:  &b.RedAthleteID,
+					BlueAthleteID: &b.BlueAthleteID,
+				}
+				if b.NumberOfJudges != 0 {
+					upd.NumberOfJudges = &b.NumberOfJudges
+				}
+				if err := s.bouts.Update(cardID, prev.ID, upd); err == nil {
+					imported++
+				}
+				continue
+			}
+			if err := s.bouts.Create(cardID, b); err == nil {
+				imported++
+			}
 		}
 	}
 	return imported
