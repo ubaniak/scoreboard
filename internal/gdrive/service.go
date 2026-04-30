@@ -29,6 +29,7 @@ type ClubCreator interface {
 
 type AthleteCreator interface {
 	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
+	FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error)
 }
 
 type BoutCreator interface {
@@ -251,6 +252,7 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		clubIdx := colIdx(hdr, "Club")
+		provinceIdx := colIdx(hdr, "Province")
 		for _, row := range rows {
 			name := cell(row, nameIdx)
 			if name == "" {
@@ -262,7 +264,13 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 					clubID = &id
 				}
 			}
-			if _, err := s.athletes.FindOrCreateByNameAndClub(name, clubID); err == nil {
+			var provinceID *uint
+			if provinceName := cell(row, provinceIdx); provinceName != "" {
+				if id, err := s.clubs.FindOrCreateProvince(provinceName); err == nil {
+					provinceID = &id
+				}
+			}
+			if _, err := s.athletes.FindOrCreateByNameClubProvince(name, clubID, provinceID); err == nil {
 				res.Athletes++
 			}
 		}
@@ -329,9 +337,7 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 	boutNumIdx := colIdx(hdr, "Bout Number")
 	boutTypeIdx := colIdx(hdr, "Bout Type")
 	redAthleteIdx := colIdx(hdr, "Red Athlete")
-	redClubIdx := colIdx(hdr, "Red Club")
 	blueAthleteIdx := colIdx(hdr, "Blue Athlete")
-	blueClubIdx := colIdx(hdr, "Blue Club")
 	ageCatIdx := colIdx(hdr, "Age Category")
 	expIdx := colIdx(hdr, "Experience")
 	genderIdx := colIdx(hdr, "Gender")
@@ -391,24 +397,12 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 		}
 
 		if redName := cell(row, redAthleteIdx); redName != "" {
-			var clubID *uint
-			if redClub := cell(row, redClubIdx); redClub != "" {
-				if id, err := s.clubs.FindOrCreateByName(redClub); err == nil {
-					clubID = &id
-				}
-			}
-			if id, err := s.athletes.FindOrCreateByNameAndClub(redName, clubID); err == nil {
+			if id, err := s.athletes.FindOrCreateByNameAndClub(redName, nil); err == nil {
 				bout.RedAthleteID = &id
 			}
 		}
 		if blueName := cell(row, blueAthleteIdx); blueName != "" {
-			var clubID *uint
-			if blueClub := cell(row, blueClubIdx); blueClub != "" {
-				if id, err := s.clubs.FindOrCreateByName(blueClub); err == nil {
-					clubID = &id
-				}
-			}
-			if id, err := s.athletes.FindOrCreateByNameAndClub(blueName, clubID); err == nil {
+			if id, err := s.athletes.FindOrCreateByNameAndClub(blueName, nil); err == nil {
 				bout.BlueAthleteID = &id
 			}
 		}
@@ -626,9 +620,9 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 		{
 			name: "Athletes",
 			rows: [][]any{
-				{"Name", "Age Category", "Nationality", "Club"},
-				{"Jane Smith", "Elite", "NZL", "City Boxing"},
-				{"Mark Jones", "U17", "NZL", "North Stars"},
+				{"Name", "Age Category", "Nationality", "Club", "Province"},
+				{"Jane Smith", "Elite", "NZL", "City Boxing", "Auckland"},
+				{"Mark Jones", "U17", "NZL", "North Stars", "Wellington"},
 			},
 		},
 		{
@@ -643,12 +637,12 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			rows: [][]any{
 				{
 					"Card Name", "Date", "Bout Number", "Bout Type",
-					"Red Athlete", "Red Club", "Blue Athlete", "Blue Club",
+					"Red Athlete", "Blue Athlete",
 					"Age Category", "Experience", "Gender", "Round Length", "Glove Size",
 				},
 				{
 					"Test Card", "2026-05-01", 1, "scored",
-					"Jane Smith", "City Boxing", "Mark Jones", "North Stars",
+					"Jane Smith", "Mark Jones",
 					"Elite", "novice", "female", "3", "10oz",
 				},
 			},

@@ -11,6 +11,7 @@ type UseCase interface {
 	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) error
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
+	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -35,6 +36,35 @@ func (uc *useCase) FindOrCreateByNameAndClub(name string, clubAffiliationID *uin
 		return matches[0].ID, nil
 	}
 	if err := uc.storage.Create(&entities.Athlete{Name: name, ClubAffiliationID: clubAffiliationID}); err != nil {
+		return 0, err
+	}
+	created, err := uc.storage.FindByName(name)
+	if err != nil || len(created) == 0 {
+		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
+	}
+	return created[len(created)-1].ID, nil
+}
+
+func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error) {
+	matches, err := uc.storage.FindByName(name)
+	if err != nil {
+		return 0, err
+	}
+	if len(matches) > 0 {
+		existing := matches[0]
+		if provinceAffiliationID != nil && existing.ProvinceAffiliationID == nil {
+			pid := provinceAffiliationID
+			if err := uc.storage.Update(existing.ID, &entities.UpdateAthlete{ProvinceAffiliationID: &pid}); err != nil {
+				return 0, err
+			}
+		}
+		return existing.ID, nil
+	}
+	if err := uc.storage.Create(&entities.Athlete{
+		Name:                  name,
+		ClubAffiliationID:     clubAffiliationID,
+		ProvinceAffiliationID: provinceAffiliationID,
+	}); err != nil {
 		return 0, err
 	}
 	created, err := uc.storage.FindByName(name)
