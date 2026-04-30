@@ -13,6 +13,7 @@ type Storage interface {
 	ListByType(affiliationType entities.AffiliationType) ([]entities.Affiliation, error)
 	Get(id uint) (*entities.Affiliation, error)
 	FindByNameAndType(name string, affiliationType entities.AffiliationType) (*entities.Affiliation, error)
+	FindByName(name string) (*entities.Affiliation, error)
 	Update(id uint, toUpdate *entities.UpdateAffiliation) error
 	Delete(id uint) error
 	SetImageUrl(id uint, url string) error

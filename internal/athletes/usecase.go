@@ -52,9 +52,17 @@ func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID
 	}
 	if len(matches) > 0 {
 		existing := matches[0]
-		if provinceAffiliationID != nil && existing.ProvinceAffiliationID == nil {
+		upd := &entities.UpdateAthlete{}
+		if clubAffiliationID != nil {
+			cid := clubAffiliationID
+			upd.ClubAffiliationID = &cid
+		}
+		if provinceAffiliationID != nil {
 			pid := provinceAffiliationID
-			if err := uc.storage.Update(existing.ID, &entities.UpdateAthlete{ProvinceAffiliationID: &pid}); err != nil {
+			upd.ProvinceAffiliationID = &pid
+		}
+		if upd.ClubAffiliationID != nil || upd.ProvinceAffiliationID != nil {
+			if err := uc.storage.Update(existing.ID, upd); err != nil {
 				return 0, err
 			}
 		}

@@ -32,11 +32,17 @@ func (u *useCaseImpl) Create(name string, affiliationType entities.AffiliationTy
 }
 
 func (u *useCaseImpl) FindOrCreate(name string, affiliationType entities.AffiliationType) (uint, error) {
-	existing, err := u.storage.FindByNameAndType(name, affiliationType)
+	existing, err := u.storage.FindByName(name)
 	if err != nil {
 		return 0, err
 	}
 	if existing != nil {
+		if existing.Type != affiliationType {
+			t := affiliationType
+			if err := u.storage.Update(existing.ID, &entities.UpdateAffiliation{Type: &t}); err != nil {
+				return 0, err
+			}
+		}
 		return existing.ID, nil
 	}
 	aff := &entities.Affiliation{

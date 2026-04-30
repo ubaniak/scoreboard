@@ -97,6 +97,22 @@ func (s *SqliteStorage) FindByNameAndType(name string, affiliationType entities.
 	}, nil
 }
 
+func (s *SqliteStorage) FindByName(name string) (*entities.Affiliation, error) {
+	var model Affiliation
+	if err := s.db.Where("name = ? AND deleted_at IS NULL", name).First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &entities.Affiliation{
+		ID:       model.ID,
+		Name:     model.Name,
+		Type:     entities.AffiliationType(model.Type),
+		ImageUrl: model.ImageUrl,
+	}, nil
+}
+
 func (s *SqliteStorage) Update(id uint, toUpdate *entities.UpdateAffiliation) error {
 	updates := map[string]interface{}{}
 	if toUpdate.Name != nil {

@@ -49,14 +49,18 @@ var _ = Describe("Affiliations Usecase", func() {
 			Expect(id1).To(Equal(id2))
 		})
 
-		It("creates separate affiliations for different types with same name", func() {
+		It("collapses same name across types and updates type on the existing row", func() {
 			idClub, err := useCase.FindOrCreate("Canada", entities.AffiliationTypeClub)
 			Expect(err).NotTo(HaveOccurred())
 
 			idNation, err := useCase.FindOrCreate("Canada", entities.AffiliationTypeNation)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(idClub).NotTo(Equal(idNation))
+			Expect(idClub).To(Equal(idNation))
+
+			aff, err := useCase.Get(idClub)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(aff.Type).To(Equal(entities.AffiliationTypeNation))
 		})
 	})
 
