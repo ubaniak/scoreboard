@@ -20,13 +20,11 @@ import {
 } from "../api/bouts";
 import { useGetCardById } from "../api/cards";
 import { baseUrl } from "../api/constants";
-import { useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { isApisLoading } from "../api/handlers";
 import { useGetOfficials } from "../api/officials";
 import { useGetScores } from "../api/score";
 import { BoutIndex } from "../components/bout";
 import { CardSummary } from "../components/cards/summery";
-import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { ApiLoading } from "../components/loading/Apiloading";
 import type { Bout } from "../entities/cards";
 import { PageLayout } from "../layouts/page";
@@ -74,10 +72,6 @@ export const BoutPage = () => {
   }, [bouts.isLoading, boutId, boutList]);
 
   const fouls = useGetFouls({ token, cardId });
-
-  const judgeDevices = useJudgeDevices({ token });
-  const generateCode = useMutationGenerateCode({ token });
-  const { data: deviceBaseUrl } = useGetBaseUrl({ token });
 
   const [roundNumber, setRoundNumber] = useState(1);
 
@@ -182,14 +176,6 @@ export const BoutPage = () => {
           >
             Bout {nextBout?.boutNumber}
           </Button>
-          <DeviceQuickLook
-            requiredJudges={bout.data?.numberOfJudges ?? 5}
-            devices={judgeDevices.data || []}
-            baseUrl={deviceBaseUrl}
-            onRefreshCode={(values) => {
-              generateCode.mutate(values);
-            }}
-          />
         </Space>
       }
       title={
@@ -200,6 +186,7 @@ export const BoutPage = () => {
       subTitle={
         <CardSummary card={card.data!} />
       }
+      requiredJudges={bout.data?.numberOfJudges ?? 5}
       breadCrumbs={[
         { title: <a href="/">home</a> },
         { title: <a href={`/card/${cardId}`}>card</a> },

@@ -1,3 +1,5 @@
+import { useTheme } from "../../theme";
+
 type CornerHalfProps = {
   corner: "red" | "blue";
   name: string;
@@ -7,13 +9,10 @@ type CornerHalfProps = {
   onTap: () => void;
 };
 
-const CONFIG = {
-  red:  { background: "#991b1b", label: "Red Corner" },
-  blue: { background: "#1d4ed8", label: "Blue Corner" },
-};
-
 export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: CornerHalfProps) => {
-  const { background, label } = CONFIG[corner];
+  const { colors } = useTheme();
+  const background = corner === "red" ? colors.red : colors.blue;
+  const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (
     <button

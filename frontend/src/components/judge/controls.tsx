@@ -2,6 +2,7 @@ import { Button } from "antd";
 import { useState } from "react";
 import type { Controls } from ".";
 import type { Current } from "../../entities/current";
+import { useTheme } from "../../theme";
 import { CornerHalf } from "./CornerHalf";
 import { MarginDrawer } from "./MarginDrawer";
 
@@ -17,6 +18,7 @@ export type ScoreControlsProps = {
 };
 
 export const ScoreControls = (props: ScoreControlsProps) => {
+  const { colors } = useTheme();
   const [pendingWinner, setPendingWinner] = useState<Winner | null>(null);
   const [selected, setSelected] = useState<{ winner: Winner; margin: Margin } | null>(null);
 
@@ -81,8 +83,8 @@ export const ScoreControls = (props: ScoreControlsProps) => {
             top: 16,
             left: "50%",
             transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.45)",
-            color: "rgba(255,255,255,0.75)",
+            background: colors.bgElevated,
+            color: colors.textMuted,
             padding: "4px 20px",
             borderRadius: 20,
             fontSize: 11,
@@ -102,7 +104,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
             bottom: 40,
             left: "50%",
             transform: `translateX(-50%) translateY(${selected ? "-80px" : "0"})`,
-            color: "rgba(255,255,255,0.35)",
+            color: colors.textFaint,
             fontSize: 11,
             letterSpacing: 3,
             textTransform: "uppercase",
@@ -132,8 +134,8 @@ export const ScoreControls = (props: ScoreControlsProps) => {
               disabled={props.submitted}
               onClick={() => props.controls.complete()}
               style={{
-                background: props.submitted ? "rgba(255,255,255,0.1)" : "white",
-                color: props.submitted ? "rgba(255,255,255,0.4)" : "#111",
+                background: props.submitted ? colors.borderSubtle : colors.text,
+                color: props.submitted ? colors.textFaint : colors.bg,
                 border: "none",
                 fontWeight: 700,
                 letterSpacing: 2,
@@ -153,7 +155,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
                   fontSize: 11,
                   letterSpacing: 2,
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.3)",
+                  color: colors.textFaint,
                   cursor: "pointer",
                   background: "none",
                   border: "none",

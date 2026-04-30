@@ -1,6 +1,7 @@
 import { Breadcrumb, Layout, Space, Typography } from "antd";
 import type { ItemType } from "antd/es/breadcrumb/Breadcrumb";
 import { Content, Header } from "antd/es/layout/layout";
+import { DevicesButton } from "../components/devices/DevicesButton";
 import { SettingsButton } from "../components/settings/SettingsButton";
 import { ThemeToggle } from "../components/shared/ThemeToggle";
 import { useTheme } from "../theme";
@@ -12,6 +13,7 @@ export type PageLayoutProps = {
   action?: React.ReactNode;
   children?: React.ReactNode;
   breadCrumbs?: ItemType[];
+  requiredJudges?: number;
 };
 
 export const PageLayout = (props: PageLayoutProps) => {
@@ -67,6 +69,7 @@ export const PageLayout = (props: PageLayoutProps) => {
 
           <Space wrap>
             {props.action}
+            <DevicesButton requiredJudges={props.requiredJudges} />
             <SettingsButton />
             <ThemeToggle />
           </Space>

@@ -1,5 +1,6 @@
 import { Typography } from "antd";
 import type { Current } from "../../../entities/current";
+import { useTheme } from "../../../theme";
 
 type WaitingScreenProps = {
   role: string;
@@ -28,6 +29,7 @@ export const WaitingScreen = ({
   pickedWinner,
   onPickWinner,
 }: WaitingScreenProps) => {
+  const { colors } = useTheme();
   const roundStatus = current?.round?.status ?? "not_started";
   const message = statusMessages[roundStatus] ?? "Waiting";
   const redCorner = current?.bout?.redCorner ?? "Red";
@@ -38,7 +40,7 @@ export const WaitingScreen = ({
       style={{
         position: "fixed",
         inset: 0,
-        background: "#0b0f1a",
+        background: colors.bg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -51,16 +53,16 @@ export const WaitingScreen = ({
           fontSize: 11,
           letterSpacing: 4,
           textTransform: "uppercase",
-          color: "rgba(255,255,255,0.4)",
+          color: colors.textMuted,
         }}
       >
         {role} — {judgeName}
       </Typography.Text>
-      <Typography.Title level={3} style={{ margin: 0, color: "white" }}>
+      <Typography.Title level={3} style={{ margin: 0, color: colors.text }}>
         {message}
       </Typography.Title>
       {current?.bout && (
-        <Typography.Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 15 }}>
+        <Typography.Text style={{ color: colors.textMuted, fontSize: 15 }}>
           Bout {current.bout.boutNumber} · Round {current.round?.roundNumber ?? "—"}
         </Typography.Text>
       )}
@@ -73,7 +75,7 @@ export const WaitingScreen = ({
               fontSize: 11,
               letterSpacing: 4,
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.5)",
+              color: colors.textMuted,
               marginBottom: 16,
             }}
           >
@@ -87,7 +89,7 @@ export const WaitingScreen = ({
                 padding: "20px 36px",
                 borderRadius: 14,
                 border: "none",
-                background: "#991b1b",
+                background: colors.red,
                 color: "white",
                 fontWeight: 800,
                 fontSize: 20,
@@ -104,7 +106,7 @@ export const WaitingScreen = ({
                 padding: "20px 36px",
                 borderRadius: 14,
                 border: "none",
-                background: "#1d4ed8",
+                background: colors.blue,
                 color: "white",
                 fontWeight: 800,
                 fontSize: 20,
@@ -123,7 +125,7 @@ export const WaitingScreen = ({
         className="judge-text-btn"
         style={{
           fontSize: 11,
-          color: "rgba(255,255,255,0.25)",
+          color: colors.textFaint,
           marginTop: 32,
           cursor: "pointer",
           letterSpacing: 2,

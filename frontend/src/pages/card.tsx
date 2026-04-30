@@ -15,7 +15,6 @@ import {
   useMutateUpdateCardStatus,
   useMutateUpdateCards,
 } from "../api/cards";
-import { useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { BoutsIndex } from "../components/bouts";
@@ -25,7 +24,6 @@ import { CardControls } from "../components/cards/cardControls";
 import { CardExports } from "../components/cards/CardExports";
 import { JudgeConsistency } from "../components/cards/JudgeConsistency";
 import { CardSummary } from "../components/cards/summery";
-import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
@@ -38,10 +36,6 @@ export const CardPage = () => {
   const card = useGetCardById({ token, cardId });
   const athletes = useListAthletes({ token });
   const auditLogs = useGetAuditLogs({ token, cardId });
-
-  const judgeDevices = useJudgeDevices({ token });
-  const generateCode = useMutationGenerateCode({ token });
-  const { data: baseUrl } = useGetBaseUrl({ token });
 
   const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
@@ -75,21 +69,10 @@ export const CardPage = () => {
   return (
     <PageLayout
       title="Card details"
-      subTitle={
-        <>
-          <CardSummary card={card.data} />
-          <DeviceQuickLook
-            requiredJudges={Math.max(
-              ...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]),
-            )}
-            devices={judgeDevices.data || []}
-            baseUrl={baseUrl}
-            onRefreshCode={(values) => {
-              generateCode.mutate(values);
-            }}
-          />
-        </>
-      }
+      subTitle={<CardSummary card={card.data} />}
+      requiredJudges={Math.max(
+        ...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]),
+      )}
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
       action={
         <div style={{ display: "flex", gap: 8 }}>

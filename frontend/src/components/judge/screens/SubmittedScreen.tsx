@@ -1,4 +1,5 @@
 import { Typography } from "antd";
+import { useTheme } from "../../../theme";
 
 type SubmittedScreenProps = {
   role: string;
@@ -6,12 +7,14 @@ type SubmittedScreenProps = {
 };
 
 export const SubmittedScreen = ({ role, judgeName }: SubmittedScreenProps) => {
+  const { colors } = useTheme();
+
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "#0b0f1a",
+        background: colors.bg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -24,18 +27,18 @@ export const SubmittedScreen = ({ role, judgeName }: SubmittedScreenProps) => {
           fontSize: 11,
           letterSpacing: 4,
           textTransform: "uppercase",
-          color: "rgba(255,255,255,0.4)",
+          color: colors.textMuted,
         }}
       >
         {role} — {judgeName}
       </Typography.Text>
-      <Typography.Title level={3} style={{ margin: 0, color: "white" }}>
+      <Typography.Title level={3} style={{ margin: 0, color: colors.text }}>
         Scores Submitted
       </Typography.Title>
       <Typography.Text
         style={{
           fontSize: 13,
-          color: "rgba(255,255,255,0.35)",
+          color: colors.textFaint,
           letterSpacing: 1,
         }}
       >
