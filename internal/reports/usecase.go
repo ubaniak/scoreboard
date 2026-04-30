@@ -1,12 +1,12 @@
 package reports
 
 import (
-	"math"
 	"sort"
 
 	athleteEntities "github.com/ubaniak/scoreboard/internal/athletes/entities"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	cardEntities "github.com/ubaniak/scoreboard/internal/cards/entities"
+	"github.com/ubaniak/scoreboard/internal/scores"
 	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
 )
 
@@ -93,13 +93,7 @@ type ReportData struct {
 	Bouts    []BoutData
 }
 
-type JudgeConsistencyRow struct {
-	JudgeName    string
-	TotalRed     int
-	TotalBlue    int
-	AvgDeviation float64
-	AgreementPct float64
-}
+type JudgeConsistencyRow = scores.JudgeConsistencyRow
 
 type ConsistencyReport struct {
 	CardName string
@@ -200,115 +194,28 @@ func (uc *useCase) PublicReport(cardId uint) (*ReportData, error) {
 }
 
 func (uc *useCase) ConsistencyReport(cardId uint) (*ConsistencyReport, error) {
-	rd, err := uc.buildReportData(cardId)
+	card, err := uc.cards.Get(cardId)
 	if err != nil {
 		return nil, err
 	}
 
-	type judgeStat struct {
-		totalRed   int
-		totalBlue  int
-		deviations []float64
-		agreed     int
-		total      int
-	}
-	stats := map[string]*judgeStat{}
-
-	for _, bout := range rd.Bouts {
-		// Group scores by round
-		byRound := map[int][]BoutScore{}
-		for _, s := range bout.Scores {
-			byRound[s.Round] = append(byRound[s.Round], s)
-		}
-
-		for _, roundScores := range byRound {
-			if len(roundScores) == 0 {
-				continue
-			}
-
-			// Mean scores across all judges this round
-			var sumRed, sumBlue float64
-			for _, s := range roundScores {
-				sumRed += float64(s.Red)
-				sumBlue += float64(s.Blue)
-			}
-			n := float64(len(roundScores))
-			meanRed := sumRed / n
-			meanBlue := sumBlue / n
-
-			// Majority winner this round
-			redWins, blueWins := 0, 0
-			for _, s := range roundScores {
-				if s.Red > s.Blue {
-					redWins++
-				} else if s.Blue > s.Red {
-					blueWins++
-				}
-			}
-			var majority string
-			if redWins > blueWins {
-				majority = "red"
-			} else if blueWins > redWins {
-				majority = "blue"
-			} else {
-				majority = "draw"
-			}
-
-			for _, s := range roundScores {
-				name := s.JudgeName
-				if name == "" {
-					name = s.JudgeRole
-				}
-				if _, ok := stats[name]; !ok {
-					stats[name] = &judgeStat{}
-				}
-				st := stats[name]
-				st.totalRed += s.Red
-				st.totalBlue += s.Blue
-				dev := math.Abs(float64(s.Red)-meanRed) + math.Abs(float64(s.Blue)-meanBlue)
-				st.deviations = append(st.deviations, dev)
-				st.total++
-
-				var judgeWinner string
-				if s.Red > s.Blue {
-					judgeWinner = "red"
-				} else if s.Blue > s.Red {
-					judgeWinner = "blue"
-				} else {
-					judgeWinner = "draw"
-				}
-				if judgeWinner == majority {
-					st.agreed++
-				}
-			}
-		}
+	boutList, err := uc.bouts.List(cardId)
+	if err != nil {
+		return nil, err
 	}
 
-	result := &ConsistencyReport{CardName: rd.CardName, CardDate: rd.CardDate}
-	for name, st := range stats {
-		avgDev := 0.0
-		if len(st.deviations) > 0 {
-			sum := 0.0
-			for _, d := range st.deviations {
-				sum += d
-			}
-			avgDev = sum / float64(len(st.deviations))
+	var allScores []*scoreEntities.Score
+	for _, b := range boutList {
+		s, err := uc.scores.List(cardId, b.ID)
+		if err != nil {
+			continue
 		}
-		agreePct := 0.0
-		if st.total > 0 {
-			agreePct = float64(st.agreed) / float64(st.total) * 100
-		}
-		result.Rows = append(result.Rows, JudgeConsistencyRow{
-			JudgeName:    name,
-			TotalRed:     st.totalRed,
-			TotalBlue:    st.totalBlue,
-			AvgDeviation: avgDev,
-			AgreementPct: agreePct,
-		})
+		allScores = append(allScores, s...)
 	}
-	sort.Slice(result.Rows, func(i, j int) bool {
-		return result.Rows[i].AgreementPct > result.Rows[j].AgreementPct
-	})
 
-	return result, nil
+	return &ConsistencyReport{
+		CardName: card.Name,
+		CardDate: card.Date,
+		Rows:     scores.Consistency(allScores),
+	}, nil
 }
