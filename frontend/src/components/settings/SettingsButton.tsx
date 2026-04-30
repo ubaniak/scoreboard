@@ -4,10 +4,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useProfile } from "../../providers/login";
 
 export const SettingsButton = () => {
-  const { token } = useProfile();
+  const { token, role } = useProfile();
   const navigate = useNavigate();
 
-  if (!token) return null;
+  if (!token || role !== "admin") return null;
 
   return (
     <Button

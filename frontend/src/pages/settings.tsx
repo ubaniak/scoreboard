@@ -8,10 +8,14 @@ import { GoogleDrive } from "../components/settings/GoogleDrive";
 const { Title } = Typography;
 
 export const SettingsPage = () => {
-  const { token } = useProfile();
+  const { token, role } = useProfile();
   const navigate = useNavigate();
   const router = useRouter();
   if (!token) return null;
+  if (role !== "admin") {
+    navigate({ to: "/" });
+    return null;
+  }
 
   const handleBack = () => {
     if (router.history.length > 1) {
