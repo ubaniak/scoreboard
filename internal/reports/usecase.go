@@ -6,7 +6,6 @@ import (
 	athleteEntities "github.com/ubaniak/scoreboard/internal/athletes/entities"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	cardEntities "github.com/ubaniak/scoreboard/internal/cards/entities"
-	"github.com/ubaniak/scoreboard/internal/scores"
 	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
 )
 
@@ -39,7 +38,6 @@ type Comment struct {
 type UseCase interface {
 	FullReport(cardId uint) (*ReportData, error)
 	PublicReport(cardId uint) (*ReportData, error)
-	ConsistencyReport(cardId uint) (*ConsistencyReport, error)
 }
 
 type useCase struct {
@@ -91,14 +89,6 @@ type ReportData struct {
 	CardName string
 	CardDate string
 	Bouts    []BoutData
-}
-
-type JudgeConsistencyRow = scores.JudgeConsistencyRow
-
-type ConsistencyReport struct {
-	CardName string
-	CardDate string
-	Rows     []JudgeConsistencyRow
 }
 
 // --- builders ---
@@ -193,29 +183,3 @@ func (uc *useCase) PublicReport(cardId uint) (*ReportData, error) {
 	return uc.buildReportData(cardId)
 }
 
-func (uc *useCase) ConsistencyReport(cardId uint) (*ConsistencyReport, error) {
-	card, err := uc.cards.Get(cardId)
-	if err != nil {
-		return nil, err
-	}
-
-	boutList, err := uc.bouts.List(cardId)
-	if err != nil {
-		return nil, err
-	}
-
-	var allScores []*scoreEntities.Score
-	for _, b := range boutList {
-		s, err := uc.scores.List(cardId, b.ID)
-		if err != nil {
-			continue
-		}
-		allScores = append(allScores, s...)
-	}
-
-	return &ConsistencyReport{
-		CardName: card.Name,
-		CardDate: card.Date,
-		Rows:     scores.Consistency(allScores),
-	}, nil
-}

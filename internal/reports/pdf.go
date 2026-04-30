@@ -248,63 +248,6 @@ func WritePublicPDF(w io.Writer, rd *ReportData) error {
 	return pdf.Output(w)
 }
 
-// WriteConsistencyPDF writes the judge consistency PDF matching the old client-side layout.
-func WriteConsistencyPDF(w io.Writer, cr *ConsistencyReport) error {
-	pdf := newPDF()
-	pdf.AddPage()
-	pageHeader(pdf, "Judge Consistency Report", cr.CardName, cr.CardDate)
-
-	setFont(pdf, "B", smallFont)
-	pdf.SetFillColor(220, 220, 220)
-	cols := []float64{80, 35, 35, 65, 50}
-	hdrs := []string{"Judge", "Total Red", "Total Blue", "Avg Deviation from Panel", "Agreement with Majority (%)"}
-	for i, h := range hdrs {
-		pdf.CellFormat(cols[i], rowH, h, "1", 0, "C", true, 0, "")
-	}
-	pdf.Ln(-1)
-
-	setFont(pdf, "", smallFont)
-	for _, row := range cr.Rows {
-		pdf.CellFormat(cols[0], rowH, row.JudgeName, "1", 0, "L", false, 0, "")
-		pdf.SetTextColor(192, 57, 43)
-		pdf.CellFormat(cols[1], rowH, fmt.Sprintf("%d", row.TotalRed), "1", 0, "C", false, 0, "")
-		pdf.SetTextColor(41, 128, 185)
-		pdf.CellFormat(cols[2], rowH, fmt.Sprintf("%d", row.TotalBlue), "1", 0, "C", false, 0, "")
-		pdf.SetTextColor(0, 0, 0)
-
-		devColor := [3]int{0, 0, 0}
-		if row.AvgDeviation <= 1 {
-			devColor = [3]int{56, 158, 13}
-		} else if row.AvgDeviation > 2 {
-			devColor = [3]int{207, 19, 34}
-		}
-		pdf.SetTextColor(devColor[0], devColor[1], devColor[2])
-		pdf.CellFormat(cols[3], rowH, fmt.Sprintf("%.2f", row.AvgDeviation), "1", 0, "C", false, 0, "")
-
-		agColor := [3]int{0, 0, 0}
-		if row.AgreementPct >= 80 {
-			agColor = [3]int{56, 158, 13}
-		} else if row.AgreementPct < 60 {
-			agColor = [3]int{207, 19, 34}
-		}
-		pdf.SetTextColor(agColor[0], agColor[1], agColor[2])
-		pdf.CellFormat(cols[4], rowH, fmt.Sprintf("%.1f%%", row.AgreementPct), "1", 0, "C", false, 0, "")
-		pdf.SetTextColor(0, 0, 0)
-		pdf.Ln(-1)
-	}
-
-	// Legend
-	pdf.Ln(4)
-	setFont(pdf, "", 7.5)
-	pdf.SetTextColor(120, 120, 120)
-	pdf.MultiCell(0, 5,
-		"Avg Deviation: average absolute difference from the panel mean per round (lower = more consistent with the panel).\n"+
-			"Agreement %: percentage of rounds where the judge agreed with the majority on who won.",
-		"", "L", false)
-
-	return pdf.Output(w)
-}
-
 // helpers
 
 func uniqueRoles(scores []BoutScore) []string {

@@ -6,8 +6,6 @@ import {
   downloadCardPublicCsv,
   downloadCardFullPdf,
   downloadCardPublicPdf,
-  downloadJudgeConsistencyCsv,
-  downloadJudgeConsistencyPdf,
 } from "../../utils/boutExport";
 
 const { Text, Title } = Typography;
@@ -40,7 +38,7 @@ const ExportOption = (props: ExportOptionProps) => (
 );
 
 export const ExportCard = (props: ExportCardProps) => {
-  const { card, bouts, allBoutScores } = props;
+  const { card, bouts } = props;
 
   return (
     <Flex vertical gap={0}>
@@ -56,12 +54,6 @@ export const ExportCard = (props: ExportCardProps) => {
         description="Bout info, winner and decision only"
         onCsv={() => downloadCardPublicCsv(card, bouts)}
         onPdf={() => downloadCardPublicPdf(card, bouts)}
-      />
-      <ExportOption
-        title="Judge Consistency"
-        description="Judge names, total scores, average deviation from the panel and agreement rate across all bouts"
-        onCsv={() => downloadJudgeConsistencyCsv(card, allBoutScores)}
-        onPdf={() => downloadJudgeConsistencyPdf(card, allBoutScores)}
       />
     </Flex>
   );

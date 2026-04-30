@@ -23,8 +23,6 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("reports.full.pdf",        "/full/pdf",        "GET", a.FullPDF,        rbac.Admin)
 	rb.AddRoute("reports.public.csv",      "/public/csv",      "GET", a.PublicCSV,      rbac.Admin)
 	rb.AddRoute("reports.public.pdf",      "/public/pdf",      "GET", a.PublicPDF,      rbac.Admin)
-	rb.AddRoute("reports.consistency.csv", "/consistency/csv", "GET", a.ConsistencyCSV, rbac.Admin)
-	rb.AddRoute("reports.consistency.pdf", "/consistency/pdf", "GET", a.ConsistencyPDF, rbac.Admin)
 }
 
 func (a *App) cardId(r *http.Request) (uint, error) {
@@ -95,34 +93,3 @@ func (a *App) PublicPDF(w http.ResponseWriter, r *http.Request) {
 	WritePublicPDF(w, rd)
 }
 
-func (a *App) ConsistencyCSV(w http.ResponseWriter, r *http.Request) {
-	id, err := a.cardId(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	cr, err := a.useCase.ConsistencyReport(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", "attachment; filename=\"consistency_report.csv\"")
-	WriteConsistencyCSV(w, cr)
-}
-
-func (a *App) ConsistencyPDF(w http.ResponseWriter, r *http.Request) {
-	id, err := a.cardId(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	cr, err := a.useCase.ConsistencyReport(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "attachment; filename=\"consistency_report.pdf\"")
-	WriteConsistencyPDF(w, cr)
-}

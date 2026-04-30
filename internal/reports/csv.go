@@ -144,25 +144,3 @@ func WritePublicCSV(w io.Writer, rd *ReportData) error {
 	return cw.Error()
 }
 
-// WriteConsistencyCSV writes the judge consistency report matching the old client-side format.
-func WriteConsistencyCSV(w io.Writer, cr *ConsistencyReport) error {
-	cw := csv.NewWriter(w)
-
-	cw.Write([]string{"Card", cr.CardName})
-	cw.Write([]string{"Date", cr.CardDate})
-	cw.Write(nil)
-	cw.Write([]string{"Judge", "Total Red", "Total Blue", "Avg Deviation from Panel", "Agreement with Majority (%)"})
-
-	for _, row := range cr.Rows {
-		cw.Write([]string{
-			row.JudgeName,
-			fmt.Sprintf("%d", row.TotalRed),
-			fmt.Sprintf("%d", row.TotalBlue),
-			fmt.Sprintf("%.2f", row.AvgDeviation),
-			fmt.Sprintf("%.1f", row.AgreementPct),
-		})
-	}
-
-	cw.Flush()
-	return cw.Error()
-}

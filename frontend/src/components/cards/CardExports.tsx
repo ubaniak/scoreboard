@@ -44,17 +44,6 @@ export const CardExports = ({ cardId, token }: Props) => {
       label: "Public Report (PDF)",
       onClick: () => downloadReport(`${base}/public/pdf`, token, `card-${cardId}-public.pdf`),
     },
-    { type: "divider" as const },
-    {
-      key: "consistency-csv",
-      label: "Judge Consistency (CSV)",
-      onClick: () => downloadReport(`${base}/consistency/csv`, token, `card-${cardId}-consistency.csv`),
-    },
-    {
-      key: "consistency-pdf",
-      label: "Judge Consistency (PDF)",
-      onClick: () => downloadReport(`${base}/consistency/pdf`, token, `card-${cardId}-consistency.pdf`),
-    },
   ];
 
   return (

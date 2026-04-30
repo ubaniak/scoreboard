@@ -43,7 +43,6 @@ type CardFinderCreator interface {
 type ReportBuilder interface {
 	FullReport(cardId uint) (*reportsPackage.ReportData, error)
 	PublicReport(cardId uint) (*reportsPackage.ReportData, error)
-	ConsistencyReport(cardId uint) (*reportsPackage.ConsistencyReport, error)
 }
 
 // ImportResult summarises what was upserted.
@@ -500,27 +499,6 @@ func (s *driveService) ExportCard(ctx context.Context, cardId uint) (*ExportCard
 			pubPdfName := fmt.Sprintf("public_report_%s_%s.pdf", sanitiseName(pubRd.CardName), pubRd.CardDate)
 			if link, err := s.upload(ctx, svc, pubPdfName, &pubPdfBuf, folderID); err == nil {
 				result.Files = append(result.Files, ExportedFile{Name: pubPdfName, Link: link})
-			}
-		}
-	}
-
-	// Judge Consistency Report CSV
-	consRd, err := s.reports.ConsistencyReport(cardId)
-	if err == nil {
-		var consBuf bytes.Buffer
-		if err := reportsPackage.WriteConsistencyCSV(&consBuf, consRd); err == nil {
-			consName := fmt.Sprintf("consistency_report_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, consName, &consBuf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: consName, Link: link})
-			}
-		}
-
-		// Judge Consistency Report PDF
-		var consPdfBuf bytes.Buffer
-		if err := reportsPackage.WriteConsistencyPDF(&consPdfBuf, consRd); err == nil {
-			consPdfName := fmt.Sprintf("consistency_report_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, consPdfName, &consPdfBuf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: consPdfName, Link: link})
 			}
 		}
 	}
