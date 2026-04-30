@@ -134,6 +134,72 @@ export const useMutateOverallWinner = (
   });
 };
 
+export type JudgeRow = {
+  judgeName: string;
+  positions: string[];
+  boutsCount: number;
+  totalRed: number;
+  totalBlue: number;
+  consistencyScore: number;
+  roundAgreementPct: number;
+  overallWinnerAgreePct: number;
+  avgDeviation: number;
+};
+
+export type ScoreEntry = {
+  judgeName: string;
+  judgeRole: string;
+  red: number;
+  blue: number;
+};
+
+export type RoundEntry = {
+  roundNumber: number;
+  scores: ScoreEntry[];
+};
+
+export type OverallWinnerEntry = {
+  judgeName: string;
+  judgeRole: string;
+  winner: string;
+};
+
+export type BoutRow = {
+  boutNumber: number;
+  boutId: number;
+  redName: string;
+  blueName: string;
+  winner: string;
+  decision: string;
+  rounds: RoundEntry[];
+  overallWinners: OverallWinnerEntry[];
+};
+
+export type JudgeConsistencyReport = {
+  judges: JudgeRow[];
+  bouts: BoutRow[];
+};
+
+export const useGetJudgeConsistency = (
+  props: Partial<TokenBase> & CardRequestType,
+) => {
+  return useQuery({
+    queryKey: ["judge-consistency", props.token, props.cardId] as const,
+    queryFn: async () => {
+      return fetchClient<JudgeConsistencyReport>(
+        `${baseUrl}/api/cards/${props.cardId}/judge-consistency`,
+        {
+          headers: {
+            "Content-type": "application/json",
+            ...(props.token && { Authorization: `Bearer ${props.token}` }),
+          },
+        },
+      );
+    },
+    enabled: !!props.token && !!props.cardId,
+  });
+};
+
 export const useGetAllBoutScores = (props: TokenBase & CardRequestType & { boutIds: string[] }) => {
   return useQueries({
     queries: props.boutIds.map((boutId) => ({

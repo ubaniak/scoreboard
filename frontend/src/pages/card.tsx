@@ -1,3 +1,4 @@
+import { Tabs } from "antd";
 import { useParams } from "@tanstack/react-router";
 import { useListAthletes } from "../api/athletes";
 import { useGetAuditLogs } from "../api/auditLogs";
@@ -22,6 +23,7 @@ import { NextBout } from "../components/bouts/nextBout";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
 import { CardExports } from "../components/cards/CardExports";
+import { JudgeConsistency } from "../components/cards/JudgeConsistency";
 import { CardSummary } from "../components/cards/summery";
 import { DeviceQuickLook } from "../components/devices/DeviceQuickLook";
 import { PageLayout } from "../layouts/page";
@@ -109,17 +111,33 @@ export const CardPage = () => {
         />
       )}
       <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
-      <BoutsIndex
-        loading={bouts.isLoading}
-        card={card.data}
-        bouts={bouts.data}
-        officials={officials.data}
-        athletes={athletes.data}
-        onAddBout={(values) => addBout.mutateAsync(values)}
-        onEditBout={(values) => updateBout.mutateAsync(values)}
-        onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
-        onImport={(file) => importBouts.mutateAsync(file)}
-        auditLogs={<CardAuditTimeline logs={auditLogs.data ?? []} />}
+      <Tabs
+        defaultActiveKey="bouts"
+        items={[
+          {
+            key: "bouts",
+            label: "Bouts",
+            children: (
+              <BoutsIndex
+                loading={bouts.isLoading}
+                card={card.data}
+                bouts={bouts.data}
+                officials={officials.data}
+                athletes={athletes.data}
+                onAddBout={(values) => addBout.mutateAsync(values)}
+                onEditBout={(values) => updateBout.mutateAsync(values)}
+                onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
+                onImport={(file) => importBouts.mutateAsync(file)}
+                auditLogs={<CardAuditTimeline logs={auditLogs.data ?? []} />}
+              />
+            ),
+          },
+          {
+            key: "judge-consistency",
+            label: "Judge Consistency",
+            children: <JudgeConsistency cardId={cardId!} token={token} />,
+          },
+        ]}
       />
     </PageLayout>
   );

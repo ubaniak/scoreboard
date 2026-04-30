@@ -204,6 +204,8 @@ func main() {
 	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
+	scoresApp := scores.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
+
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
 	currentApp := current.NewApp(currentUseCase, broadcaster)
@@ -212,6 +214,7 @@ func main() {
 	apiRegister.Add(healthCheckApp)
 	apiRegister.Add(loginApp)
 	apiRegister.Add(cardApp)
+	apiRegister.Add(scoresApp)
 	apiRegister.Add(deviceApp)
 
 	// -- setup (public, no auth)
