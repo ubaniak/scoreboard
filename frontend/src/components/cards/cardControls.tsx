@@ -1,6 +1,5 @@
-import { Segmented, Switch, Typography } from "antd";
+import { Collapse, Segmented, Switch, Typography } from "antd";
 import type { Card as CardEntity } from "../../entities/cards";
-import { Card } from "../card/card";
 
 const { Text } = Typography;
 
@@ -12,8 +11,18 @@ type Props = {
 
 export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
   return (
-    <Card title="Controls">
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Collapse
+      style={{
+        borderRadius: 16,
+        boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
+        marginBottom: 16,
+      }}
+      items={[
+        {
+          key: "controls",
+          label: "Controls",
+          children: (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <Text style={{ marginRight: 8 }}>Number of Judges</Text>
           <Segmented
@@ -89,6 +98,9 @@ export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
           />
         </div>
       </div>
-    </Card>
+          ),
+        },
+      ]}
+    />
   );
 };
