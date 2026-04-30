@@ -43,6 +43,7 @@ type CardFinderCreator interface {
 type ReportBuilder interface {
 	FullReport(cardId uint) (*reportsPackage.ReportData, error)
 	PublicReport(cardId uint) (*reportsPackage.ReportData, error)
+	JudgeConsistencyReport(cardId uint) (*reportsPackage.JudgeConsistencyData, error)
 }
 
 // ImportResult summarises what was upserted.
@@ -499,6 +500,38 @@ func (s *driveService) ExportCard(ctx context.Context, cardId uint) (*ExportCard
 			pubPdfName := fmt.Sprintf("public_report_%s_%s.pdf", sanitiseName(pubRd.CardName), pubRd.CardDate)
 			if link, err := s.upload(ctx, svc, pubPdfName, &pubPdfBuf, folderID); err == nil {
 				result.Files = append(result.Files, ExportedFile{Name: pubPdfName, Link: link})
+			}
+		}
+	}
+
+	// Judge Consistency reports
+	if consRd, err := s.reports.JudgeConsistencyReport(cardId); err == nil {
+		var shortCsv bytes.Buffer
+		if err := reportsPackage.WriteShortConsistencyCSV(&shortCsv, consRd); err == nil {
+			name := fmt.Sprintf("judge_consistency_short_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, name, &shortCsv, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
+			}
+		}
+		var shortPdf bytes.Buffer
+		if err := reportsPackage.WriteShortConsistencyPDF(&shortPdf, consRd); err == nil {
+			name := fmt.Sprintf("judge_consistency_short_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, name, &shortPdf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
+			}
+		}
+		var fullCsv bytes.Buffer
+		if err := reportsPackage.WriteFullConsistencyCSV(&fullCsv, consRd); err == nil {
+			name := fmt.Sprintf("judge_consistency_full_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, name, &fullCsv, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
+			}
+		}
+		var fullPdf bytes.Buffer
+		if err := reportsPackage.WriteFullConsistencyPDF(&fullPdf, consRd); err == nil {
+			name := fmt.Sprintf("judge_consistency_full_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
+			if link, err := s.upload(ctx, svc, name, &fullPdf, folderID); err == nil {
+				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
 			}
 		}
 	}

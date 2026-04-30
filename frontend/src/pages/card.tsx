@@ -128,7 +128,6 @@ export const CardPage = () => {
                 onEditBout={(values) => updateBout.mutateAsync(values)}
                 onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
                 onImport={(file) => importBouts.mutateAsync(file)}
-                auditLogs={<CardAuditTimeline logs={auditLogs.data ?? []} />}
               />
             ),
           },
@@ -136,6 +135,11 @@ export const CardPage = () => {
             key: "judge-consistency",
             label: "Judge Consistency",
             children: <JudgeConsistency cardId={cardId!} token={token} />,
+          },
+          {
+            key: "activity-log",
+            label: "Activity Log",
+            children: <CardAuditTimeline logs={auditLogs.data ?? []} />,
           },
         ]}
       />

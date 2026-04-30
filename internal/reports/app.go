@@ -23,6 +23,64 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("reports.full.pdf",        "/full/pdf",        "GET", a.FullPDF,        rbac.Admin)
 	rb.AddRoute("reports.public.csv",      "/public/csv",      "GET", a.PublicCSV,      rbac.Admin)
 	rb.AddRoute("reports.public.pdf",      "/public/pdf",      "GET", a.PublicPDF,      rbac.Admin)
+	rb.AddRoute("reports.consistency.short.csv", "/consistency/short/csv", "GET", a.ConsistencyShortCSV, rbac.Admin)
+	rb.AddRoute("reports.consistency.short.pdf", "/consistency/short/pdf", "GET", a.ConsistencyShortPDF, rbac.Admin)
+	rb.AddRoute("reports.consistency.full.csv",  "/consistency/full/csv",  "GET", a.ConsistencyFullCSV,  rbac.Admin)
+	rb.AddRoute("reports.consistency.full.pdf",  "/consistency/full/pdf",  "GET", a.ConsistencyFullPDF,  rbac.Admin)
+}
+
+func (a *App) consistencyData(w http.ResponseWriter, r *http.Request) (*JudgeConsistencyData, bool) {
+	id, err := a.cardId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil, false
+	}
+	d, err := a.useCase.JudgeConsistencyReport(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil, false
+	}
+	return d, true
+}
+
+func (a *App) ConsistencyShortCSV(w http.ResponseWriter, r *http.Request) {
+	d, ok := a.consistencyData(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"judge_consistency_short.csv\"")
+	WriteShortConsistencyCSV(w, d)
+}
+
+func (a *App) ConsistencyShortPDF(w http.ResponseWriter, r *http.Request) {
+	d, ok := a.consistencyData(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"judge_consistency_short.pdf\"")
+	WriteShortConsistencyPDF(w, d)
+}
+
+func (a *App) ConsistencyFullCSV(w http.ResponseWriter, r *http.Request) {
+	d, ok := a.consistencyData(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"judge_consistency_full.csv\"")
+	WriteFullConsistencyCSV(w, d)
+}
+
+func (a *App) ConsistencyFullPDF(w http.ResponseWriter, r *http.Request) {
+	d, ok := a.consistencyData(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"judge_consistency_full.pdf\"")
+	WriteFullConsistencyPDF(w, d)
 }
 
 func (a *App) cardId(r *http.Request) (uint, error) {

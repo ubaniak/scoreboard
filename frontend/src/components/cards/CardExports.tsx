@@ -44,6 +44,47 @@ export const CardExports = ({ cardId, token }: Props) => {
       label: "Public Report (PDF)",
       onClick: () => downloadReport(`${base}/public/pdf`, token, `card-${cardId}-public.pdf`),
     },
+    { type: "divider" as const },
+    {
+      key: "consistency-short-csv",
+      label: "Judge Consistency — Short (CSV)",
+      onClick: () =>
+        downloadReport(
+          `${base}/consistency/short/csv`,
+          token,
+          `card-${cardId}-consistency-short.csv`,
+        ),
+    },
+    {
+      key: "consistency-short-pdf",
+      label: "Judge Consistency — Short (PDF)",
+      onClick: () =>
+        downloadReport(
+          `${base}/consistency/short/pdf`,
+          token,
+          `card-${cardId}-consistency-short.pdf`,
+        ),
+    },
+    {
+      key: "consistency-full-csv",
+      label: "Judge Consistency — Full (CSV)",
+      onClick: () =>
+        downloadReport(
+          `${base}/consistency/full/csv`,
+          token,
+          `card-${cardId}-consistency-full.csv`,
+        ),
+    },
+    {
+      key: "consistency-full-pdf",
+      label: "Judge Consistency — Full (PDF)",
+      onClick: () =>
+        downloadReport(
+          `${base}/consistency/full/pdf`,
+          token,
+          `card-${cardId}-consistency-full.pdf`,
+        ),
+    },
   ];
 
   return (
