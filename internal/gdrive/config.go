@@ -62,7 +62,10 @@ func loadConfig() (Config, error) {
 		return Config{}, err
 	}
 	var cfg Config
-	return cfg, json.Unmarshal(data, &cfg)
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
 }
 
 func saveConfig(cfg Config) error {
@@ -87,7 +90,10 @@ func loadToken() (*oauth2.Token, error) {
 		return nil, err
 	}
 	var tok oauth2.Token
-	return &tok, json.Unmarshal(data, &tok)
+	if err := json.Unmarshal(data, &tok); err != nil {
+		return nil, err
+	}
+	return &tok, nil
 }
 
 func saveToken(tok *oauth2.Token) error {

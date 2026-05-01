@@ -83,9 +83,10 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     return <SubmittedScreen role={props.role} judgeName={selectedName} />;
   }
 
-  // Bout is awaiting an overall-winner decision (judge submitted final round)
-  const awaitingDecision =
-    boutStatus === "waiting_for_decision" && submittedRound === roundNumber;
+  // Bout is awaiting an overall-winner decision. Round 3 transitions to
+  // `complete` when admin advances, so `current.round` is nil here — don't
+  // gate on roundNumber.
+  const awaitingDecision = boutStatus === "waiting_for_decision";
 
   if (awaitingDecision) {
     return (
