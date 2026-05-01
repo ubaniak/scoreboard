@@ -43,9 +43,9 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     setPickedWinner(null);
   }
 
-  // Derive judge name and submitted round from server scores when local state
-  // hasn't been set (e.g. after a page refresh). Local state takes precedence
-  // once the judge interacts.
+  // The scores API omits judgeName/status/overallWinner for non-admin roles,
+  // so server score lookup only works for admins. For judges, derive state
+  // from the server score only when the current round's data is present.
   const myServerScore = props.scores?.[roundNumber ?? 0]?.find(
     (s) => s.judgeRole === props.role,
   );
@@ -57,6 +57,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
       : null);
   const submitted =
     resolvedSubmittedRound !== null && resolvedSubmittedRound === roundNumber;
+  const resolvedPickedWinner = pickedWinner ?? myServerScore?.overallWinner ?? null;
 
   useEffect(() => {
     if (resolvedName && roundNumber && resolvedSubmittedRound !== roundNumber) {
@@ -95,14 +96,19 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     );
   }
 
-  if (pickedWinner) {
+  if (resolvedPickedWinner) {
     return <SubmittedScreen role={props.role} judgeName={resolvedName} />;
   }
 
-  // Bout is awaiting an overall-winner decision. Round 3 transitions to
-  // `complete` when admin advances, so `current.round` is nil here — don't
-  // gate on roundNumber.
-  const awaitingDecision = boutStatus === "waiting_for_decision";
+  // Show winner picker when bout is in decision phase. Mirrors admin's
+  // isDecisionPhase logic: score_complete on round 3 means all judges have
+  // submitted and admin can act — judges should pick at the same time.
+  // waiting_for_decision covers the case where admin explicitly advanced.
+  const isRound3 = roundNumber === 3;
+  const awaitingDecision =
+    boutStatus === "waiting_for_decision" ||
+    (boutStatus === "score_complete" && isRound3) ||
+    (submitted && isRound3);
 
   if (awaitingDecision) {
     return (
@@ -112,7 +118,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
         current={props.current}
         onChangeName={() => setSelectedName(null)}
         showWinnerPicker
-        pickedWinner={pickedWinner}
+        pickedWinner={resolvedPickedWinner}
         onPickWinner={handlePickWinner}
       />
     );

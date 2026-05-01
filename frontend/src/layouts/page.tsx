@@ -14,6 +14,7 @@ export type PageLayoutProps = {
   children?: React.ReactNode;
   breadCrumbs?: ItemType[];
   requiredJudges?: number;
+  hideControls?: boolean;
 };
 
 export const PageLayout = (props: PageLayoutProps) => {
@@ -69,8 +70,12 @@ export const PageLayout = (props: PageLayoutProps) => {
 
           <Space wrap>
             {props.action}
-            <DevicesButton requiredJudges={props.requiredJudges} />
-            <SettingsButton />
+            {!props.hideControls && (
+              <>
+                <DevicesButton requiredJudges={props.requiredJudges} />
+                <SettingsButton />
+              </>
+            )}
             <ThemeToggle />
           </Space>
         </div>

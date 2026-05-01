@@ -9,6 +9,8 @@ export type Palette = {
   redMuted: string;
   blue: string;
   blueMuted: string;
+  cornerRed: string;
+  cornerBlue: string;
   text: string;
   textMuted: string;
   textFaint: string;
@@ -24,6 +26,8 @@ export const palettes: Record<ThemeMode, Palette> = {
     redMuted: "rgba(252,165,165,0.5)",
     blue: "#93c5fd",
     blueMuted: "rgba(147,197,253,0.5)",
+    cornerRed: "#b91c1c",
+    cornerBlue: "#1d4ed8",
     text: "#ffffff",
     textMuted: "rgba(255,255,255,0.55)",
     textFaint: "rgba(255,255,255,0.4)",
@@ -37,6 +41,8 @@ export const palettes: Record<ThemeMode, Palette> = {
     redMuted: "rgba(220,38,38,0.45)",
     blue: "#2563eb",
     blueMuted: "rgba(37,99,235,0.45)",
+    cornerRed: "#b91c1c",
+    cornerBlue: "#1d4ed8",
     text: "#0b0f1a",
     textMuted: "rgba(11,15,26,0.65)",
     textFaint: "rgba(11,15,26,0.45)",

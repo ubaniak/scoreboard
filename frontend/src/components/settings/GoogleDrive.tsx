@@ -99,9 +99,18 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
           {
             title: "",
             key: "action",
-            width: 100,
-            render: (_, __, idx) => (
+            width: 140,
+            render: (_, record: Sheet & { key: number }, idx) => (
               <Space size="small">
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<LinkOutlined />}
+                  href={`https://docs.google.com/spreadsheets/d/${record.sheetId}/edit`}
+                  target="_blank"
+                >
+                  Go to
+                </Button>
                 <Button
                   type="link"
                   size="small"
@@ -397,11 +406,21 @@ const SetupGuideContent = ({
             </Text>
             . Leave blank to upload to root.
           </Text>
-          <Input
-            placeholder="1A2B3C4D5E6F7G8H9I"
-            value={folderId}
-            onChange={(e) => setFolderId(e.target.value)}
-          />
+          <Space.Compact style={{ width: "100%" }}>
+            <Input
+              placeholder="1A2B3C4D5E6F7G8H9I"
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+            />
+            <Button
+              icon={<LinkOutlined />}
+              href={folderId ? `https://drive.google.com/drive/folders/${folderId}` : undefined}
+              target="_blank"
+              disabled={!folderId}
+            >
+              Go to
+            </Button>
+          </Space.Compact>
         </Space>
       ),
     },
@@ -695,6 +714,15 @@ export const GoogleDrive = ({ token }: TokenBase) => {
           >
             Import Now
           </Button>
+          {importSheetId && (
+            <Button
+              icon={<LinkOutlined />}
+              href={`https://docs.google.com/spreadsheets/d/${importSheetId}/edit`}
+              target="_blank"
+            >
+              Go to Sheet
+            </Button>
+          )}
         </Space>
       </Space>
 
@@ -725,6 +753,15 @@ export const GoogleDrive = ({ token }: TokenBase) => {
           >
             Export
           </Button>
+          {cfg?.folderId && (
+            <Button
+              icon={<LinkOutlined />}
+              href={`https://drive.google.com/drive/folders/${cfg.folderId}`}
+              target="_blank"
+            >
+              Go to Folder
+            </Button>
+          )}
         </Space>
         {exportResult && (
           <div>

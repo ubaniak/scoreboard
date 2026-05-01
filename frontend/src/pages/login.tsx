@@ -33,7 +33,7 @@ export const LoginPage = () => {
     }
   };
   return (
-    <PageLayout title="Login">
+    <PageLayout title="Login" hideControls>
       <Card>
         <Row justify="center" align="middle" style={{ width: "100%" }}>
           <LoginPageForm login={onFinish} />

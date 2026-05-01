@@ -14,10 +14,20 @@ import {
   useGetScores,
   type ScoreRoundProps,
 } from "../api/score";
+import { useTheme } from "../theme";
 
 export const JudgePage = () => {
   const { token, role } = useProfile();
   const queryClient = useQueryClient();
+  const theme = useTheme();
+
+  useEffect(() => {
+    const previousMode = theme.mode;
+    theme.setMode("dark");
+    return () => {
+      theme.setMode(previousMode);
+    };
+  }, [theme]);
   useHealthCheck({ token });
   const current = useGetCurrent();
 

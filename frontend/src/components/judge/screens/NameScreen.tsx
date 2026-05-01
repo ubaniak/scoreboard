@@ -1,4 +1,5 @@
-import { Typography } from "antd";
+import { Button, Select, Typography } from "antd";
+import { useState } from "react";
 import type { Official } from "../../../entities/cards";
 import { formatRole, space, tracking, type, useTheme } from "../../../theme";
 
@@ -10,8 +11,7 @@ type NameScreenProps = {
 
 export const NameScreen = ({ role, officials, onSelect }: NameScreenProps) => {
   const { colors } = useTheme();
-  const tileBg = colors.borderSubtle;
-  const tileBgHover = colors.border;
+  const [selected, setSelected] = useState<string | null>(null);
 
   return (
     <div
@@ -48,48 +48,36 @@ export const NameScreen = ({ role, officials, onSelect }: NameScreenProps) => {
       ) : (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            display: "flex",
+            flexDirection: "column",
             gap: space.md,
             width: "100%",
-            maxWidth: 720,
+            maxWidth: 400,
           }}
         >
-          {officials.map((o) => (
-            <button
-              key={o.name}
-              type="button"
-              onClick={() => onSelect(o.name)}
-              aria-label={`Select ${o.name}`}
-              style={{
-                minHeight: 88,
-                padding: `${space.md}px ${space.lg}px`,
-                borderRadius: 12,
-                border: `1px solid ${colors.border}`,
-                background: tileBg,
-                color: colors.text,
-                fontSize: type.h3,
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "background 0.15s ease, transform 0.05s ease",
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = "scale(0.98)";
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.background = tileBg;
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = tileBgHover;
-              }}
-            >
-              {o.name}
-            </button>
-          ))}
+          <Select
+            showSearch
+            placeholder="Search your name…"
+            value={selected}
+            onChange={(val) => setSelected(val)}
+            filterOption={(input, option) =>
+              (option?.label as string)
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            options={officials.map((o) => ({ value: o.name, label: o.name }))}
+            size="large"
+            style={{ width: "100%" }}
+          />
+          <Button
+            type="primary"
+            size="large"
+            disabled={!selected}
+            onClick={() => selected && onSelect(selected)}
+            style={{ width: "100%" }}
+          >
+            Confirm
+          </Button>
         </div>
       )}
     </div>

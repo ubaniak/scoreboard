@@ -11,7 +11,7 @@ type CornerHalfProps = {
 
 export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: CornerHalfProps) => {
   const { colors } = useTheme();
-  const background = corner === "red" ? colors.red : colors.blue;
+  const background = corner === "red" ? colors.cornerRed : colors.cornerBlue;
   const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (
