@@ -112,7 +112,8 @@ const queryClient = new QueryClient({
       },
     }),
     mutationCache: new MutationCache({
-      onError: (error) => {
+      onError: (error, _variables, _context, mutation) => {
+        if (mutation.options.meta?.hideGlobalError) return;
         if (error instanceof ApiError) {
           apiErrorBus.emit(error);
         } else {

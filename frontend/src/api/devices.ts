@@ -46,6 +46,7 @@ export const useMutationGenerateCode = (props: TokenBase) => {
 export const useHealthCheck = (props: TokenBase) => {
   return useQuery({
     queryKey: keys.healthcheck(props.token),
+    enabled: !!props.token,
     queryFn: () => {
       return fetchClient<string>(`${baseUrl}/api/devices/healthcheck`, {
         headers: {

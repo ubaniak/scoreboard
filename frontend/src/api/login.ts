@@ -6,6 +6,7 @@ import { fetchClient } from "./fetchClient";
 export const useMutateLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { hideGlobalError: true },
     mutationFn: (login: Login) => loginFn(login.role, login.code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["login"] });
