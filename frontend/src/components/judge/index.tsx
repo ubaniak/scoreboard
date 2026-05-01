@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ScoreRoundProps } from "../../api/score";
 import type { Official } from "../../entities/cards";
 import type { Current } from "../../entities/current";
+import type { ScoresByRound } from "../../entities/scores";
 import { ScoreControls } from "./controls";
 import { IdleScreen } from "./screens/IdleScreen";
 import { NameScreen } from "./screens/NameScreen";
@@ -20,6 +21,7 @@ export type JudgeIndexProps = {
   role: string;
   officials: Official[];
   controls: Controls;
+  scores?: ScoresByRound;
 };
 
 export const JudgeIndex = (props: JudgeIndexProps) => {
@@ -30,7 +32,6 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
   const boutId = props.current?.bout?.id;
   const roundNumber = props.current?.round?.roundNumber;
   const boutStatus = props.current?.bout?.status;
-  const submitted = submittedRound !== null && submittedRound === roundNumber;
 
   // Reset per-bout state when a new bout starts. React-recommended pattern
   // for resetting state on prop change (https://react.dev/reference/react/useState#storing-information-from-previous-renders).
@@ -42,9 +43,24 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     setPickedWinner(null);
   }
 
+  // Derive judge name and submitted round from server scores when local state
+  // hasn't been set (e.g. after a page refresh). Local state takes precedence
+  // once the judge interacts.
+  const myServerScore = props.scores?.[roundNumber ?? 0]?.find(
+    (s) => s.judgeRole === props.role,
+  );
+  const resolvedName = selectedName ?? myServerScore?.judgeName ?? null;
+  const resolvedSubmittedRound =
+    submittedRound ??
+    (myServerScore?.status === "complete" && roundNumber != null
+      ? roundNumber
+      : null);
+  const submitted =
+    resolvedSubmittedRound !== null && resolvedSubmittedRound === roundNumber;
+
   useEffect(() => {
-    if (selectedName && roundNumber) {
-      props.controls.setReady(selectedName);
+    if (resolvedName && roundNumber && resolvedSubmittedRound !== roundNumber) {
+      props.controls.setReady(resolvedName);
     }
   }, [roundNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -69,7 +85,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     setPickedWinner(winner);
   };
 
-  if (!selectedName) {
+  if (!resolvedName) {
     return (
       <NameScreen
         role={props.role}
@@ -80,7 +96,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
   }
 
   if (pickedWinner) {
-    return <SubmittedScreen role={props.role} judgeName={selectedName} />;
+    return <SubmittedScreen role={props.role} judgeName={resolvedName} />;
   }
 
   // Bout is awaiting an overall-winner decision. Round 3 transitions to
@@ -92,7 +108,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     return (
       <WaitingScreen
         role={props.role}
-        judgeName={selectedName}
+        judgeName={resolvedName}
         current={props.current}
         onChangeName={() => setSelectedName(null)}
         showWinnerPicker
@@ -106,7 +122,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
     return (
       <WaitingScreen
         role={props.role}
-        judgeName={selectedName}
+        judgeName={resolvedName}
         current={props.current}
         onChangeName={() => setSelectedName(null)}
       />
@@ -119,7 +135,7 @@ export const JudgeIndex = (props: JudgeIndexProps) => {
       submitted={submitted}
       current={props.current}
       role={props.role}
-      judgeName={selectedName}
+      judgeName={resolvedName}
     />
   );
 };

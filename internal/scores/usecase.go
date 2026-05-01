@@ -1,6 +1,8 @@
 package scores
 
 import (
+	"errors"
+
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/scores/entities"
 )
@@ -112,6 +114,9 @@ func (u *usecase) Ready(cardId, boutId uint, roundNumber int, judgeRole, judgeNa
 	if err != nil {
 		return err
 	}
+	if score.Status == entities.ScoreStatusComplete {
+		return errors.New("score already submitted")
+	}
 	score.Status = entities.ScoreStatusReady
 	score.JudgeName = judgeName
 	return u.storage.Update(score)
@@ -121,6 +126,9 @@ func (u *usecase) Score(cardId, boutId uint, roundNumber int, JudgeRole string, 
 	score, err := u.storage.Get(cardId, boutId, roundNumber, JudgeRole)
 	if err != nil {
 		return err
+	}
+	if score.Status == entities.ScoreStatusComplete {
+		return errors.New("score already submitted")
 	}
 	score.Red = red
 	score.Blue = blue
@@ -135,6 +143,9 @@ func (u *usecase) Complete(cardId, boutId uint, roundNumber int, JudgeRole strin
 	score, err := u.storage.Get(cardId, boutId, roundNumber, JudgeRole)
 	if err != nil {
 		return err
+	}
+	if score.Status == entities.ScoreStatusComplete {
+		return errors.New("score already submitted")
 	}
 	score.Status = entities.ScoreStatusComplete
 	if err := u.storage.Update(score); err != nil {

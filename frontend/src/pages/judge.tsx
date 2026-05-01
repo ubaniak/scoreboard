@@ -11,6 +11,7 @@ import {
   useMutateOverallWinner,
   useMutateReadyScore,
   useMutateScoreRound,
+  useGetScores,
   type ScoreRoundProps,
 } from "../api/score";
 
@@ -34,6 +35,7 @@ export const JudgePage = () => {
   const roundNumber = current.data?.round?.roundNumber ?? 0;
 
   const officials = useGetOfficials({ token });
+  const scores = useGetScores({ token, cardId, boutId });
   const ready = useMutateReadyScore({ token, cardId, boutId, roundNumber });
   const score = useMutateScoreRound({ token, cardId, boutId, roundNumber });
   const completeRound = useMutateCompleteScoreRound({
@@ -65,6 +67,7 @@ export const JudgePage = () => {
       current={current.data}
       role={role}
       officials={officials.data ?? []}
+      scores={scores.data}
       controls={{
         scoreRound,
         complete,
