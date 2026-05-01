@@ -18,6 +18,7 @@ import { BLUE, RED } from "../../entities/corner";
 import { StatusTag } from "../status/tag";
 import { Card } from "../card/card";
 import { RoundSummary } from "./RoundSummary";
+import { RoundDetailsButton } from "../round/RoundDetailsButton";
 import { decisionLabels } from "../bouts/decisionLabels";
 
 const { Text, Title } = Typography;
@@ -85,44 +86,55 @@ const RoundsRow = ({
       const isDimmed = activeRoundNumber !== undefined && !isActive;
       return (
         <Col key={r.roundNumber} xs={24} sm={12} md={8}>
-          <button
-            onClick={() => onSelectRound?.(r.roundNumber)}
-            onKeyDown={(e) =>
-              (e.key === "Enter" || e.key === " ") && onSelectRound?.(r.roundNumber)
-            }
-            aria-label={`Select Round ${r.roundNumber}`}
-            aria-pressed={isActive}
+          <div
             style={{
               border: isActive ? "2px solid #faad14" : "1px solid rgba(255,255,255,0.12)",
               borderRadius: 8,
-              padding: 12,
               opacity: isDimmed ? 0.4 : 1,
               transition: "opacity 0.2s, border-color 0.2s",
-              cursor: onSelectRound ? "pointer" : "default",
               background: "transparent",
-              width: "100%",
-              textAlign: "left",
               position: "relative",
             }}
           >
-            <Row justify="space-between" style={{ marginBottom: 6 }}>
-              <Text strong style={{ fontSize: 13 }}>
-                Round {r.roundNumber}
-              </Text>
-              <span
-                style={{
-                  color: r.status === "complete"
-                    ? "#52c41a"
-                    : (r.status === "in_progress" || r.status === "score_complete" || r.status === "waiting_for_results")
-                      ? "#1677ff"
-                      : "rgba(255,255,255,0.3)",
-                }}
-              >
-                {statusIcon(r.status)}
-              </span>
-            </Row>
-            <RoundSummary round={r} />
-          </button>
+            <button
+              onClick={() => onSelectRound?.(r.roundNumber)}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && onSelectRound?.(r.roundNumber)
+              }
+              aria-label={`Select Round ${r.roundNumber}`}
+              aria-pressed={isActive}
+              style={{
+                border: "none",
+                background: "transparent",
+                padding: 12,
+                width: "100%",
+                textAlign: "left",
+                cursor: onSelectRound ? "pointer" : "default",
+                color: "inherit",
+              }}
+            >
+              <Row justify="space-between" style={{ marginBottom: 6 }}>
+                <Text strong style={{ fontSize: 13 }}>
+                  Round {r.roundNumber}
+                </Text>
+                <span
+                  style={{
+                    color: r.status === "complete"
+                      ? "#52c41a"
+                      : (r.status === "in_progress" || r.status === "score_complete" || r.status === "waiting_for_results")
+                        ? "#1677ff"
+                        : "rgba(255,255,255,0.3)",
+                  }}
+                >
+                  {statusIcon(r.status)}
+                </span>
+              </Row>
+              <RoundSummary round={r} />
+            </button>
+            <div style={{ padding: "0 8px 8px", textAlign: "right" }}>
+              <RoundDetailsButton round={r} />
+            </div>
+          </div>
         </Col>
       );
     })}
