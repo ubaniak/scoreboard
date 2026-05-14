@@ -167,7 +167,7 @@ export const AffiliationIndex = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             allowClear
-            style={{ width: 260 }}
+            style={{ width: "100%", maxWidth: 260 }}
           />
         </Space>
         <Table rowKey="id" dataSource={filtered} columns={columns} loading={loading} pagination={false} scroll={{ x: "max-content" }} />

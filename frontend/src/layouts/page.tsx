@@ -1,9 +1,12 @@
-import { Breadcrumb, Layout, Space, Typography } from "antd";
+import { MenuOutlined } from "@ant-design/icons";
+import { Breadcrumb, Button, Drawer, Layout, Space, Typography } from "antd";
 import type { ItemType } from "antd/es/breadcrumb/Breadcrumb";
 import { Content, Header } from "antd/es/layout/layout";
+import { useState } from "react";
 import { DevicesButton } from "../components/devices/DevicesButton";
 import { SettingsButton } from "../components/settings/SettingsButton";
 import { ThemeToggle } from "../components/shared/ThemeToggle";
+import { useIsMobile } from "../hooks/useBreakpoint";
 import { useTheme } from "../theme";
 const { Title, Text } = Typography;
 
@@ -19,6 +22,22 @@ export type PageLayoutProps = {
 
 export const PageLayout = (props: PageLayoutProps) => {
   const { colors } = useTheme();
+  const isMobile = useIsMobile();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const controls = (
+    <>
+      {props.action}
+      {!props.hideControls && (
+        <>
+          <DevicesButton requiredJudges={props.requiredJudges} />
+          <SettingsButton />
+        </>
+      )}
+      <ThemeToggle />
+    </>
+  );
+
   return (
     <Layout style={{ minHeight: "100vh", background: colors.bg }}>
       <a
@@ -69,16 +88,29 @@ export const PageLayout = (props: PageLayoutProps) => {
             </Space>
           </Space>
 
-          <Space wrap>
-            {props.action}
-            {!props.hideControls && (
-              <>
-                <DevicesButton requiredJudges={props.requiredJudges} />
-                <SettingsButton />
-              </>
-            )}
-            <ThemeToggle />
-          </Space>
+          {isMobile ? (
+            <>
+              <Button
+                shape="circle"
+                icon={<MenuOutlined />}
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+              />
+              <Drawer
+                title="Menu"
+                placement="right"
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                width={280}
+              >
+                <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+                  {controls}
+                </Space>
+              </Drawer>
+            </>
+          ) : (
+            <Space wrap>{controls}</Space>
+          )}
         </div>
       </Header>
       <Content style={{ padding: "16px 12px" }}>

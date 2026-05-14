@@ -65,7 +65,7 @@ export const HandleFouls = (props: HandleFoulsProps) => {
             addFoul(newFoul);
             setNewFoul("");
           }}
-          style={{ width: 200 }}
+          style={{ width: "100%", maxWidth: 200 }}
         />
         <ActionMenu
           trigger={{

@@ -31,8 +31,8 @@ const ExportOption = (props: ExportOptionProps) => (
       <Text type="secondary" style={{ fontSize: 12 }}>{props.description}</Text>
     </div>
     <Space>
-      <Button size="small" onClick={props.onCsv}>CSV</Button>
-      <Button size="small" onClick={props.onPdf}>PDF</Button>
+      <Button onClick={props.onCsv}>CSV</Button>
+      <Button onClick={props.onPdf}>PDF</Button>
     </Space>
   </Flex>
 );

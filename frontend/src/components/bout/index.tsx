@@ -57,7 +57,7 @@ export const BoutIndex = (props: BoutIndexProps) => {
           <Flex vertical align="center" justify="center" gap="middle">
             {props.bout?.boutType !== "sparring" && (
               <Select
-                style={{ width: 240 }}
+                style={{ width: "100%", maxWidth: 240 }}
                 placeholder="Select referee..."
                 value={props.bout?.referee || undefined}
                 options={(props.officials ?? []).map((o) => ({

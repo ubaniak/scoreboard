@@ -222,7 +222,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
                           okButtonProps={{ danger: true }}
                           onConfirm={() => handleRestore(b.filename)}
                         >
-                          <Button size="small" danger loading={restoreBackup.isPending}>
+                          <Button danger loading={restoreBackup.isPending}>
                             Restore from here
                           </Button>
                         </Popconfirm>
@@ -233,7 +233,7 @@ export const AutoBackup = ({ token }: TokenBase) => {
                           okButtonProps={{ danger: true }}
                           onConfirm={() => handleDelete(b.filename)}
                         >
-                          <Button size="small" loading={deleteBackup.isPending}>
+                          <Button loading={deleteBackup.isPending}>
                             Delete
                           </Button>
                         </Popconfirm>
