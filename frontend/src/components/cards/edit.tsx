@@ -31,15 +31,15 @@ export const EditCard = (props: EditCardProps) => {
   return (
     <>
       <Form
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 14 }}
+        labelCol={{ xs: { span: 24 }, md: { span: 4 } }}
+        wrapperCol={{ xs: { span: 24 }, md: { span: 14 } }}
         layout="horizontal"
         initialValues={{
           name: props.card.name,
           date: props.card.date,
           status: props.card.status,
         }}
-        style={{ maxWidth: 600 }}
+        style={{ width: "100%", maxWidth: 600 }}
         onFinish={onFinish}
       >
         <Form.Item<FieldType> label="Name" name="name" rules={[{ required: true, message: "Name is required" }]}>

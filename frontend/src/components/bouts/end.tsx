@@ -58,8 +58,8 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
         />
       )}
       <Form
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 14 }}
+        labelCol={{ xs: { span: 24 }, md: { span: 4 } }}
+        wrapperCol={{ xs: { span: 24 }, md: { span: 14 } }}
         layout="horizontal"
         initialValues={{
           boutNumber: 0,
@@ -70,7 +70,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
           experience: "novice",
           winner: "na",
         }}
-        style={{ maxWidth: 600 }}
+        style={{ width: "100%", maxWidth: 600 }}
         onFinish={onFinish}
       >
         <Form.Item label="Overall Winner" name="winner" rules={[{ required: true, message: "Winner is required" }]}>
@@ -91,7 +91,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
               value,
               label,
             }))}
-            style={{ width: 280 }}
+            style={{ width: "100%", maxWidth: 280 }}
           />
         </Form.Item>
         <Form.Item label="Comment" name="comment">

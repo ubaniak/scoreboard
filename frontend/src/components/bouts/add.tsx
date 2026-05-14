@@ -30,8 +30,8 @@ export const AddBout = (props: AddBoutProps) => {
 
   return (
     <Form
-      labelCol={{ span: 4 }}
-      wrapperCol={{ span: 14 }}
+      labelCol={{ xs: { span: 24 }, md: { span: 4 } }}
+      wrapperCol={{ xs: { span: 24 }, md: { span: 14 } }}
       layout="horizontal"
       initialValues={{
         boutNumber: props.nextBoutNumber ?? 1,
@@ -42,7 +42,7 @@ export const AddBout = (props: AddBoutProps) => {
         gloveSize: "10oz",
         roundLength: 1,
       }}
-      style={{ maxWidth: 600 }}
+      style={{ width: "100%", maxWidth: 600 }}
       onFinish={onFinish}
     >
       <Form.Item<CreateBoutProps> label="Bout Type" name="boutType">

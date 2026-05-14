@@ -47,11 +47,11 @@ export const EditBout = (props: EditBoutProps) => {
 
   return (
     <Form
-      labelCol={{ span: 4 }}
-      wrapperCol={{ span: 14 }}
+      labelCol={{ xs: { span: 24 }, md: { span: 4 } }}
+      wrapperCol={{ xs: { span: 24 }, md: { span: 14 } }}
       layout="horizontal"
       form={form}
-      style={{ maxWidth: 600 }}
+      style={{ width: "100%", maxWidth: 600 }}
       onFinish={onFinish}
     >
       <Form.Item<UpdateBoutProps> label="Bout Type" name="boutType">

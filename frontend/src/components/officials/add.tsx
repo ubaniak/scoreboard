@@ -16,10 +16,10 @@ export const AddOfficial = (props: AddOfficialProps) => {
   };
   return (
     <Form
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 16 }}
+      labelCol={{ xs: { span: 24 }, md: { span: 6 } }}
+      wrapperCol={{ xs: { span: 24 }, md: { span: 16 } }}
       layout="horizontal"
-      style={{ maxWidth: 600 }}
+      style={{ width: "100%", maxWidth: 600 }}
       onFinish={onFinish}
     >
       <Form.Item<CreateOfficialProps> label="Name" name="name" rules={[{ required: true }]}>

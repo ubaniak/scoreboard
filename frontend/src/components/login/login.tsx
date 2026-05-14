@@ -13,9 +13,9 @@ export const LoginPageForm = (props: LoginPageFormProps) => {
   return (
     <Form
       name="Login"
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 16 }}
-      style={{ maxWidth: 600 }}
+      labelCol={{ xs: { span: 24 }, md: { span: 8 } }}
+      wrapperCol={{ xs: { span: 24 }, md: { span: 16 } }}
+      style={{ width: "100%", maxWidth: 600 }}
       onFinish={onFinish}
       autoComplete="on"
     >

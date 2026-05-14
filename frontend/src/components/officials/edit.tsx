@@ -21,8 +21,8 @@ export const EditOfficial = (props: EditOfficialProps) => {
   };
   return (
     <Form
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 16 }}
+      labelCol={{ xs: { span: 24 }, md: { span: 6 } }}
+      wrapperCol={{ xs: { span: 24 }, md: { span: 16 } }}
       layout="horizontal"
       initialValues={{
         name: props.official.name,
@@ -33,7 +33,7 @@ export const EditOfficial = (props: EditOfficialProps) => {
         provinceAffiliationId: props.official.provinceAffiliationId,
         nationAffiliationId: props.official.nationAffiliationId,
       }}
-      style={{ maxWidth: 600 }}
+      style={{ width: "100%", maxWidth: 600 }}
       onFinish={onFinish}
     >
       <Form.Item<UpdateOfficialProps> label="Name" name="name" rules={[{ required: true }]}>
