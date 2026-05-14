@@ -221,7 +221,7 @@ export const HomePage = () => {
               >
                 <>
                   <Input.Search aria-label="Search athletes" placeholder="Search athletes…" value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
-                  <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""} ${a.provinceName ?? ""} ${a.nationName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} />
+                  <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""} ${a.provinceName ?? ""} ${a.nationName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} scroll={{ x: "max-content" }} />
                 </>
               </TableLayout>
             ),

@@ -282,6 +282,7 @@ export const Scores = ({
         pagination={false}
         size="small"
         bordered
+        scroll={{ x: "max-content" }}
         rowClassName={(record) =>
           record.key === "__total__" ? "scores-total-row" : ""
         }

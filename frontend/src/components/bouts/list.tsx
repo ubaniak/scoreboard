@@ -175,7 +175,7 @@ export const ListBouts = (props: ListBoutsProps) => {
         loading={props.loading}
         dataSource={filtered}
         columns={columns}
-        scroll={{ y: 55 * 5 }}
+        scroll={{ x: "max-content", y: 55 * 5 }}
       />
     </>
   );

@@ -170,7 +170,7 @@ export const AffiliationIndex = ({
             style={{ width: 260 }}
           />
         </Space>
-        <Table rowKey="id" dataSource={filtered} columns={columns} loading={loading} pagination={false} />
+        <Table rowKey="id" dataSource={filtered} columns={columns} loading={loading} pagination={false} scroll={{ x: "max-content" }} />
       </>
     </TableLayout>
   );

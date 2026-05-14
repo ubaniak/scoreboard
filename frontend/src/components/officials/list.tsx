@@ -90,6 +90,7 @@ export const ListOfficials = (props: ListOfficialsProps) => {
         dataSource={filtered}
         columns={columns}
         loading={props.loading}
+        scroll={{ x: "max-content" }}
       />
     </>
   );

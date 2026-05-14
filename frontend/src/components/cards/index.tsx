@@ -160,6 +160,7 @@ export const CardIndex = (props: CardTableProps) => {
           columns={columns}
           loading={props.isLoading}
           locale={{ emptyText }}
+          scroll={{ x: "max-content" }}
         />
       </TableLayout>
   );

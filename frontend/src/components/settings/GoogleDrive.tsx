@@ -134,6 +134,7 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
           },
         ]}
         pagination={false}
+        scroll={{ x: "max-content" }}
         locale={{ emptyText: "No sheets configured" }}
       />
       <Button

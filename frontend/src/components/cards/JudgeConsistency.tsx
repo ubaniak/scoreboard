@@ -105,6 +105,7 @@ export const JudgeConsistency = ({ cardId, token }: Props) => {
       dataSource={judges}
       columns={columns}
       pagination={false}
+      scroll={{ x: "max-content" }}
     />
   );
 };
@@ -190,6 +191,7 @@ const BoutBlock = ({
         columns={cols}
         pagination={false}
         style={{ marginTop: 8 }}
+        scroll={{ x: "max-content" }}
       />
     </div>
   );
