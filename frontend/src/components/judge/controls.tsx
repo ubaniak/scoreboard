@@ -151,6 +151,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
               <button
                 onClick={() => setSelected(null)}
                 className="judge-text-btn"
+                aria-label="Clear score selection and choose again"
                 style={{
                   fontSize: 11,
                   letterSpacing: 2,

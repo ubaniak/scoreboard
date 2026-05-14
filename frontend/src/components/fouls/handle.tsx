@@ -41,6 +41,7 @@ export const HandleFouls = (props: HandleFoulsProps) => {
             key={foul}
             checked={false}
             onChange={() => addFoul(foul)}
+            aria-label={`Add ${foul} ${props.type} to ${props.corner} corner`}
             style={{
               border: "1px solid",
               borderColor: "rgba(255,255,255,0.2)",

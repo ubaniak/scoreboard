@@ -85,6 +85,7 @@ export const WaitingScreen = ({
             <button
               onClick={() => onPickWinner?.("red")}
               className="judge-winner-btn"
+              aria-label={`Award decision to ${redCorner} (red corner)`}
               style={{
                 padding: "20px 36px",
                 borderRadius: 14,
@@ -102,6 +103,7 @@ export const WaitingScreen = ({
             <button
               onClick={() => onPickWinner?.("blue")}
               className="judge-winner-btn"
+              aria-label={`Award decision to ${blueCorner} (blue corner)`}
               style={{
                 padding: "20px 36px",
                 borderRadius: 14,
@@ -123,6 +125,7 @@ export const WaitingScreen = ({
       <button
         onClick={onChangeName}
         className="judge-text-btn"
+        aria-label="Change judge name"
         style={{
           fontSize: 11,
           color: colors.textFaint,

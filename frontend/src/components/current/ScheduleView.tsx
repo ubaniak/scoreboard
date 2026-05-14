@@ -359,7 +359,10 @@ export const ScheduleView = ({ cardName, cardImageUrl, bouts, nextBoutId }: Sche
           )}
 
           {needsPaging && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24, flexShrink: 0 }}>
+            <div
+              aria-hidden="true"
+              style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24, flexShrink: 0 }}
+            >
               {Array.from({ length: pageCount }).map((_, i) => (
                 <div
                   key={i}
