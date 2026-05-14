@@ -1,4 +1,5 @@
 /* src/index.css or src/global.css */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
 
 /* Dark color scheme — browser native controls adopt dark mode */
 html {
@@ -67,7 +68,31 @@ html {
   }
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
+/* Mobile breakpoints — admin pages adapt for phones.
+   Judge / scoreboard pages opt out via their own positioning. */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+}
+
+/* Prevent iOS Safari from zooming on input focus when font < 16px */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  .ant-input,
+  .ant-select-selector,
+  .ant-input-number-input {
+    font-size: 16px !important;
+  }
+}
 
 /* 1. Make html and body truly full-screen */
 html,

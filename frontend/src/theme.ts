@@ -73,6 +73,18 @@ export const tracking = {
   caps: "0.2em",
 } as const;
 
+/**
+ * Responsive breakpoints — matches Ant Design's `Grid.useBreakpoint()` defaults.
+ * Use with `hooks/useBreakpoint.ts` to gate layout decisions.
+ */
+export const bp = {
+  xs: 480,   // small phones (iPhone SE)
+  sm: 576,   // phones
+  md: 768,   // tablets
+  lg: 992,   // desktop
+  xl: 1200,  // large desktop
+} as const;
+
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
   judge1: "Judge 1",

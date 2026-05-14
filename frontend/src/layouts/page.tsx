@@ -39,7 +39,7 @@ export const PageLayout = (props: PageLayoutProps) => {
         style={{
           background: colors.bgElevated,
           borderBottom: `1px solid ${colors.borderSubtle}`,
-          padding: "0 16px",
+          padding: "0 12px",
           position: "sticky",
           top: 0,
           zIndex: 100,
@@ -51,6 +51,7 @@ export const PageLayout = (props: PageLayoutProps) => {
         <div
           style={{
             maxWidth: 1280,
+            width: "100%",
             margin: "0 auto",
             padding: "12px 0",
             display: "flex",
@@ -80,8 +81,8 @@ export const PageLayout = (props: PageLayoutProps) => {
           </Space>
         </div>
       </Header>
-      <Content style={{ padding: 16 }}>
-        <div id="main-content" style={{ maxWidth: 1280, margin: "0 auto" }}>
+      <Content style={{ padding: "16px 12px" }}>
+        <div id="main-content" style={{ maxWidth: 1280, width: "100%", margin: "0 auto" }}>
           <Breadcrumb
             style={{ margin: "16px 0" }}
             items={props.breadCrumbs || []}
