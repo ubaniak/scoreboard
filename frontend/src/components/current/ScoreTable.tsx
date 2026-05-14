@@ -66,10 +66,18 @@ export const ScoreTable = ({
   };
 
   return (
-    <div style={{ minWidth: 480, maxWidth: "90%", overflowX: "auto" }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "90%",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
       <table
         style={{
           width: "100%",
+          minWidth: judgeCount > 1 ? 320 : "auto",
           borderCollapse: "collapse",
           color: colors.text,
         }}
