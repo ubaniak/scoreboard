@@ -23,14 +23,15 @@ import (
 )
 
 type App struct {
-	useCase         UseCase
-	boutsApp        *bouts.App
-	reportsApp      *reports.App
-	broadcaster     *events.Broadcaster
-	importOfficials ImportOfficialCreator
-	importClubs     ImportClubCreator
-	importAthletes  ImportAthleteCreator
-	importBouts     ImportBoutCreator
+	useCase             UseCase
+	boutsApp            *bouts.App
+	reportsApp          *reports.App
+	broadcaster         *events.Broadcaster
+	importOfficials     ImportOfficialCreator
+	importClubs         ImportClubCreator
+	importAthletes      ImportAthleteCreator
+	importAthleteLookup ImportAthleteLookup
+	importBouts         ImportBoutCreator
 }
 
 func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, broadcaster *events.Broadcaster) *App {
@@ -42,10 +43,11 @@ func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, broad
 	}
 }
 
-func (h *App) WithImport(officials ImportOfficialCreator, clubs ImportClubCreator, athletes ImportAthleteCreator, bouts ImportBoutCreator) {
+func (h *App) WithImport(officials ImportOfficialCreator, clubs ImportClubCreator, athletes ImportAthleteCreator, athleteLookup ImportAthleteLookup, bouts ImportBoutCreator) {
 	h.importOfficials = officials
 	h.importClubs = clubs
 	h.importAthletes = athletes
+	h.importAthleteLookup = athleteLookup
 	h.importBouts = bouts
 }
 

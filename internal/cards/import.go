@@ -1,7 +1,6 @@
 package cards
 
 import (
-	"bufio"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -27,22 +26,33 @@ type ImportAthleteCreator interface {
 	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
 }
 
+// ImportAthleteInfo carries the minimal athlete fields needed to populate bout
+// metadata (age category, experience, gender) at import time.
+type ImportAthleteInfo struct {
+	ID          uint
+	AgeCategory string
+	Experience  string
+	Gender      string
+}
+
+// ImportAthleteLookup looks up an athlete by name to derive bout metadata.
+type ImportAthleteLookup interface {
+	FindFirstByName(name string) (*ImportAthleteInfo, error)
+}
+
 type ImportBoutCreator interface {
 	CreateBulk(cardId uint, bouts []*boutEntities.Bout) error
 	GetNumberOfJudges(cardId uint) (int, error)
 }
 
-// ImportCSV handles POST /cards/import
-// The CSV has three sections separated by blank lines:
+// ImportCSV handles POST /cards/import.
 //
-//	Name: <card name>
-//	Date: <YYYY-MM-DD>
+// The CSV is flat — every data row carries the card name + date plus one bout:
 //
-//	Officials:
-//	Name,Nationality,Year of Birth,Registration Number
+//	Card Name,Date,Bout Number,Bout Type,Red Athlete,Blue Athlete,Round Length,Glove Size
 //
-//	Bouts:
-//	Bout Number,Bout Type,Red Athlete,Red Club,Blue Athlete,Blue Club,Age Category,Experience,Gender,Round Length,Glove Size
+// Athletes must already exist (use the Athletes tab to import them first).
+// Age Category, Experience, and Gender are derived from the Red athlete record.
 func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -57,43 +67,37 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Read all lines for section-based parsing.
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	rows, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		presenter.WithError(fmt.Errorf("invalid CSV: %w", err)).Present()
+		return
 	}
-	if err := scanner.Err(); err != nil {
-		presenter.WithError(fmt.Errorf("reading file: %w", err)).Present()
+	if len(rows) < 2 {
+		presenter.WithError(errors.New("CSV must contain a header row and at least one bout")).Present()
 		return
 	}
 
-	// ── Parse card details ───────────────────────────────────────────────────
-	// Supports "Name: Foo" / "Date: Foo" key-value lines and
-	// "card_name,Foo" / "date,Foo" CSV row style.
+	hdr := normaliseHeader(rows[0])
+	if _, ok := hdr["redathlete"]; !ok {
+		presenter.WithError(errors.New("CSV missing required column: Red Athlete")).Present()
+		return
+	}
+
+	// Resolve card from the first row with non-empty Card Name.
 	cardName, cardDate := "", ""
-	for _, line := range lines {
-		if after, ok := strings.CutPrefix(line, "Name:"); ok {
-			cardName = firstCSVField(strings.TrimSpace(after))
-			continue
+	for _, row := range rows[1:] {
+		if v := colVal(row, hdr, "cardname"); v != "" && cardName == "" {
+			cardName = v
 		}
-		if after, ok := strings.CutPrefix(line, "Date:"); ok {
-			cardDate = firstCSVField(strings.TrimSpace(after))
-			continue
+		if v := colVal(row, hdr, "date"); v != "" && cardDate == "" {
+			cardDate = v
 		}
-		// CSV row style: first field is the key, second is the value.
-		if parts := strings.SplitN(line, ",", 3); len(parts) >= 2 {
-			key := strings.ToLower(strings.TrimSpace(parts[0]))
-			val := strings.TrimSpace(parts[1])
-			if key == "card_name" || key == "card name" || key == "name" {
-				cardName = val
-			} else if key == "date" {
-				cardDate = val
-			}
+		if cardName != "" && cardDate != "" {
+			break
 		}
 	}
 	if cardName == "" {
-		presenter.WithError(errors.New("CSV missing card name (use 'Name: Foo' or 'card_name,Foo')")).Present()
+		presenter.WithError(errors.New("CSV missing card name (add a Card Name column)")).Present()
 		return
 	}
 
@@ -103,122 +107,44 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ── Split into sections ──────────────────────────────────────────────────
-	officialLines, boutLines := splitSections(lines)
-
-	// ── Process officials ────────────────────────────────────────────────────
-	if h.importOfficials != nil && len(officialLines) > 0 {
-		rdr := csv.NewReader(strings.NewReader(strings.Join(officialLines, "\n")))
-		rows, err := rdr.ReadAll()
-		if err != nil {
-			presenter.WithError(fmt.Errorf("officials CSV: %w", err)).Present()
-			return
-		}
-		if len(rows) > 1 {
-			hdr := normaliseHeader(rows[0])
-			for i, row := range rows[1:] {
-				name := colVal(row, hdr, "name")
-				if name == "" {
-					presenter.WithError(fmt.Errorf("officials row %d: missing name", i+2)).Present()
-					return
-				}
-				nationality := colVal(row, hdr, "nationality")
-				regNum := colVal(row, hdr, "registrationnumber")
-				yob := 0
-				if v := colVal(row, hdr, "yearofbirth"); v != "" {
-					yob, _ = strconv.Atoi(v)
-				}
-				if err := h.importOfficials.FindOrCreate(name, nationality, yob, regNum); err != nil {
-					presenter.WithError(fmt.Errorf("official %q: %w", name, err)).Present()
-					return
-				}
-			}
-		}
-	}
-
-	// ── Process bouts ────────────────────────────────────────────────────────
-	if h.importBouts == nil || len(boutLines) == 0 {
-		presenter.WithError(nil).WithStatusCode(http.StatusCreated).Present()
+	if h.importBouts == nil || h.importAthletes == nil || h.importAthleteLookup == nil {
+		presenter.WithError(errors.New("card import not configured")).Present()
 		return
-	}
-
-	rdr := csv.NewReader(strings.NewReader(strings.Join(boutLines, "\n")))
-	rows, err := rdr.ReadAll()
-	if err != nil {
-		presenter.WithError(fmt.Errorf("bouts CSV: %w", err)).Present()
-		return
-	}
-	if len(rows) < 2 {
-		presenter.WithError(nil).WithStatusCode(http.StatusCreated).Present()
-		return
-	}
-
-	hdr := normaliseHeader(rows[0])
-
-	mapAgeCategory := func(s string) boutEntities.AgeCategory {
-		switch strings.ToLower(s) {
-		case "u13":
-			return boutEntities.JuniorA
-		case "u15":
-			return boutEntities.JuniorB
-		case "u17":
-			return boutEntities.JuniorC
-		case "u19":
-			return boutEntities.Youth
-		case "elite":
-			return boutEntities.Elite
-		case "masters":
-			return boutEntities.Masters
-		default:
-			return boutEntities.AgeCategory(strings.ToLower(s))
-		}
-	}
-
-	mapRoundLength := func(s string) boutEntities.RoundLength {
-		clean := strings.TrimSpace(strings.ToLower(strings.ReplaceAll(s, "min", "")))
-		switch clean {
-		case "1", "1.0":
-			return boutEntities.OneMinute
-		case "1.5":
-			return boutEntities.OneHalfMinute
-		case "2", "2.0":
-			return boutEntities.TwoMinutes
-		case "3", "3.0":
-			return boutEntities.ThreeMinutes
-		}
-		return 0
-	}
-
-	mapGloveSize := func(s string) boutEntities.GloveSize {
-		clean := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "oz", ""))
-		switch clean {
-		case "10":
-			return boutEntities.TenOz
-		case "12":
-			return boutEntities.TwelveOz
-		case "16":
-			return boutEntities.SixteenOz
-		}
-		return boutEntities.GloveSize(strings.ToLower(strings.ReplaceAll(s, " ", "")))
 	}
 
 	bouts := make([]*boutEntities.Bout, 0, len(rows)-1)
 	for i, row := range rows[1:] {
 		rowNum := i + 2
-		ageCategory := mapAgeCategory(colVal(row, hdr, "agecategory"))
-		experience := boutEntities.Experience(strings.ToLower(colVal(row, hdr, "experience")))
-		gender := boutEntities.Gender(strings.ToLower(colVal(row, hdr, "gender")))
 
+		redName := colVal(row, hdr, "redathlete")
+		blueName := colVal(row, hdr, "blueathlete")
+		if redName == "" {
+			continue
+		}
+
+		red, err := h.importAthleteLookup.FindFirstByName(redName)
+		if err != nil {
+			presenter.WithError(fmt.Errorf("row %d red athlete %q: %w", rowNum, redName, err)).Present()
+			return
+		}
+		if red == nil {
+			presenter.WithError(fmt.Errorf("row %d: red athlete %q not found — import athletes first", rowNum, redName)).Present()
+			return
+		}
+
+		ageCategory := boutEntities.AgeCategory(strings.ToLower(red.AgeCategory))
+		experience := boutEntities.Experience(strings.ToLower(red.Experience))
+		gender := boutEntities.Gender(strings.ToLower(red.Gender))
 		if !ageCategory.IsValid() {
-			presenter.WithError(fmt.Errorf("bouts row %d: invalid ageCategory %q", rowNum, colVal(row, hdr, "agecategory"))).Present()
+			presenter.WithError(fmt.Errorf("row %d: red athlete %q has invalid ageCategory %q", rowNum, redName, red.AgeCategory)).Present()
 			return
 		}
 		if !experience.IsValid() {
-			presenter.WithError(fmt.Errorf("bouts row %d: invalid experience %q", rowNum, colVal(row, hdr, "experience"))).Present()
+			presenter.WithError(fmt.Errorf("row %d: red athlete %q has invalid experience %q", rowNum, redName, red.Experience)).Present()
 			return
 		}
 		if !gender.IsValid() {
-			presenter.WithError(fmt.Errorf("bouts row %d: invalid gender %q", rowNum, colVal(row, hdr, "gender"))).Present()
+			presenter.WithError(fmt.Errorf("row %d: red athlete %q has invalid gender %q", rowNum, redName, red.Gender)).Present()
 			return
 		}
 
@@ -228,7 +154,6 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 				boutNumber = n
 			}
 		}
-
 		boutType := boutEntities.BoutTypeScored
 		if v := colVal(row, hdr, "bouttype"); v != "" {
 			if bt := boutEntities.BoutType(strings.ToLower(v)); bt.IsValid() {
@@ -240,71 +165,40 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if roundLength == 0 {
 			roundLength = roundLengthDefault(ageCategory, experience)
 		}
-
 		gloveSize := mapGloveSize(colVal(row, hdr, "glovesize"))
 		if gloveSize == "" {
 			gloveSize = boutEntities.TenOz
 		}
 
 		bout := &boutEntities.Bout{
-			CardID:      cardId,
-			BoutNumber:  boutNumber,
-			AgeCategory: ageCategory,
-			Experience:  experience,
-			Gender:      gender,
-			RoundLength: roundLength,
-			GloveSize:   gloveSize,
-			BoutType:    boutType,
-			Status:      boutEntities.BoutStatusNotStarted,
+			CardID:        cardId,
+			BoutNumber:    boutNumber,
+			AgeCategory:   ageCategory,
+			Experience:    experience,
+			Gender:        gender,
+			RoundLength:   roundLength,
+			GloveSize:     gloveSize,
+			BoutType:      boutType,
+			Status:        boutEntities.BoutStatusNotStarted,
+			RedAthleteID:  &red.ID,
 		}
 
-		if h.importAthletes != nil && h.importClubs != nil {
-			redName := colVal(row, hdr, "redathlete")
-			blueName := colVal(row, hdr, "blueathlete")
-			redClub := colVal(row, hdr, "redclub")
-			blueClub := colVal(row, hdr, "blueclub")
-
-			if redName != "" {
-				var clubID *uint
-				if redClub != "" {
-					id, err := h.importClubs.FindOrCreateByName(redClub)
-					if err != nil {
-						presenter.WithError(fmt.Errorf("bouts row %d: red club: %w", rowNum, err)).Present()
-						return
-					}
-					clubID = &id
-				}
-				id, err := h.importAthletes.FindOrCreateByNameAndClub(redName, clubID)
-				if err != nil {
-					presenter.WithError(fmt.Errorf("bouts row %d: red athlete: %w", rowNum, err)).Present()
-					return
-				}
-				bout.RedAthleteID = &id
+		if blueName != "" {
+			blue, err := h.importAthleteLookup.FindFirstByName(blueName)
+			if err != nil {
+				presenter.WithError(fmt.Errorf("row %d blue athlete %q: %w", rowNum, blueName, err)).Present()
+				return
 			}
-
-			if blueName != "" {
-				var clubID *uint
-				if blueClub != "" {
-					id, err := h.importClubs.FindOrCreateByName(blueClub)
-					if err != nil {
-						presenter.WithError(fmt.Errorf("bouts row %d: blue club: %w", rowNum, err)).Present()
-						return
-					}
-					clubID = &id
-				}
-				id, err := h.importAthletes.FindOrCreateByNameAndClub(blueName, clubID)
-				if err != nil {
-					presenter.WithError(fmt.Errorf("bouts row %d: blue athlete: %w", rowNum, err)).Present()
-					return
-				}
-				bout.BlueAthleteID = &id
+			if blue == nil {
+				presenter.WithError(fmt.Errorf("row %d: blue athlete %q not found — import athletes first", rowNum, blueName)).Present()
+				return
 			}
+			bout.BlueAthleteID = &blue.ID
 		}
 
 		bouts = append(bouts, bout)
 	}
 
-	// Apply card-level judge count.
 	if numJudges, err := h.importBouts.GetNumberOfJudges(cardId); err == nil {
 		for _, b := range bouts {
 			if b.BoutType == boutEntities.BoutTypeScored {
@@ -318,40 +212,6 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	presenter.WithError(nil).WithStatusCode(http.StatusCreated).Present()
-}
-
-// splitSections returns the CSV row lines for the Officials and Bouts sections.
-// Section headers may have trailing commas (e.g. "Officials:,,,,") as produced
-// by spreadsheet exports.
-func splitSections(lines []string) (officials, bouts []string) {
-	const (
-		secNone      = 0
-		secOfficials = 1
-		secBouts     = 2
-	)
-	sec := secNone
-	for _, line := range lines {
-		// Use only the first CSV field when detecting section headers.
-		firstField := strings.ToLower(strings.TrimSpace(strings.SplitN(line, ",", 2)[0]))
-		if firstField == "officials:" {
-			sec = secOfficials
-			continue
-		}
-		if firstField == "bouts:" {
-			sec = secBouts
-			continue
-		}
-		if isBlankCSVRow(line) {
-			continue
-		}
-		switch sec {
-		case secOfficials:
-			officials = append(officials, line)
-		case secBouts:
-			bouts = append(bouts, line)
-		}
-	}
-	return
 }
 
 // normaliseHeader builds a lowercase column index with spaces and underscores
@@ -368,29 +228,40 @@ func normaliseHeader(header []string) map[string]int {
 	return m
 }
 
-// firstCSVField returns the content before the first comma, trimmed. This
-// strips trailing commas that spreadsheet exports add to every line.
-func firstCSVField(s string) string {
-	return strings.TrimSpace(strings.SplitN(s, ",", 2)[0])
-}
-
-// isBlankCSVRow reports whether every field in a CSV line is empty, which
-// happens when a spreadsheet exports a blank row as ",,,,,,,,,,".
-func isBlankCSVRow(line string) bool {
-	for _, field := range strings.Split(line, ",") {
-		if strings.TrimSpace(field) != "" {
-			return false
-		}
-	}
-	return true
-}
-
 // colVal returns the trimmed value for a column key (normalised) from a row.
 func colVal(row []string, hdr map[string]int, key string) string {
 	if idx, ok := hdr[key]; ok && idx < len(row) {
 		return strings.TrimSpace(row[idx])
 	}
 	return ""
+}
+
+func mapRoundLength(s string) boutEntities.RoundLength {
+	clean := strings.TrimSpace(strings.ToLower(strings.ReplaceAll(s, "min", "")))
+	switch clean {
+	case "1", "1.0":
+		return boutEntities.OneMinute
+	case "1.5":
+		return boutEntities.OneHalfMinute
+	case "2", "2.0":
+		return boutEntities.TwoMinutes
+	case "3", "3.0":
+		return boutEntities.ThreeMinutes
+	}
+	return 0
+}
+
+func mapGloveSize(s string) boutEntities.GloveSize {
+	clean := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "oz", ""))
+	switch clean {
+	case "10":
+		return boutEntities.TenOz
+	case "12":
+		return boutEntities.TwelveOz
+	case "16":
+		return boutEntities.SixteenOz
+	}
+	return boutEntities.GloveSize(strings.ToLower(strings.ReplaceAll(s, " ", "")))
 }
 
 // roundLengthDefault mirrors the logic from the bouts package without importing it.

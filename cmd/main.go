@@ -173,7 +173,8 @@ func main() {
 		panic(err)
 	}
 	athleteUseCase := athletes.NewUseCase(athleteStorage)
-	athleteApp := athletes.NewApp(athleteUseCase)
+	athleteApp := athletes.NewApp(athleteUseCase).
+		WithAffiliationResolver(&athleteAffiliationResolver{affiliationUseCase})
 
 	// -- bouts
 
@@ -202,7 +203,7 @@ func main() {
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
 	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
-	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
+	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &cardAthleteLookupAdapter{athleteUseCase}, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	scoresApp := scores.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
 
@@ -627,6 +628,39 @@ func (a *importBoutAdapter) GetNumberOfJudges(cardId uint) (int, error) {
 		return 5, nil
 	}
 	return card.NumberOfJudges, nil
+}
+
+type athleteAffiliationResolver struct {
+	uc affiliations.UseCase
+}
+
+func (a *athleteAffiliationResolver) FindOrCreateClub(name string) (uint, error) {
+	return a.uc.FindOrCreateByName(name)
+}
+
+func (a *athleteAffiliationResolver) FindOrCreateProvince(name string) (uint, error) {
+	return a.uc.FindOrCreateProvince(name)
+}
+
+func (a *athleteAffiliationResolver) FindOrCreateNation(name string) (uint, error) {
+	return a.uc.FindOrCreateNation(name)
+}
+
+type cardAthleteLookupAdapter struct {
+	uc athletes.UseCase
+}
+
+func (a *cardAthleteLookupAdapter) FindFirstByName(name string) (*cards.ImportAthleteInfo, error) {
+	at, err := a.uc.FindFirstByName(name)
+	if err != nil || at == nil {
+		return nil, err
+	}
+	return &cards.ImportAthleteInfo{
+		ID:          at.ID,
+		AgeCategory: at.AgeCategory,
+		Experience:  at.Experience,
+		Gender:      at.Gender,
+	}, nil
 }
 
 func getLocalIP() string {

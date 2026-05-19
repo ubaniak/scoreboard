@@ -12,6 +12,7 @@ type UseCase interface {
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
+	FindFirstByName(name string) (*entities.Athlete, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -119,6 +120,18 @@ func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffi
 		ProvinceAffiliationID: provinceAffiliationID,
 		NationAffiliationID:   nationAffiliationID,
 	})
+}
+
+func (uc *useCase) FindFirstByName(name string) (*entities.Athlete, error) {
+	matches, err := uc.storage.FindByName(name)
+	if err != nil {
+		return nil, err
+	}
+	if len(matches) == 0 {
+		return nil, nil
+	}
+	a := matches[0]
+	return &a, nil
 }
 
 func (uc *useCase) List() ([]entities.Athlete, error) {

@@ -2,15 +2,7 @@ import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons
 import { Avatar, Button, Input, Popconfirm, Space, Table, Tabs, type TableProps } from "antd";
 import { useMemo, useState } from "react";
 import { ImageUpload } from "../components/image/imageUpload";
-import {
-  useListAffiliations,
-  useMutateCreateAffiliation,
-  useMutateDeleteAffiliation,
-  useMutateImportAffiliations,
-  useMutateRemoveAffiliationImage,
-  useMutateUpdateAffiliation,
-  useMutateUploadAffiliationImage,
-} from "../api/affiliations";
+import { useListAffiliations } from "../api/affiliations";
 import {
   type Athlete,
   useListAthletes,
@@ -43,7 +35,6 @@ import { CardIndex } from "../components/cards";
 import { ImportCSV } from "../components/shared/ImportCSV";
 import { AddAthlete } from "../components/athletes/AddAthlete";
 import { EditAthlete } from "../components/athletes/EditAthlete";
-import { AffiliationIndex } from "../components/affiliations";
 import { TableLayout } from "../layouts/table";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
@@ -69,12 +60,6 @@ export const HomePage = () => {
   const importCard = useMutateImportCard({ token });
 
   const affiliationsQuery = useListAffiliations({ token });
-  const createAffiliation = useMutateCreateAffiliation({ token });
-  const updateAffiliation = useMutateUpdateAffiliation({ token });
-  const deleteAffiliation = useMutateDeleteAffiliation({ token });
-  const uploadAffiliationImage = useMutateUploadAffiliationImage({ token });
-  const removeAffiliationImage = useMutateRemoveAffiliationImage({ token });
-  const importAffiliations = useMutateImportAffiliations({ token });
 
   const athletesQuery = useListAthletes({ token });
   const createAthlete = useMutateCreateAthlete({ token });
@@ -162,22 +147,6 @@ export const HomePage = () => {
         style={{ marginTop: 16 }}
         items={[
           {
-            key: "affiliations",
-            label: `Affiliations (${allAffiliations.length})`,
-            children: (
-              <AffiliationIndex
-                affiliations={allAffiliations}
-                loading={affiliationsQuery.isLoading}
-                onCreate={(vals) => createAffiliation.mutateAsync(vals)}
-                onUpdate={(args) => updateAffiliation.mutateAsync(args)}
-                onDelete={(id) => deleteAffiliation.mutate(id)}
-                onUploadImage={(args) => uploadAffiliationImage.mutateAsync(args)}
-                onRemoveImage={(id) => removeAffiliationImage.mutate(id)}
-                onImport={(file) => importAffiliations.mutateAsync(file)}
-              />
-            ),
-          },
-          {
             key: "athletes",
             label: `Athletes (${athletesQuery.data?.length ?? 0})`,
             children: (
@@ -192,10 +161,18 @@ export const HomePage = () => {
                           <ImportCSV
                             onClose={close}
                             onImport={(f) => importAthletes.mutateAsync(f)}
-                            hint="Required: name. Optional: dateOfBirth, ageCategory, gender, experience, clubAffiliationId, provinceAffiliationId, nationAffiliationId"
+                            hint={
+                              "Columns: Name, Gender, Age Category, Experience, Club, Province, Nationality. " +
+                              "Key — Age Category: U13, U15, U19, Elite, Masters. " +
+                              "Experience: Open, Novice. Gender: Male, Female. " +
+                              "Club/Province/Nationality are names — affiliations are created automatically."
+                            }
                             template={{
                               filename: "athletes-template.csv",
-                              content: "name,dateOfBirth,gender,experience,clubAffiliationId,provinceAffiliationId,nationAffiliationId\nJane Smith,2005-03-15,female,open,,,\nJohn Doe,2007-08-22,male,novice,,,",
+                              content:
+                                "Name,Gender,Age Category,Experience,Club,Province,Nationality\n" +
+                                "Jane Smith,Female,U19,Open,City Boxing,Ontario,Canada\n" +
+                                "John Doe,Male,Elite,Novice,Westside Club,New York,USA\n",
                             }}
                           />
                         ),

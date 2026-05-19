@@ -9,8 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"time"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -21,12 +20,25 @@ import (
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
 
+// AffiliationResolver looks up or creates an affiliation by name.
+type AffiliationResolver interface {
+	FindOrCreateClub(name string) (uint, error)
+	FindOrCreateProvince(name string) (uint, error)
+	FindOrCreateNation(name string) (uint, error)
+}
+
 type App struct {
-	useCase UseCase
+	useCase      UseCase
+	affiliations AffiliationResolver
 }
 
 func NewApp(useCase UseCase) *App {
 	return &App{useCase: useCase}
+}
+
+func (a *App) WithAffiliationResolver(r AffiliationResolver) *App {
+	a.affiliations = r
+	return a
 }
 
 func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
@@ -229,36 +241,10 @@ func (a *App) RemoveImage(w http.ResponseWriter, r *http.Request) {
 	presenter.WithError(a.useCase.SetImageUrl(id, "")).Present()
 }
 
-// ageCategoryFromDOB derives the boxing age category from a YYYY-MM-DD date of birth.
-// Rules: U13=11-12, U15=13-14, U17=15-16, U19=17-18, Elite=19-39, Masters=40+
-func ageCategoryFromDOB(dob string) string {
-	t, err := time.Parse("2006-01-02", dob)
-	if err != nil {
-		return ""
-	}
-	now := time.Now()
-	age := now.Year() - t.Year()
-	if now.Month() < t.Month() || (now.Month() == t.Month() && now.Day() < t.Day()) {
-		age--
-	}
-	switch {
-	case age <= 12:
-		return "u13"
-	case age <= 14:
-		return "u15"
-	case age <= 16:
-		return "u17"
-	case age <= 18:
-		return "u19"
-	case age <= 39:
-		return "elite"
-	default:
-		return "masters"
-	}
-}
-
 // ImportCSV accepts a multipart form with a "file" CSV field.
-// Required columns: name. Optional: dateOfBirth (YYYY-MM-DD), ageCategory, nationality, clubAffiliationId, provinceAffiliationId, nationAffiliationId
+// Header (case-insensitive, spaces/underscores ignored):
+//   Name, Gender, Age Category, Experience, Club, Province, Nationality
+// Club, Province, Nationality are names — affiliations are created if missing.
 func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -283,58 +269,63 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	colIndex := map[string]int{}
+	hdr := make(map[string]int, len(records[0]))
 	for i, col := range records[0] {
-		colIndex[col] = i
+		key := strings.ToLower(strings.TrimSpace(col))
+		key = strings.ReplaceAll(key, " ", "")
+		key = strings.ReplaceAll(key, "_", "")
+		hdr[key] = i
 	}
-	if _, ok := colIndex["name"]; !ok {
-		presenter.WithError(errors.New("CSV missing required column: name")).Present()
+	col := func(row []string, key string) string {
+		if i, ok := hdr[key]; ok && i < len(row) {
+			return strings.TrimSpace(row[i])
+		}
+		return ""
+	}
+	if _, ok := hdr["name"]; !ok {
+		presenter.WithError(errors.New("CSV missing required column: Name")).Present()
 		return
 	}
 
-	for _, row := range records[1:] {
-		name := row[colIndex["name"]]
-		ageCategory := ""
-		if i, ok := colIndex["dateOfBirth"]; ok && i < len(row) && row[i] != "" {
-			ageCategory = ageCategoryFromDOB(row[i])
+	for rowIdx, row := range records[1:] {
+		name := col(row, "name")
+		if name == "" {
+			presenter.WithError(fmt.Errorf("row %d: missing Name", rowIdx+2)).Present()
+			return
 		}
-		if ageCategory == "" {
-			if i, ok := colIndex["ageCategory"]; ok && i < len(row) {
-				ageCategory = row[i]
-			}
-		}
-		gender := ""
-		if i, ok := colIndex["gender"]; ok && i < len(row) {
-			gender = row[i]
-		}
-		experience := ""
-		if i, ok := colIndex["experience"]; ok && i < len(row) {
-			experience = row[i]
-		}
+		gender := strings.ToLower(col(row, "gender"))
+		ageCategory := strings.ToLower(col(row, "agecategory"))
+		experience := strings.ToLower(col(row, "experience"))
 
-		var clubAffiliationID *uint
-		if i, ok := colIndex["clubAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
-				id := uint(v)
-				clubAffiliationID = &id
+		var clubID, provinceID, nationID *uint
+		if a.affiliations != nil {
+			if v := col(row, "club"); v != "" {
+				id, err := a.affiliations.FindOrCreateClub(v)
+				if err != nil {
+					presenter.WithError(fmt.Errorf("row %d club %q: %w", rowIdx+2, v, err)).Present()
+					return
+				}
+				clubID = &id
 			}
-		}
-		var provinceAffiliationID *uint
-		if i, ok := colIndex["provinceAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
-				id := uint(v)
-				provinceAffiliationID = &id
+			if v := col(row, "province"); v != "" {
+				id, err := a.affiliations.FindOrCreateProvince(v)
+				if err != nil {
+					presenter.WithError(fmt.Errorf("row %d province %q: %w", rowIdx+2, v, err)).Present()
+					return
+				}
+				provinceID = &id
 			}
-		}
-		var nationAffiliationID *uint
-		if i, ok := colIndex["nationAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, err := strconv.ParseUint(row[i], 10, 64); err == nil {
-				id := uint(v)
-				nationAffiliationID = &id
+			if v := col(row, "nationality"); v != "" {
+				id, err := a.affiliations.FindOrCreateNation(v)
+				if err != nil {
+					presenter.WithError(fmt.Errorf("row %d nationality %q: %w", rowIdx+2, v, err)).Present()
+					return
+				}
+				nationID = &id
 			}
 		}
 
-		if err := a.useCase.Create(name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID); err != nil {
+		if err := a.useCase.Create(name, ageCategory, gender, experience, clubID, provinceID, nationID); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

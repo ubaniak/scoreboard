@@ -3,9 +3,9 @@ import { App, Button, Space, Upload, type UploadFile } from "antd";
 import { useState } from "react";
 
 const TEMPLATE = [
-  "name,nationality,gender,yearOfBirth,registrationNumber,province,nation",
-  "Jane Smith,CAN,female,1985,REG001,Ontario,Canada",
-  "John Doe,USA,male,1979,REG002,New York,USA",
+  "Name,Nationality,Year of Birth,Registration Number",
+  "Jane Smith,Canada,1985,REG001",
+  "John Doe,USA,1979,REG002",
 ].join("\n");
 
 function downloadTemplate() {
@@ -50,7 +50,7 @@ export const ImportOfficialsCSV = (props: ImportOfficialsCSVProps) => {
       >
         <p className="ant-upload-drag-icon"><InboxOutlined /></p>
         <p className="ant-upload-text">Click or drag a CSV file to upload</p>
-        <p className="ant-upload-hint">Required columns: name</p>
+        <p className="ant-upload-hint">Columns: Name, Nationality, Year of Birth, Registration Number</p>
       </Upload.Dragger>
       <Space>
         <Button onClick={() => props.onClose()}>Cancel</Button>

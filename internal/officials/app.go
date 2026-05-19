@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -188,42 +189,51 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 
 	header := records[0]
 	colIndex := make(map[string]int, len(header))
-	for i, col := range header {
-		colIndex[col] = i
+	for i, raw := range header {
+		key := strings.ToLower(strings.TrimSpace(raw))
+		key = strings.ReplaceAll(key, " ", "")
+		key = strings.ReplaceAll(key, "_", "")
+		colIndex[key] = i
+	}
+	col := func(row []string, key string) string {
+		if i, ok := colIndex[key]; ok && i < len(row) {
+			return strings.TrimSpace(row[i])
+		}
+		return ""
 	}
 
 	if _, ok := colIndex["name"]; !ok {
-		presenter.WithError(errors.New("CSV missing required column: name")).Present()
+		presenter.WithError(errors.New("CSV missing required column: Name")).Present()
 		return
 	}
 
 	officials := make([]*entities.Official, 0, len(records)-1)
 	for _, row := range records[1:] {
-		o := &entities.Official{Name: row[colIndex["name"]]}
-		if i, ok := colIndex["nationality"]; ok && i < len(row) {
-			o.Nationality = row[i]
+		name := col(row, "name")
+		if name == "" {
+			continue
 		}
-		if i, ok := colIndex["gender"]; ok && i < len(row) {
-			o.Gender = row[i]
+		o := &entities.Official{
+			Name:               name,
+			Nationality:        col(row, "nationality"),
+			Gender:             col(row, "gender"),
+			RegistrationNumber: col(row, "registrationnumber"),
 		}
-		if i, ok := colIndex["yearOfBirth"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.Atoi(row[i]); parseErr == nil {
-				o.YearOfBirth = v
+		if v := col(row, "yearofbirth"); v != "" {
+			if n, parseErr := strconv.Atoi(v); parseErr == nil {
+				o.YearOfBirth = n
 			}
 		}
-		if i, ok := colIndex["registrationNumber"]; ok && i < len(row) {
-			o.RegistrationNumber = row[i]
-		}
-		if i, ok := colIndex["provinceAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
-				id := uint(v)
-				o.ProvinceAffiliationID = &id
+		if v := col(row, "provinceaffiliationid"); v != "" {
+			if id, parseErr := strconv.ParseUint(v, 10, 64); parseErr == nil {
+				u := uint(id)
+				o.ProvinceAffiliationID = &u
 			}
 		}
-		if i, ok := colIndex["nationAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
-				id := uint(v)
-				o.NationAffiliationID = &id
+		if v := col(row, "nationaffiliationid"); v != "" {
+			if id, parseErr := strconv.ParseUint(v, 10, 64); parseErr == nil {
+				u := uint(id)
+				o.NationAffiliationID = &u
 			}
 		}
 		officials = append(officials, o)

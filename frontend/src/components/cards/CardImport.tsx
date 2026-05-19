@@ -2,19 +2,10 @@ import { InboxOutlined } from "@ant-design/icons";
 import { Button, Upload } from "antd";
 import type { RcFile } from "antd/es/upload";
 
-const TEMPLATE = `Name: Spring Open 2024
-Date: 2024-04-20
-
-Officials:
-Name,Nationality,Year of Birth,Registration Number
-Jane Smith,CAN,1985,REG001
-John Doe,USA,1979,REG002
-
-Bouts:
-Bout Number,Bout Type,Red Athlete,Red Club,Blue Athlete,Blue Club,Age Category,Experience,Gender,Round Length,Glove Size
-1,scored,Alice Johnson,Eastside Boxing,Bob Williams,Westside BC,u17,open,female,2,10oz
-2,scored,Maria Garcia,Westside Club,John Doe,City Boxing,elite,open,male,3,12oz
-3,sparring,Alice Brown,,Bob White,,u13,novice,male,1,10oz
+const TEMPLATE = `Card Name,Date,Bout Number,Bout Type,Red Athlete,Blue Athlete,Round Length,Glove Size
+Spring Open 2024,2024-04-20,1,scored,Jane Smith,Maria Garcia,2,10oz
+Spring Open 2024,2024-04-20,2,scored,John Doe,Mike Johnson,3,12oz
+Spring Open 2024,2024-04-20,3,sparring,Alice Brown,Bob White,1,10oz
 `;
 
 export const CardImport = ({
@@ -50,7 +41,8 @@ export const CardImport = ({
         </p>
         <p className="ant-upload-text">Click or drag CSV file to import</p>
         <p className="ant-upload-hint">
-          Imports card, officials, and bouts (athletes and clubs are created from bout rows)
+          Columns: Card Name, Date, Bout Number, Bout Type, Red Athlete, Blue Athlete, Round Length, Glove Size.
+          Athletes must be imported on the Athletes tab first — age category, experience, and gender are taken from the Red athlete.
         </p>
       </Upload.Dragger>
     </div>
