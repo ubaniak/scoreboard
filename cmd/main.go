@@ -26,6 +26,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/apps/healthcheck"
 	"github.com/ubaniak/scoreboard/internal/affiliations"
 	"github.com/ubaniak/scoreboard/internal/athletes"
+	athleteEntities "github.com/ubaniak/scoreboard/internal/athletes/entities"
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	"github.com/ubaniak/scoreboard/internal/backup"
 	"github.com/ubaniak/scoreboard/internal/dump"
@@ -240,7 +241,7 @@ func main() {
 	apiRegister.Add(backupApp)
 	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
 
-	gdriveApp := gdrive.NewApp(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
+	gdriveApp := gdrive.NewApp(officialUsecCase, affiliationUseCase, &gdriveAthleteAdapter{athleteUseCase}, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
 	apiRegister.Add(gdriveApp)
 
 	apiRegister.Register(rb)
@@ -656,6 +657,74 @@ func (a *cardAthleteLookupAdapter) FindFirstByName(name string) (*cards.ImportAt
 		return nil, err
 	}
 	return &cards.ImportAthleteInfo{
+		ID:          at.ID,
+		AgeCategory: at.AgeCategory,
+		Experience:  at.Experience,
+		Gender:      at.Gender,
+	}, nil
+}
+
+type gdriveAthleteAdapter struct {
+	uc athletes.UseCase
+}
+
+func (a *gdriveAthleteAdapter) FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error) {
+	return a.uc.FindOrCreateByNameAndClub(name, clubID)
+}
+
+func (a *gdriveAthleteAdapter) FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error) {
+	return a.uc.FindOrCreateByNameClubProvince(name, clubID, provinceID)
+}
+
+func (a *gdriveAthleteAdapter) UpsertFull(name, gender, ageCategory, experience string, clubID, provinceID, nationID *uint) (uint, error) {
+	existing, err := a.uc.FindFirstByName(name)
+	if err != nil {
+		return 0, err
+	}
+	if existing != nil {
+		upd := &athleteEntities.UpdateAthlete{}
+		if gender != "" {
+			upd.Gender = &gender
+		}
+		if ageCategory != "" {
+			upd.AgeCategory = &ageCategory
+		}
+		if experience != "" {
+			upd.Experience = &experience
+		}
+		if clubID != nil {
+			cid := clubID
+			upd.ClubAffiliationID = &cid
+		}
+		if provinceID != nil {
+			pid := provinceID
+			upd.ProvinceAffiliationID = &pid
+		}
+		if nationID != nil {
+			nid := nationID
+			upd.NationAffiliationID = &nid
+		}
+		if err := a.uc.Update(existing.ID, upd); err != nil {
+			return 0, err
+		}
+		return existing.ID, nil
+	}
+	if err := a.uc.Create(name, ageCategory, gender, experience, clubID, provinceID, nationID); err != nil {
+		return 0, err
+	}
+	created, err := a.uc.FindFirstByName(name)
+	if err != nil || created == nil {
+		return 0, err
+	}
+	return created.ID, nil
+}
+
+func (a *gdriveAthleteAdapter) FindFirstByName(name string) (*gdrive.AthleteInfo, error) {
+	at, err := a.uc.FindFirstByName(name)
+	if err != nil || at == nil {
+		return nil, err
+	}
+	return &gdrive.AthleteInfo{
 		ID:          at.ID,
 		AgeCategory: at.AgeCategory,
 		Experience:  at.Experience,

@@ -28,9 +28,19 @@ type ClubCreator interface {
 	FindOrCreateNation(name string) (uint, error)
 }
 
+// AthleteInfo carries the minimal athlete fields needed at gdrive import time.
+type AthleteInfo struct {
+	ID          uint
+	AgeCategory string
+	Experience  string
+	Gender      string
+}
+
 type AthleteCreator interface {
 	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error)
+	UpsertFull(name, gender, ageCategory, experience string, clubID, provinceID, nationID *uint) (uint, error)
+	FindFirstByName(name string) (*AthleteInfo, error)
 }
 
 type BoutCreator interface {
@@ -180,102 +190,46 @@ func cell(row []string, idx int) string {
 func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResult, error) {
 	res := &ImportResult{}
 
-	// ── Affiliations (single sheet, name + type) ─────────────────────────────
-	hdr, rows, err := s.sheetRows(ctx, sheetID, "Affiliations")
+	// ── Athletes ─────────────────────────────────────────────────────────────
+	// Columns: Name, Gender, Age Category, Experience, Club, Province, Nationality.
+	// Club/Province/Nationality are names — affiliations created on demand.
+	hdr, rows, err := s.sheetRows(ctx, sheetID, "Athletes")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
-		typeIdx := colIdx(hdr, "Type")
+		genderIdx := colIdx(hdr, "Gender")
+		ageIdx := colIdx(hdr, "Age Category")
+		expIdx := colIdx(hdr, "Experience")
+		clubIdx := colIdx(hdr, "Club")
+		provinceIdx := colIdx(hdr, "Province")
+		nationIdx := colIdx(hdr, "Nationality")
 		for _, row := range rows {
 			name := cell(row, nameIdx)
 			if name == "" {
 				continue
 			}
-			switch strings.ToLower(cell(row, typeIdx)) {
-			case "province":
-				if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
-					res.Provinces++
-				}
-			case "nation":
-				if _, err := s.clubs.FindOrCreateNation(name); err == nil {
-					res.Nations++
-				}
-			default:
-				if _, err := s.clubs.FindOrCreateByName(name); err == nil {
+			var clubID, provinceID, nationID *uint
+			if v := cell(row, clubIdx); v != "" {
+				if id, err := s.clubs.FindOrCreateByName(v); err == nil {
+					clubID = &id
 					res.Clubs++
 				}
 			}
-		}
-	}
-
-	// ── Clubs (legacy single-type sheet) ─────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Clubs")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateByName(name); err == nil {
-				res.Clubs++
-			}
-		}
-	}
-
-	// ── Provinces ────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Provinces")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
-				res.Provinces++
-			}
-		}
-	}
-
-	// ── Nations ──────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Nations")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateNation(name); err == nil {
-				res.Nations++
-			}
-		}
-	}
-
-	// ── Athletes ─────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Athletes")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		clubIdx := colIdx(hdr, "Club")
-		provinceIdx := colIdx(hdr, "Province")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			var clubID *uint
-			if clubName := cell(row, clubIdx); clubName != "" {
-				if id, err := s.clubs.FindOrCreateByName(clubName); err == nil {
-					clubID = &id
-				}
-			}
-			var provinceID *uint
-			if provinceName := cell(row, provinceIdx); provinceName != "" {
-				if id, err := s.clubs.FindOrCreateProvince(provinceName); err == nil {
+			if v := cell(row, provinceIdx); v != "" {
+				if id, err := s.clubs.FindOrCreateProvince(v); err == nil {
 					provinceID = &id
+					res.Provinces++
 				}
 			}
-			if _, err := s.athletes.FindOrCreateByNameClubProvince(name, clubID, provinceID); err == nil {
+			if v := cell(row, nationIdx); v != "" {
+				if id, err := s.clubs.FindOrCreateNation(v); err == nil {
+					nationID = &id
+					res.Nations++
+				}
+			}
+			gender := strings.ToLower(cell(row, genderIdx))
+			ageCategory := strings.ToLower(cell(row, ageIdx))
+			experience := strings.ToLower(cell(row, expIdx))
+			if _, err := s.athletes.UpsertFull(name, gender, ageCategory, experience, clubID, provinceID, nationID); err == nil {
 				res.Athletes++
 			}
 		}
@@ -343,9 +297,6 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 	boutTypeIdx := colIdx(hdr, "Bout Type")
 	redAthleteIdx := colIdx(hdr, "Red Athlete")
 	blueAthleteIdx := colIdx(hdr, "Blue Athlete")
-	ageCatIdx := colIdx(hdr, "Age Category")
-	expIdx := colIdx(hdr, "Experience")
-	genderIdx := colIdx(hdr, "Gender")
 	roundLenIdx := colIdx(hdr, "Round Length")
 	gloveSizeIdx := colIdx(hdr, "Glove Size")
 
@@ -372,9 +323,18 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 			}
 		}
 
-		ageCategory := mapAgeCategory(cell(row, ageCatIdx))
-		experience := boutEntities.Experience(strings.ToLower(cell(row, expIdx)))
-		gender := boutEntities.Gender(strings.ToLower(cell(row, genderIdx)))
+		redName := cell(row, redAthleteIdx)
+		if redName == "" {
+			continue
+		}
+		red, err := s.athletes.FindFirstByName(redName)
+		if err != nil || red == nil {
+			continue
+		}
+		ageCategory := boutEntities.AgeCategory(strings.ToLower(red.AgeCategory))
+		experience := boutEntities.Experience(strings.ToLower(red.Experience))
+		gender := boutEntities.Gender(strings.ToLower(red.Gender))
+
 		roundLen := mapRoundLength(cell(row, roundLenIdx))
 		if roundLen == 0 {
 			roundLen = roundLengthDefault(ageCategory, experience)
@@ -391,24 +351,20 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 		}
 
 		bout := &boutEntities.Bout{
-			BoutNumber:  boutNum,
-			AgeCategory: ageCategory,
-			Experience:  experience,
-			Gender:      gender,
-			RoundLength: roundLen,
-			GloveSize:   gloveSize,
-			BoutType:    boutType,
-			Status:      boutEntities.BoutStatusNotStarted,
+			BoutNumber:   boutNum,
+			AgeCategory:  ageCategory,
+			Experience:   experience,
+			Gender:       gender,
+			RoundLength:  roundLen,
+			GloveSize:    gloveSize,
+			BoutType:     boutType,
+			Status:       boutEntities.BoutStatusNotStarted,
+			RedAthleteID: &red.ID,
 		}
 
-		if redName := cell(row, redAthleteIdx); redName != "" {
-			if id, err := s.athletes.FindOrCreateByNameAndClub(redName, nil); err == nil {
-				bout.RedAthleteID = &id
-			}
-		}
 		if blueName := cell(row, blueAthleteIdx); blueName != "" {
-			if id, err := s.athletes.FindOrCreateByNameAndClub(blueName, nil); err == nil {
-				bout.BlueAthleteID = &id
+			if blue, err := s.athletes.FindFirstByName(blueName); err == nil && blue != nil {
+				bout.BlueAthleteID = &blue.ID
 			}
 		}
 
@@ -620,8 +576,6 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			Title: "Scoreboard Import Template",
 		},
 		Sheets: []*sheetsAPI.Sheet{
-			{Properties: &sheetsAPI.SheetProperties{Title: "Affiliations"}},
-			{Properties: &sheetsAPI.SheetProperties{Title: "Clubs"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Athletes"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Officials"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Cards"}},
@@ -641,35 +595,18 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 
 	tabs := []tabData{
 		{
-			name: "Affiliations",
-			rows: [][]any{
-				{"Name", "Type"},
-				{"City Boxing", "club"},
-				{"Auckland", "province"},
-				{"New Zealand", "nation"},
-			},
-		},
-		{
-			name: "Clubs",
-			rows: [][]any{
-				{"Name", "Location"},
-				{"City Boxing", "Auckland"},
-				{"North Stars", "Wellington"},
-			},
-		},
-		{
 			name: "Athletes",
 			rows: [][]any{
-				{"Name", "Age Category", "Nationality", "Club", "Province"},
-				{"Jane Smith", "Elite", "NZL", "City Boxing", "Auckland"},
-				{"Mark Jones", "U17", "NZL", "North Stars", "Wellington"},
+				{"Name", "Gender", "Age Category", "Experience", "Club", "Province", "Nationality"},
+				{"Jane Smith", "Female", "Elite", "Open", "City Boxing", "Auckland", "New Zealand"},
+				{"Mark Jones", "Male", "U19", "Novice", "North Stars", "Wellington", "New Zealand"},
 			},
 		},
 		{
 			name: "Officials",
 			rows: [][]any{
 				{"Name", "Nationality", "Year of Birth", "Registration Number"},
-				{"Ref Roberts", "NZL", 1980, "REF001"},
+				{"Ref Roberts", "New Zealand", 1980, "REF001"},
 			},
 		},
 		{
@@ -677,13 +614,11 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			rows: [][]any{
 				{
 					"Card Name", "Date", "Bout Number", "Bout Type",
-					"Red Athlete", "Blue Athlete",
-					"Age Category", "Experience", "Gender", "Round Length", "Glove Size",
+					"Red Athlete", "Blue Athlete", "Round Length", "Glove Size",
 				},
 				{
 					"Test Card", "2026-05-01", 1, "scored",
-					"Jane Smith", "Mark Jones",
-					"Elite", "novice", "female", "3", "10oz",
+					"Jane Smith", "Mark Jones", "3", "10oz",
 				},
 			},
 		},
@@ -707,25 +642,6 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 func sanitiseName(s string) string {
 	r := strings.NewReplacer(" ", "_", "/", "-", "\\", "-")
 	return r.Replace(s)
-}
-
-func mapAgeCategory(s string) boutEntities.AgeCategory {
-	switch strings.ToLower(s) {
-	case "u13":
-		return boutEntities.JuniorA
-	case "u15":
-		return boutEntities.JuniorB
-	case "u17":
-		return boutEntities.JuniorC
-	case "u19":
-		return boutEntities.Youth
-	case "elite":
-		return boutEntities.Elite
-	case "masters":
-		return boutEntities.Masters
-	default:
-		return boutEntities.AgeCategory(strings.ToLower(s))
-	}
 }
 
 func mapRoundLength(s string) boutEntities.RoundLength {

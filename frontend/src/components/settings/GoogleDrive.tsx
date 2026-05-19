@@ -384,7 +384,7 @@ const SetupGuideContent = ({
           <Text>
             <Text strong>Option B:</Text> Create your own sheet with tabs named exactly:{" "}
             <Text code>Athletes</Text>, <Text code>Officials</Text>,{" "}
-            <Text code>Clubs</Text>, <Text code>Cards</Text>.
+            <Text code>Cards</Text>.
           </Text>
         </Space>
       ),
