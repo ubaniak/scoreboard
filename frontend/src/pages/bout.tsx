@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   useGetBoutById,
   useGetBouts,
-  useGetFouls,
   useGetRound,
   useMutateCompleteBout,
   useMutateEightCount,
@@ -71,8 +70,6 @@ export const BoutPage = () => {
     }
   }, [bouts.isLoading, boutId, boutList]);
 
-  const fouls = useGetFouls({ token, cardId });
-
   const [roundNumber, setRoundNumber] = useState(1);
 
   const round = useGetRound({ token, cardId, boutId, roundNumber });
@@ -134,7 +131,7 @@ export const BoutPage = () => {
     });
   };
 
-  const isLoading = isApisLoading({ card, bout, fouls });
+  const isLoading = isApisLoading({ card, bout });
 
   const nextRoundState = useMutateNextRoundState({
     token,
@@ -195,9 +192,8 @@ export const BoutPage = () => {
     >
       <BoutIndex
         isLoading={isLoading}
-        loadingComponent={<ApiLoading apis={{ card, bout, fouls }} />}
+        loadingComponent={<ApiLoading apis={{ card, bout }} />}
         bout={bout.data!}
-        fouls={fouls.data!}
         round={round.data!}
         scores={scores.data}
         officials={officials.data}

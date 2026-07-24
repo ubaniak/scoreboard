@@ -1,26 +1,19 @@
-import {
-  FlagOutlined,
-  SafetyCertificateOutlined,
-  ThunderboltOutlined,
-} from "@ant-design/icons";
+import { SafetyCertificateOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { Divider, Space, Tag } from "antd";
 import { BLUE, RED, type Corner } from "../../entities/corner";
 import { Card } from "../card/card";
 import { Control } from "./Control";
-import { HandleFouls } from "../fouls/handle";
+import { Counter } from "../fouls/counter";
 import type {
   MutateEightCountProps,
   MutateHandleFoulProps,
 } from "../../api/bouts";
-import { HandleEightCounts } from "../fouls/eightcounts";
 
 export type CornerPanelProps = {
   corner: Corner;
-  allFouls: string[];
   handleFoul: (props: MutateHandleFoulProps) => void;
   handleEightCount: (props: MutateEightCountProps) => void;
-  warnings: string[];
-  cautions: string[];
+  warnings: number;
   eightCounts: number;
 };
 
@@ -43,31 +36,28 @@ export const CornerControls = (props: CornerPanelProps) => {
         <Divider style={{ margin: "12px 0" }} />
         <Control
           corner={props.corner}
-          icon={<FlagOutlined />}
-          label={`Cautions (${props.cautions.length})`}
-          toolTip="Minor infractions"
-          action={
-            <HandleFouls
-              corner={props.corner}
-              handleFoul={props.handleFoul}
-              allFouls={props.allFouls}
-              fouls={props.cautions}
-              type="caution"
-            />
-          }
-        />
-        <Control
-          corner={props.corner}
           icon={<SafetyCertificateOutlined />}
-          label={`Warnings (${props.warnings.length})`}
+          label={`Warnings (${props.warnings})`}
           toolTip="Will remove points"
           action={
-            <HandleFouls
-              corner={props.corner}
-              handleFoul={props.handleFoul}
-              allFouls={props.allFouls}
-              fouls={props.warnings}
-              type="warning"
+            <Counter
+              onAdd={() => {
+                props.handleFoul({
+                  corner: props.corner,
+                  type: "warning",
+                  foul: "Warning",
+                  action: "add",
+                });
+              }}
+              onRemove={() => {
+                props.handleFoul({
+                  corner: props.corner,
+                  type: "warning",
+                  foul: "Warning",
+                  action: "remove",
+                });
+              }}
+              removeDisabled={props.warnings === 0}
             />
           }
         />
@@ -77,7 +67,7 @@ export const CornerControls = (props: CornerPanelProps) => {
           label={`Eight Counts (${props.eightCounts})`}
           toolTip="Eight counts"
           action={
-            <HandleEightCounts
+            <Counter
               onAdd={() => {
                 props.handleEightCount({
                   corner: props.corner,

@@ -21,7 +21,6 @@ export type RoundIndexProps = {
   length: number;
   boutStatus?: string;
   onChange: (roundNumber: number) => void;
-  fouls: string[];
   handleFoul: (props: MutateHandleFoulProps) => void;
   handleEightCount: (props: MutateEightCountProps) => void;
   controls: {
@@ -89,22 +88,18 @@ export const RoundIndex = (props: RoundIndexProps) => {
             <Col xs={24} md={12}>
               <CornerControls
                 corner="red"
-                allFouls={props.fouls}
                 handleFoul={props.handleFoul}
                 handleEightCount={props.handleEightCount}
-                warnings={props.rounds[selectedRound].red.warnings}
-                cautions={props.rounds[selectedRound].red.cautions}
+                warnings={props.rounds[selectedRound].red.warnings.length}
                 eightCounts={props.rounds[selectedRound].red.eightCounts}
               />
             </Col>
             <Col xs={24} md={12}>
               <CornerControls
                 corner="blue"
-                allFouls={props.fouls}
                 handleFoul={props.handleFoul}
                 handleEightCount={props.handleEightCount}
-                warnings={props.rounds[selectedRound].blue.warnings}
-                cautions={props.rounds[selectedRound].blue.cautions}
+                warnings={props.rounds[selectedRound].blue.warnings.length}
                 eightCounts={props.rounds[selectedRound].blue.eightCounts}
               />
             </Col>

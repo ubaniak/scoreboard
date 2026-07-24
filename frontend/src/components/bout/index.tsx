@@ -25,7 +25,6 @@ export type Controls = {
 };
 
 export type BoutIndexProps = {
-  fouls?: string[];
   bout?: Bout;
   round?: RoundDetails;
   scores?: ScoresByRound;
@@ -79,7 +78,6 @@ export const BoutIndex = (props: BoutIndexProps) => {
         <RoundIndex
           controls={props.controls}
           round={props.round}
-          fouls={props.fouls || []}
           rounds={props.bout?.rounds}
           scores={props.scores}
           length={props.bout?.roundLength || 0}

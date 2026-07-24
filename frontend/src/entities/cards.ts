@@ -83,12 +83,10 @@ export type RoundDetails = {
   decision: string;
   red: {
     warnings: string[];
-    cautions: string[];
     eightCounts: number;
   };
   blue: {
     warnings: string[];
-    cautions: string[];
     eightCounts: number;
   };
 };

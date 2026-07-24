@@ -77,10 +77,8 @@ export function downloadFullCsv(card: Card, bout: Bout, scores: ScoresByRound) {
       "Red Score",
       "Blue Score",
       "Red Warnings",
-      "Red Cautions",
       "Red 8-Counts",
       "Blue Warnings",
-      "Blue Cautions",
       "Blue 8-Counts",
     ])
   );
@@ -101,10 +99,8 @@ export function downloadFullCsv(card: Card, bout: Bout, scores: ScoresByRound) {
           score.red,
           score.blue,
           rd?.red?.warnings?.length ?? "",
-          rd?.red?.cautions?.length ?? "",
           rd?.red?.eightCounts ?? "",
           rd?.blue?.warnings?.length ?? "",
-          rd?.blue?.cautions?.length ?? "",
           rd?.blue?.eightCounts ?? "",
         ])
       );
@@ -251,10 +247,8 @@ export function downloadFullPdf(card: Card, bout: Bout, scores: ScoresByRound) {
           <td>${score.red}</td>
           <td>${score.blue}</td>
           <td>${rd?.red?.warnings?.length ?? 0}</td>
-          <td>${rd?.red?.cautions?.length ?? 0}</td>
           <td>${rd?.red?.eightCounts ?? 0}</td>
           <td>${rd?.blue?.warnings?.length ?? 0}</td>
-          <td>${rd?.blue?.cautions?.length ?? 0}</td>
           <td>${rd?.blue?.eightCounts ?? 0}</td>
         </tr>`
       );
@@ -275,8 +269,8 @@ export function downloadFullPdf(card: Card, bout: Bout, scores: ScoresByRound) {
         <tr>
           <th>Round</th><th>Role</th><th>Judge</th>
           <th>Red</th><th>Blue</th>
-          <th>Red Warn</th><th>Red Caut</th><th>Red 8c</th>
-          <th>Blue Warn</th><th>Blue Caut</th><th>Blue 8c</th>
+          <th>Red Warn</th><th>Red 8c</th>
+          <th>Blue Warn</th><th>Blue 8c</th>
         </tr>
       </thead>
       <tbody>${roundRows}</tbody>

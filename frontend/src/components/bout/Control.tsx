@@ -1,5 +1,5 @@
 import type { AntdIconProps } from "@ant-design/icons/lib/components/AntdIcon";
-import { Col, Divider, Row, Space, Typography } from "antd";
+import { Col, Divider, Row, Space, Typography, theme } from "antd";
 import type React from "react";
 const { Text } = Typography;
 
@@ -12,6 +12,8 @@ export type ControlProps = {
 };
 
 export const Control = (props: ControlProps) => {
+  const { token } = theme.useToken();
+
   return (
     <Row
       align="middle"
@@ -29,9 +31,9 @@ export const Control = (props: ControlProps) => {
               alignItems: "center",
               justifyContent: "center",
               borderRadius: 10,
-              background: "rgba(0,0,0,0.03)",
-              border: "1px solid #f0f0f0",
-              color: "rgba(0,0,0,0.65)",
+              background: token.colorFillTertiary,
+              border: `1px solid ${token.colorBorderSecondary}`,
+              color: token.colorText,
             }}
           >
             {props.icon}

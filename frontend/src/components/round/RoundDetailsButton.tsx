@@ -10,30 +10,15 @@ type RoundDetailsButtonProps = {
   round: RoundDetails;
 };
 
-const FoulList = ({ items }: { items: string[] }) =>
-  items.length === 0 ? (
-    <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
-  ) : (
-    <Space direction="vertical" size={2} style={{ width: "100%" }}>
-      {items.map((f, i) => (
-        <Text key={`${f}-${i}`} style={{ fontSize: 12 }}>
-          • {f}
-        </Text>
-      ))}
-    </Space>
-  );
-
 const CornerDetails = ({
   label,
   color,
   warnings,
-  cautions,
   eightCounts,
 }: {
   label: string;
   color: string;
-  warnings: string[];
-  cautions: string[];
+  warnings: number;
   eightCounts: number;
 }) => (
   <Space direction="vertical" size={8} style={{ width: "100%" }}>
@@ -41,12 +26,10 @@ const CornerDetails = ({
       {label}
     </Text>
     <div>
-      <Text type="secondary" style={{ fontSize: 12 }}>Cautions ({cautions.length})</Text>
-      <FoulList items={cautions} />
-    </div>
-    <div>
-      <Text type="secondary" style={{ fontSize: 12 }}>Warnings ({warnings.length})</Text>
-      <FoulList items={warnings} />
+      <Text type="secondary" style={{ fontSize: 12 }}>Warnings</Text>
+      <Text style={{ display: "block", fontSize: 14, fontWeight: 600 }}>
+        {warnings}
+      </Text>
     </div>
     <div>
       <Text type="secondary" style={{ fontSize: 12 }}>8-Counts</Text>
@@ -60,10 +43,8 @@ const CornerDetails = ({
 export const RoundDetailsButton = ({ round }: RoundDetailsButtonProps) => {
   const empty =
     round.red.warnings.length === 0 &&
-    round.red.cautions.length === 0 &&
     round.red.eightCounts === 0 &&
     round.blue.warnings.length === 0 &&
-    round.blue.cautions.length === 0 &&
     round.blue.eightCounts === 0;
 
   return (
@@ -96,8 +77,7 @@ export const RoundDetailsButton = ({ round }: RoundDetailsButtonProps) => {
                 <CornerDetails
                   label="Red Corner"
                   color={RED}
-                  warnings={round.red.warnings}
-                  cautions={round.red.cautions}
+                  warnings={round.red.warnings.length}
                   eightCounts={round.red.eightCounts}
                 />
               </Col>
@@ -108,8 +88,7 @@ export const RoundDetailsButton = ({ round }: RoundDetailsButtonProps) => {
                 <CornerDetails
                   label="Blue Corner"
                   color={BLUE}
-                  warnings={round.blue.warnings}
-                  cautions={round.blue.cautions}
+                  warnings={round.blue.warnings.length}
                   eightCounts={round.blue.eightCounts}
                 />
               </Col>
