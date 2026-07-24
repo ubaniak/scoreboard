@@ -676,7 +676,9 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			rows: [][]any{
 				{"Name", "Age Category", "Gender", "Experience", "Nationality", "Club", "Province"},
 				{"Jane Smith", "elite", "female", "open", "NZL", "City Boxing", "Auckland"},
-				{"Mark Jones", "u17", "male", "novice", "NZL", "North Stars", "Wellington"},
+				{"Amelia Clarke", "elite", "female", "open", "NZL", "North Stars", "Wellington"},
+				{"Mark Jones", "elite", "male", "open", "NZL", "City Boxing", "Auckland"},
+				{"Liam Turner", "elite", "male", "open", "NZL", "North Stars", "Wellington"},
 			},
 		},
 		{
@@ -696,8 +698,13 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 				},
 				{
 					"Test Card", "2026-05-01", 1, "scored",
-					"Jane Smith", "Mark Jones",
-					"Elite", "novice", "female", "3", "10oz",
+					"Jane Smith", "Amelia Clarke",
+					"Elite", "open", "female", "3", "10oz",
+				},
+				{
+					"Test Card", "2026-05-01", 2, "scored",
+					"Mark Jones", "Liam Turner",
+					"Elite", "open", "male", "3", "10oz",
 				},
 			},
 		},
