@@ -19,6 +19,7 @@ export type Athlete = {
   nationName?: string;
   nationImageUrl?: string;
   imageUrl?: string;
+  weightClass?: number;
 };
 
 const keys = {
@@ -48,6 +49,7 @@ export type CreateAthleteProps = {
   clubAffiliationId?: number;
   provinceAffiliationId?: number;
   nationAffiliationId?: number;
+  weightClass?: number;
 };
 
 export const useMutateCreateAthlete = (props: TokenBase) => {
@@ -77,6 +79,8 @@ export type UpdateAthleteProps = {
   clearClubAffiliation?: boolean;
   provinceAffiliationId?: number;
   nationAffiliationId?: number;
+  weightClass?: number;
+  clearWeightClass?: boolean;
 };
 
 export const useMutateUpdateAthlete = (props: TokenBase) => {

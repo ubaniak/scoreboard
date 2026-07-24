@@ -1,4 +1,4 @@
-import { Button, DatePicker, Form, Input, Segmented, Select, Space, Typography } from "antd";
+import { Button, DatePicker, Form, Input, InputNumber, Segmented, Select, Space, Typography } from "antd";
 import type { Dayjs } from "dayjs";
 import { ageCategoryFromDOB } from "../../utils/ageCategory";
 import type { CreateAthleteProps } from "../../api/athletes";
@@ -45,6 +45,7 @@ export const AddAthlete = ({ clubs, provinces, nations, onClose, onSubmit }: Add
             clubAffiliationId: v.clubAffiliationId,
             provinceAffiliationId: v.provinceAffiliationId,
             nationAffiliationId: v.nationAffiliationId,
+            weightClass: v.weightClass,
           }).then(() => form.resetFields()),
         );
       }}
@@ -77,6 +78,9 @@ export const AddAthlete = ({ clubs, provinces, nations, onClose, onSubmit }: Add
             { value: "open", label: "Open" },
           ]}
         />
+      </Form.Item>
+      <Form.Item label="Weight (kg)" name="weightClass">
+        <InputNumber min={0} step={0.5} style={{ width: "100%" }} placeholder="Optional" />
       </Form.Item>
       <Form.Item label="Club" name="clubAffiliationId">
         <Select options={clubs} allowClear showSearch optionFilterProp="label" placeholder="Select club..." />

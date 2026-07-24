@@ -63,6 +63,7 @@ export type CreateBoutProps = {
   boutType: string;
   roundLength: number;
   gloveSize: string;
+  weightClass?: number;
   redAthleteId?: number;
   blueAthleteId?: number;
 };

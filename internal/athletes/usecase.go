@@ -8,7 +8,7 @@ import (
 )
 
 type UseCase interface {
-	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) error
+	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) error
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
@@ -109,7 +109,7 @@ func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
 	return created[len(created)-1].ID, nil
 }
 
-func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) error {
+func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) error {
 	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		AgeCategory:           ageCategory,
@@ -118,6 +118,7 @@ func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffi
 		ClubAffiliationID:     clubAffiliationID,
 		ProvinceAffiliationID: provinceAffiliationID,
 		NationAffiliationID:   nationAffiliationID,
+		WeightClass:           weightClass,
 	})
 }
 

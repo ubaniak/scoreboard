@@ -16,6 +16,12 @@ import {
   useMutateUpdateCards,
 } from "../api/cards";
 import { useGetOfficials } from "../api/officials";
+import {
+  useListRoster,
+  useMutateAddToRoster,
+  useMutateRemoveFromRoster,
+  useMutateSetRosterAvailable,
+} from "../api/roster";
 import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
 import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
@@ -24,6 +30,7 @@ import { CardControls } from "../components/cards/cardControls";
 import { CardExports } from "../components/cards/CardExports";
 import { JudgeConsistency } from "../components/cards/JudgeConsistency";
 import { CardSummary } from "../components/cards/summery";
+import { RosterIndex } from "../components/roster";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
@@ -36,11 +43,16 @@ export const CardPage = () => {
   const card = useGetCardById({ token, cardId });
   const athletes = useListAthletes({ token });
   const auditLogs = useGetAuditLogs({ token, cardId });
+  const roster = useListRoster({ token, cardId });
 
   const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
+
+  const addToRoster = useMutateAddToRoster({ token, cardId });
+  const removeFromRoster = useMutateRemoveFromRoster({ token, cardId });
+  const setRosterAvailable = useMutateSetRosterAvailable({ token, cardId });
 
   const updateCardStatus = useMutateUpdateCardStatus({ token });
   const updateCardJudges = useMutateUpdateCardJudges({ token });
@@ -107,10 +119,29 @@ export const CardPage = () => {
                 bouts={bouts.data}
                 officials={officials.data}
                 athletes={athletes.data}
+                availableAthleteIds={(roster.data ?? [])
+                  .filter((r) => r.available)
+                  .map((r) => r.athleteId)}
                 onAddBout={(values) => addBout.mutateAsync(values)}
                 onEditBout={(values) => updateBout.mutateAsync(values)}
                 onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
                 onImport={(file) => importBouts.mutateAsync(file)}
+              />
+            ),
+          },
+          {
+            key: "roster",
+            label: "Roster",
+            children: (
+              <RosterIndex
+                loading={roster.isLoading}
+                entries={roster.data}
+                athletes={athletes.data}
+                onAdd={(athleteId) => addToRoster.mutateAsync(athleteId)}
+                onSetAvailable={(athleteId, available) =>
+                  setRosterAvailable.mutateAsync({ athleteId, available })
+                }
+                onRemove={(athleteId) => removeFromRoster.mutateAsync(athleteId)}
               />
             ),
           },

@@ -1,4 +1,4 @@
-import { Button, DatePicker, Form, Input, Segmented, Select, Space, Typography } from "antd";
+import { Button, DatePicker, Form, Input, InputNumber, Segmented, Select, Space, Typography } from "antd";
 import type { Dayjs } from "dayjs";
 import type { Athlete, UpdateAthleteProps } from "../../api/athletes";
 import { ageCategoryFromDOB } from "../../utils/ageCategory";
@@ -44,9 +44,11 @@ export const EditAthlete = ({ athlete, clubs, provinces, nations, onClose, onSub
         clubAffiliationId: athlete.clubAffiliationId,
         provinceAffiliationId: athlete.provinceAffiliationId,
         nationAffiliationId: athlete.nationAffiliationId,
+        weightClass: athlete.weightClass,
       }}
       onFinish={(v) => {
         const clearClub = v.clubAffiliationId === undefined || v.clubAffiliationId === null;
+        const clearWeight = v.weightClass === undefined || v.weightClass === null;
         onClose(
           onSubmit({
             name: v.name,
@@ -57,6 +59,8 @@ export const EditAthlete = ({ athlete, clubs, provinces, nations, onClose, onSub
             clearClubAffiliation: clearClub,
             provinceAffiliationId: v.provinceAffiliationId,
             nationAffiliationId: v.nationAffiliationId,
+            weightClass: clearWeight ? undefined : v.weightClass,
+            clearWeightClass: clearWeight,
           }),
         );
       }}
@@ -89,6 +93,9 @@ export const EditAthlete = ({ athlete, clubs, provinces, nations, onClose, onSub
             { value: "open", label: "Open" },
           ]}
         />
+      </Form.Item>
+      <Form.Item label="Weight (kg)" name="weightClass">
+        <InputNumber min={0} step={0.5} style={{ width: "100%" }} placeholder="Optional" />
       </Form.Item>
       <Form.Item label="Club" name="clubAffiliationId">
         <Select options={clubs} allowClear showSearch optionFilterProp="label" placeholder="Select club..." />

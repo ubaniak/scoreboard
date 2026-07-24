@@ -13,6 +13,7 @@ export type BoutsIndexParams = {
   bouts?: Bout[];
   officials?: Official[];
   athletes?: Athlete[];
+  availableAthleteIds?: number[];
   loading?: boolean;
   onAddBout: (values: CreateBoutProps) => Promise<unknown>;
   onEditBout: (values: {
@@ -46,6 +47,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 <AddBout
                   onClose={close}
                   athletes={props.athletes}
+                  availableAthleteIds={props.availableAthleteIds}
                   nextBoutNumber={Math.max(0, ...(props.bouts ?? []).map((b) => b.boutNumber)) + 1}
                   onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
                 />
@@ -60,6 +62,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
         loading={props.loading}
         officials={props.officials}
         athletes={props.athletes}
+        availableAthleteIds={props.availableAthleteIds}
         onEditBout={(values) => props.onEditBout(values)}
         onDeleteBout={props.onDeleteBout}
       />

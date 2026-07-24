@@ -16,6 +16,7 @@ type Athlete struct {
 	NationName            string // populated on read, not stored
 	NationImageUrl        string // populated on read, not stored
 	ImageUrl              string
+	WeightClass           *float64 // kg, optional
 }
 
 type UpdateAthlete struct {
@@ -26,4 +27,5 @@ type UpdateAthlete struct {
 	ClubAffiliationID     **uint // nil = don't change; &nil = clear; &value = set
 	ProvinceAffiliationID **uint // nil = don't change; &nil = clear; &value = set
 	NationAffiliationID   **uint // nil = don't change; &nil = clear; &value = set
+	WeightClass           **float64 // nil = don't change; &nil = clear; &value = set
 }

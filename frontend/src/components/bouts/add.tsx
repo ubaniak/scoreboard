@@ -1,7 +1,9 @@
 import {
+  Alert,
   Button,
   Form,
   InputNumber,
+  Popconfirm,
   Segmented,
   Select,
   Space,
@@ -10,19 +12,44 @@ import {
 } from "antd";
 import type { CreateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
+import { matchWarnings } from "./matchCompatibility";
 
 export type AddBoutProps = {
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: CreateBoutProps) => Promise<unknown>;
   athletes?: Athlete[];
+  availableAthleteIds?: number[];
   nextBoutNumber?: number;
 };
 
 export const AddBout = (props: AddBoutProps) => {
-  const athleteOptions = (props.athletes ?? []).map((a) => ({
-    value: a.id,
-    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
-  }));
+  const [form] = Form.useForm<CreateBoutProps>();
+
+  const availableSet = new Set(props.availableAthleteIds ?? []);
+  const athleteOptions = (props.athletes ?? [])
+    .filter((a) => availableSet.has(a.id))
+    .map((a) => ({
+      value: a.id,
+      label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
+    }));
+
+  const redAthleteId = Form.useWatch("redAthleteId", form);
+  const blueAthleteId = Form.useWatch("blueAthleteId", form);
+  const redAthlete = (props.athletes ?? []).find((a) => a.id === redAthleteId);
+  const blueAthlete = (props.athletes ?? []).find((a) => a.id === blueAthleteId);
+  const warnings = matchWarnings(redAthlete, blueAthlete);
+
+  const handleRedAthleteChange = (value: number) => {
+    const athlete = (props.athletes ?? []).find((a) => a.id === value);
+    if (athlete) {
+      form.setFieldsValue({
+        ageCategory: athlete.ageCategory,
+        gender: athlete.gender,
+        experience: athlete.experience,
+        weightClass: athlete.weightClass,
+      });
+    }
+  };
 
   const onFinish: FormProps<CreateBoutProps>["onFinish"] = (values) => {
     props.onClose(props.onSubmit(values));
@@ -30,6 +57,7 @@ export const AddBout = (props: AddBoutProps) => {
 
   return (
     <Form
+      form={form}
       labelCol={{ xs: { span: 24 }, md: { span: 4 } }}
       wrapperCol={{ xs: { span: 24 }, md: { span: 14 } }}
       layout="horizontal"
@@ -66,6 +94,7 @@ export const AddBout = (props: AddBoutProps) => {
           showSearch
           optionFilterProp="label"
           placeholder="Select athlete…"
+          onChange={handleRedAthleteChange}
         />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Blue Athlete" name="blueAthleteId" rules={[{ required: true, message: "Blue athlete is required" }]}>
@@ -76,6 +105,9 @@ export const AddBout = (props: AddBoutProps) => {
           optionFilterProp="label"
           placeholder="Select athlete…"
         />
+      </Form.Item>
+      <Form.Item<CreateBoutProps> label="Weight (kg)" name="weightClass">
+        <InputNumber min={0} step={0.5} style={{ width: "100%" }} placeholder="Auto-filled from red athlete" />
       </Form.Item>
       <Form.Item<CreateBoutProps> label="Age Cat" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
         <Select
@@ -143,14 +175,42 @@ export const AddBout = (props: AddBoutProps) => {
       <Form.Item<CreateBoutProps> label="Referee" name="referee">
         <Input autoComplete="off" />
       </Form.Item>
+      {warnings.length > 0 && (
+        <Form.Item label={null}>
+          <Alert
+            type="warning"
+            showIcon
+            message="Possible mismatch"
+            description={
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            }
+          />
+        </Form.Item>
+      )}
       <Form.Item label={null}>
         <Space>
           <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
+          {warnings.length > 0 ? (
+            <Popconfirm
+              title="Match anyway?"
+              description="This pairing has mismatches — see warning above."
+              onConfirm={() => form.submit()}
+              okText="Match anyway"
+              cancelText="Cancel"
+            >
+              <Button type="primary">Submit</Button>
+            </Popconfirm>
+          ) : (
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          )}
         </Space>
       </Form.Item>
     </Form>

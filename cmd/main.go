@@ -44,6 +44,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
+	"github.com/ubaniak/scoreboard/internal/roster"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
 	"github.com/ubaniak/scoreboard/internal/setup"
@@ -175,6 +176,13 @@ func main() {
 	athleteUseCase := athletes.NewUseCase(athleteStorage)
 	athleteApp := athletes.NewApp(athleteUseCase)
 
+	// -- roster (per-card athlete availability)
+	rosterStorage, err := roster.NewSqlite(db)
+	if err != nil {
+		panic(err)
+	}
+	rosterUseCase := roster.NewUseCase(rosterStorage, athleteUseCase)
+
 	// -- bouts
 
 	boutStorage, err := bouts.NewSqlite(db)
@@ -185,6 +193,9 @@ func main() {
 	broadcaster := events.NewBroadcaster()
 
 	boutsUseCase := bouts.NewUseCase(boutStorage, roundUseCase, commentsUseCase, scoreUseCase)
+	bouts.SetRosterAvailability(boutsUseCase, rosterUseCase)
+	roster.SetBoutQuerier(rosterUseCase, &boutAthleteQuerier{boutsUseCase})
+	rosterApp := roster.NewApp(rosterUseCase)
 	athleteQuerier := &athleteClubQuerier{athleteUseCase}
 	// -- audit logs
 	auditLogStorage, err := auditStorage.NewSqlite(db)
@@ -201,7 +212,7 @@ func main() {
 	reportsUseCase := reportsPackage.NewUseCase(cardUseCase, boutsUseCase, athleteUseCase, scoreUseCase, &commentQuerier{commentsUseCase})
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
-	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, broadcaster)
+	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, rosterApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	scoresApp := scores.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
@@ -560,6 +571,26 @@ func (q *athleteClubQuerier) GetAthleteName(athleteID uint) string {
 		return ""
 	}
 	return a.Name
+}
+
+type boutAthleteQuerier struct {
+	uc bouts.UseCase
+}
+
+func (q *boutAthleteQuerier) IsAthleteMatched(cardID, athleteID uint) (bool, error) {
+	boutsList, err := q.uc.List(cardID)
+	if err != nil {
+		return false, err
+	}
+	for _, b := range boutsList {
+		if b.Status == boutEntities.BoutStatusCancelled {
+			continue
+		}
+		if (b.RedAthleteID != nil && *b.RedAthleteID == athleteID) || (b.BlueAthleteID != nil && *b.BlueAthleteID == athleteID) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 type officialAffiliationQuerier struct {

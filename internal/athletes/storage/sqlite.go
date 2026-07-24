@@ -78,6 +78,7 @@ func (s *Sqlite) resolveAffiliationNames(athletes []Athlete) ([]entities.Athlete
 			ProvinceAffiliationID: a.ProvinceAffiliationID,
 			NationAffiliationID:   a.NationAffiliationID,
 			ImageUrl:              a.ImageUrl,
+			WeightClass:           a.WeightClass,
 		}
 		if a.ClubAffiliationID != nil {
 			if info, ok := affiliations[*a.ClubAffiliationID]; ok {
@@ -111,6 +112,7 @@ func (s *Sqlite) Create(athlete *entities.Athlete) error {
 		ClubAffiliationID:     athlete.ClubAffiliationID,
 		ProvinceAffiliationID: athlete.ProvinceAffiliationID,
 		NationAffiliationID:   athlete.NationAffiliationID,
+		WeightClass:           athlete.WeightClass,
 	}
 	return s.db.Create(m).Error
 }
@@ -171,6 +173,9 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateAthlete) error {
 	}
 	if toUpdate.NationAffiliationID != nil {
 		row.NationAffiliationID = *toUpdate.NationAffiliationID
+	}
+	if toUpdate.WeightClass != nil {
+		row.WeightClass = *toUpdate.WeightClass
 	}
 	return s.db.Save(&row).Error
 }

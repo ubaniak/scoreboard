@@ -1,8 +1,10 @@
 import { DeleteOutlined } from "@ant-design/icons";
 import {
+  Alert,
   Button,
   Form,
   InputNumber,
+  Popconfirm,
   Segmented,
   Select,
   Space,
@@ -12,11 +14,13 @@ import { useEffect } from "react";
 import type { UpdateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
 import type { Bout, Official } from "../../entities/cards";
+import { matchWarnings } from "./matchCompatibility";
 
 export type EditBoutProps = {
   bout: Bout;
   officials?: Official[];
   athletes?: Athlete[];
+  availableAthleteIds?: number[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: UpdateBoutProps) => Promise<unknown>;
   onDelete?: () => void;
@@ -27,19 +31,44 @@ export const EditBout = (props: EditBoutProps) => {
     value: o.name,
     label: o.name,
   }));
-  const athleteOptions = (props.athletes ?? []).map((a) => ({
-    value: a.id,
-    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
-  }));
+
+  const availableSet = new Set(props.availableAthleteIds ?? []);
+  // Each corner's own current assignment stays selectable even if it's no longer
+  // roster-available, so editing a bout doesn't force the corner to appear empty.
+  const redAthleteOptions = (props.athletes ?? [])
+    .filter((a) => availableSet.has(a.id) || a.id === props.bout.redAthleteId)
+    .map((a) => ({ value: a.id, label: a.clubName ? `${a.name} (${a.clubName})` : a.name }));
+  const blueAthleteOptions = (props.athletes ?? [])
+    .filter((a) => availableSet.has(a.id) || a.id === props.bout.blueAthleteId)
+    .map((a) => ({ value: a.id, label: a.clubName ? `${a.name} (${a.clubName})` : a.name }));
+
   const [form] = Form.useForm<Bout>();
   const boutType = Form.useWatch("boutType", form);
   const isScored = !boutType || boutType === "scored";
+
+  const redAthleteId = Form.useWatch("redAthleteId", form);
+  const blueAthleteId = Form.useWatch("blueAthleteId", form);
+  const redAthlete = (props.athletes ?? []).find((a) => a.id === redAthleteId);
+  const blueAthlete = (props.athletes ?? []).find((a) => a.id === blueAthleteId);
+  const warnings = matchWarnings(redAthlete, blueAthlete);
 
   useEffect(() => {
     form.setFieldsValue({
       ...props.bout,
     });
   }, [props.bout, form]); // Dependency on props.bout triggers the update
+
+  const handleRedAthleteChange = (value: number) => {
+    const athlete = (props.athletes ?? []).find((a) => a.id === value);
+    if (athlete) {
+      form.setFieldsValue({
+        ageCategory: athlete.ageCategory,
+        gender: athlete.gender,
+        experience: athlete.experience,
+        weightClass: athlete.weightClass,
+      } as Partial<Bout>);
+    }
+  };
 
   const onFinish: FormProps<UpdateBoutProps>["onFinish"] = (values) => {
     props.onClose(props.onSubmit(values));
@@ -69,10 +98,20 @@ export const EditBout = (props: EditBoutProps) => {
         <InputNumber />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Red Athlete" name="redAthleteId" rules={[{ required: true, message: "Red athlete is required" }]}>
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
+        <Select
+          options={redAthleteOptions}
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="Select athlete…"
+          onChange={handleRedAthleteChange}
+        />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Blue Athlete" name="blueAthleteId" rules={[{ required: true, message: "Blue athlete is required" }]}>
-        <Select options={athleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
+        <Select options={blueAthleteOptions} allowClear showSearch optionFilterProp="label" placeholder="Select athlete…" />
+      </Form.Item>
+      <Form.Item<UpdateBoutProps> label="Weight (kg)" name="weightClass">
+        <InputNumber min={0} step={0.5} style={{ width: "100%" }} placeholder="Auto-filled from red athlete" />
       </Form.Item>
       <Form.Item<UpdateBoutProps> label="Age Cat" name="ageCategory" rules={[{ required: true, message: "Age category is required" }]}>
         <Select
@@ -148,14 +187,42 @@ export const EditBout = (props: EditBoutProps) => {
           placeholder="Select referee…"
         />
       </Form.Item>
+      {warnings.length > 0 && (
+        <Form.Item label={null}>
+          <Alert
+            type="warning"
+            showIcon
+            message="Possible mismatch"
+            description={
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            }
+          />
+        </Form.Item>
+      )}
       <Form.Item label={null}>
         <Space>
           <Button type="text" onClick={() => props.onClose()}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
+          {warnings.length > 0 ? (
+            <Popconfirm
+              title="Match anyway?"
+              description="This pairing has mismatches — see warning above."
+              onConfirm={() => form.submit()}
+              okText="Match anyway"
+              cancelText="Cancel"
+            >
+              <Button type="primary">Submit</Button>
+            </Popconfirm>
+          ) : (
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          )}
           {props.onDelete && (
             <Button
               danger

@@ -12,6 +12,7 @@ type Athlete struct {
 	ProvinceAffiliationID *uint
 	NationAffiliationID   *uint
 	ImageUrl              string
+	WeightClass           *float64
 	// Old columns kept for migration:
 	Nationality      string // deprecated: removed from API
 	ClubID           *uint  // deprecated: use ClubAffiliationID

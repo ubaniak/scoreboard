@@ -52,10 +52,11 @@ type AthleteResponse struct {
 	ProvinceAffiliationID *uint  `json:"provinceAffiliationId,omitempty"`
 	ProvinceName          string `json:"provinceName,omitempty"`
 	ProvinceImageUrl      string `json:"provinceImageUrl,omitempty"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId,omitempty"`
-	NationName            string `json:"nationName,omitempty"`
-	NationImageUrl        string `json:"nationImageUrl,omitempty"`
-	ImageUrl              string `json:"imageUrl,omitempty"`
+	NationAffiliationID   *uint    `json:"nationAffiliationId,omitempty"`
+	NationName            string   `json:"nationName,omitempty"`
+	NationImageUrl        string   `json:"nationImageUrl,omitempty"`
+	ImageUrl              string   `json:"imageUrl,omitempty"`
+	WeightClass           *float64 `json:"weightClass,omitempty"`
 }
 
 func toResponse(a entities.Athlete) AthleteResponse {
@@ -75,28 +76,32 @@ func toResponse(a entities.Athlete) AthleteResponse {
 		NationName:            a.NationName,
 		NationImageUrl:        a.NationImageUrl,
 		ImageUrl:              a.ImageUrl,
+		WeightClass:           a.WeightClass,
 	}
 }
 
 type CreateAthleteRequest struct {
-	Name                  string `json:"name"`
-	AgeCategory           string `json:"ageCategory"`
-	Gender                string `json:"gender"`
-	Experience            string `json:"experience"`
-	ClubAffiliationID     *uint  `json:"clubAffiliationId"`
-	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId"`
+	Name                  string   `json:"name"`
+	AgeCategory           string   `json:"ageCategory"`
+	Gender                string   `json:"gender"`
+	Experience            string   `json:"experience"`
+	ClubAffiliationID     *uint    `json:"clubAffiliationId"`
+	ProvinceAffiliationID *uint    `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint    `json:"nationAffiliationId"`
+	WeightClass           *float64 `json:"weightClass"`
 }
 
 type UpdateAthleteRequest struct {
-	Name                  *string `json:"name"`
-	AgeCategory           *string `json:"ageCategory"`
-	Gender                *string `json:"gender"`
-	Experience            *string `json:"experience"`
-	ClubAffiliationID     *uint   `json:"clubAffiliationId"`
-	ClearClubAffiliation  bool    `json:"clearClubAffiliation"`
-	ProvinceAffiliationID *uint   `json:"provinceAffiliationId"`
-	NationAffiliationID   *uint   `json:"nationAffiliationId"`
+	Name                  *string  `json:"name"`
+	AgeCategory           *string  `json:"ageCategory"`
+	Gender                *string  `json:"gender"`
+	Experience            *string  `json:"experience"`
+	ClubAffiliationID     *uint    `json:"clubAffiliationId"`
+	ClearClubAffiliation  bool     `json:"clearClubAffiliation"`
+	ProvinceAffiliationID *uint    `json:"provinceAffiliationId"`
+	NationAffiliationID   *uint    `json:"nationAffiliationId"`
+	WeightClass           *float64 `json:"weightClass"`
+	ClearWeightClass      bool     `json:"clearWeightClass"`
 }
 
 func (a *App) List(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +125,7 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.AgeCategory, req.Gender, req.Experience, req.ClubAffiliationID, req.ProvinceAffiliationID, req.NationAffiliationID)
+	err := a.useCase.Create(req.Name, req.AgeCategory, req.Gender, req.Experience, req.ClubAffiliationID, req.ProvinceAffiliationID, req.NationAffiliationID, req.WeightClass)
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
@@ -154,6 +159,11 @@ func (a *App) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.NationAffiliationID != nil {
 		toUpdate.NationAffiliationID = &req.NationAffiliationID
+	}
+	if req.ClearWeightClass {
+		toUpdate.WeightClass = new(*float64) // &nil — clears the weight
+	} else if req.WeightClass != nil {
+		toUpdate.WeightClass = &req.WeightClass
 	}
 
 	err = a.useCase.Update(id, toUpdate)
@@ -334,7 +344,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if err := a.useCase.Create(name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID); err != nil {
+		if err := a.useCase.Create(name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID, nil); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}
