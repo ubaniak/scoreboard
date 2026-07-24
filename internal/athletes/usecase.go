@@ -12,6 +12,7 @@ type UseCase interface {
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
+	FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -72,6 +73,61 @@ func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID
 		Name:                  name,
 		ClubAffiliationID:     clubAffiliationID,
 		ProvinceAffiliationID: provinceAffiliationID,
+	}); err != nil {
+		return 0, err
+	}
+	created, err := uc.storage.FindByName(name)
+	if err != nil || len(created) == 0 {
+		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
+	}
+	return created[len(created)-1].ID, nil
+}
+
+func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) (uint, error) {
+	matches, err := uc.storage.FindByName(name)
+	if err != nil {
+		return 0, err
+	}
+	if len(matches) > 0 {
+		existing := matches[0]
+		upd := &entities.UpdateAthlete{}
+		if ageCategory != "" {
+			upd.AgeCategory = &ageCategory
+		}
+		if gender != "" {
+			upd.Gender = &gender
+		}
+		if experience != "" {
+			upd.Experience = &experience
+		}
+		if clubAffiliationID != nil {
+			cid := clubAffiliationID
+			upd.ClubAffiliationID = &cid
+		}
+		if provinceAffiliationID != nil {
+			pid := provinceAffiliationID
+			upd.ProvinceAffiliationID = &pid
+		}
+		if nationAffiliationID != nil {
+			nid := nationAffiliationID
+			upd.NationAffiliationID = &nid
+		}
+		if upd.AgeCategory != nil || upd.Gender != nil || upd.Experience != nil ||
+			upd.ClubAffiliationID != nil || upd.ProvinceAffiliationID != nil || upd.NationAffiliationID != nil {
+			if err := uc.storage.Update(existing.ID, upd); err != nil {
+				return 0, err
+			}
+		}
+		return existing.ID, nil
+	}
+	if err := uc.storage.Create(&entities.Athlete{
+		Name:                  name,
+		AgeCategory:           ageCategory,
+		Gender:                gender,
+		Experience:            experience,
+		ClubAffiliationID:     clubAffiliationID,
+		ProvinceAffiliationID: provinceAffiliationID,
+		NationAffiliationID:   nationAffiliationID,
 	}); err != nil {
 		return 0, err
 	}

@@ -31,6 +31,7 @@ type ClubCreator interface {
 type AthleteCreator interface {
 	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error)
+	FindOrCreateFull(name, ageCategory, gender, experience string, clubID, provinceID, nationID *uint) (uint, error)
 }
 
 type BoutCreator interface {
@@ -258,6 +259,10 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 		nameIdx := colIdx(hdr, "Name")
 		clubIdx := colIdx(hdr, "Club")
 		provinceIdx := colIdx(hdr, "Province")
+		nationIdx := colIdx(hdr, "Nationality")
+		ageCatIdx := colIdx(hdr, "Age Category")
+		genderIdx := colIdx(hdr, "Gender")
+		expIdx := colIdx(hdr, "Experience")
 		for _, row := range rows {
 			name := cell(row, nameIdx)
 			if name == "" {
@@ -275,7 +280,16 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 					provinceID = &id
 				}
 			}
-			if _, err := s.athletes.FindOrCreateByNameClubProvince(name, clubID, provinceID); err == nil {
+			var nationID *uint
+			if nationName := cell(row, nationIdx); nationName != "" {
+				if id, err := s.clubs.FindOrCreateNation(nationName); err == nil {
+					nationID = &id
+				}
+			}
+			ageCategory := strings.ToLower(cell(row, ageCatIdx))
+			gender := strings.ToLower(cell(row, genderIdx))
+			experience := strings.ToLower(cell(row, expIdx))
+			if _, err := s.athletes.FindOrCreateFull(name, ageCategory, gender, experience, clubID, provinceID, nationID); err == nil {
 				res.Athletes++
 			}
 		}
@@ -660,9 +674,9 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 		{
 			name: "Athletes",
 			rows: [][]any{
-				{"Name", "Age Category", "Nationality", "Club", "Province"},
-				{"Jane Smith", "Elite", "NZL", "City Boxing", "Auckland"},
-				{"Mark Jones", "U17", "NZL", "North Stars", "Wellington"},
+				{"Name", "Age Category", "Gender", "Experience", "Nationality", "Club", "Province"},
+				{"Jane Smith", "elite", "female", "open", "NZL", "City Boxing", "Auckland"},
+				{"Mark Jones", "u17", "male", "novice", "NZL", "North Stars", "Wellington"},
 			},
 		},
 		{

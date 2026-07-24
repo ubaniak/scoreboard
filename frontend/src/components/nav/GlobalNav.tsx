@@ -2,7 +2,6 @@ import {
   DesktopOutlined,
   HomeOutlined,
   SettingOutlined,
-  SoundOutlined,
 } from "@ant-design/icons";
 import { Flex } from "antd";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -20,7 +19,6 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Home", icon: <HomeOutlined /> },
-  { to: "/judge", label: "Judge", icon: <SoundOutlined /> },
   { to: "/scoreboard", label: "Scoreboard", icon: <DesktopOutlined />, external: true },
   { to: "/settings", label: "Settings", icon: <SettingOutlined />, adminOnly: true },
 ];
