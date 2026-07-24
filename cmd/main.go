@@ -105,10 +105,10 @@ func main() {
 	}
 	roles.Inherits(rbac.Admin, rbac.JudgeList...)
 
-	rbacSrv := rbac.NewRbacService(roles, authUseCase)
+	rbacMw := rbac.NewMiddleware(roles, authUseCase)
 
 	apiRegister := app.NewRegister()
-	rb := rbac.NewRouteBuilder(apiRouter, rbacSrv)
+	rb := rbac.NewRouteBuilder(apiRouter, rbacMw)
 
 	healthCheckApp := healthcheck.NewHealthCheck()
 	// -- login

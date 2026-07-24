@@ -7,21 +7,19 @@ import (
 	"github.com/ubaniak/scoreboard/internal/auth"
 )
 
-// TODO: Rename to middleware
-
-type RbacService struct {
+type Middleware struct {
 	roles       *Role
 	authUseCase auth.UseCase
 }
 
-func NewRbacService(roles *Role, authUseCase auth.UseCase) *RbacService {
-	return &RbacService{
+func NewMiddleware(roles *Role, authUseCase auth.UseCase) *Middleware {
+	return &Middleware{
 		roles:       roles,
 		authUseCase: authUseCase,
 	}
 }
 
-func (s *RbacService) JWTMiddleware(roles ...string) func(http.Handler) http.Handler {
+func (s *Middleware) JWTMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if len(roles) == 0 {

@@ -34,9 +34,9 @@ func AddApps(router *mux.Router) error {
 	roles.AddRole("judge")
 	roles.Inherits("admin", "judge")
 
-	rbacSrv := rbac.NewRbacService(roles, authUseCase)
+	rbacMw := rbac.NewMiddleware(roles, authUseCase)
 
-	rb := rbac.NewRouteBuilder(router, rbacSrv)
+	rb := rbac.NewRouteBuilder(router, rbacMw)
 
 	apiRegister := app.NewRegister()
 

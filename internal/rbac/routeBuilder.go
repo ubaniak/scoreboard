@@ -12,12 +12,12 @@ import (
 type RouteBuilder struct {
 	pathPrefix string
 	route      *mux.Router
-	rbacSrv    *RbacService
+	rbacMw     *Middleware
 	labels     map[string]string
 }
 
-func NewRouteBuilder(route *mux.Router, rbacSrv *RbacService) *RouteBuilder {
-	return &RouteBuilder{route: route, pathPrefix: "/", rbacSrv: rbacSrv, labels: make(map[string]string)}
+func NewRouteBuilder(route *mux.Router, rbacMw *Middleware) *RouteBuilder {
+	return &RouteBuilder{route: route, pathPrefix: "/", rbacMw: rbacMw, labels: make(map[string]string)}
 }
 
 func (rb *RouteBuilder) WithMiddleware(mw ...mux.MiddlewareFunc) *RouteBuilder {
@@ -30,7 +30,7 @@ func (rb *RouteBuilder) AddRoute(label, path string, method string, handler http
 	if len(roles) == 0 {
 		rb.route.Handle(path, handler).Methods(method)
 	} else {
-		wrapped := rb.rbacSrv.JWTMiddleware(roles...)(handler)
+		wrapped := rb.rbacMw.JWTMiddleware(roles...)(handler)
 		rb.route.Handle(path, wrapped).Methods(method)
 	}
 
@@ -63,6 +63,6 @@ func (rb *RouteBuilder) AddSubroute(sr string) *RouteBuilder {
 		pathPrefix: p,
 		labels:     rb.labels,
 		route:      r,
-		rbacSrv:    rb.rbacSrv,
+		rbacMw:     rb.rbacMw,
 	}
 }
