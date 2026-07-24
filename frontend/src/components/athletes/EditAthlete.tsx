@@ -1,4 +1,4 @@
-import { Button, DatePicker, Form, Input, InputNumber, Segmented, Select, Space, Typography } from "antd";
+import { Button, DatePicker, Divider, Form, Input, InputNumber, Segmented, Select, Space, Typography } from "antd";
 import type { Dayjs } from "dayjs";
 import type { Athlete, UpdateAthleteProps } from "../../api/athletes";
 import { ageCategoryFromDOB } from "../../utils/ageCategory";
@@ -65,12 +65,15 @@ export const EditAthlete = ({ athlete, clubs, provinces, nations, onClose, onSub
         );
       }}
     >
+      <Divider titlePlacement="left" plain style={{ marginTop: 0 }}>Identity</Divider>
       <Form.Item label="Name" name="name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
       <Form.Item label="Date of Birth" name="dateOfBirth" extra={<Typography.Text type="secondary" style={{ fontSize: 12 }}>Auto-fills age category</Typography.Text>}>
         <DatePicker format="YYYY-MM-DD" onChange={handleDOBChange} style={{ width: "100%" }} />
       </Form.Item>
+
+      <Divider titlePlacement="left" plain>Classification</Divider>
       <Form.Item label="Age Category" name="ageCategory" rules={[{ required: true }]}>
         <Select options={AGE_CATEGORY_OPTIONS} placeholder="Select age category..." />
       </Form.Item>
@@ -97,6 +100,8 @@ export const EditAthlete = ({ athlete, clubs, provinces, nations, onClose, onSub
       <Form.Item label="Weight (kg)" name="weightClass">
         <InputNumber min={0} step={0.5} style={{ width: "100%" }} placeholder="Optional" />
       </Form.Item>
+
+      <Divider titlePlacement="left" plain>Affiliation</Divider>
       <Form.Item label="Club" name="clubAffiliationId">
         <Select options={clubs} allowClear showSearch optionFilterProp="label" placeholder="Select club..." />
       </Form.Item>

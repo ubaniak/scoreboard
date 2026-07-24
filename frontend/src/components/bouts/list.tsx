@@ -159,6 +159,7 @@ export const ListBouts = (props: ListBoutsProps) => {
                 />
               ),
             }}
+            width={900}
           />
         );
       },

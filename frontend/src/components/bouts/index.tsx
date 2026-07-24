@@ -53,6 +53,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 />
               ),
             }}
+            width={900}
           />
         </>
       }

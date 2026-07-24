@@ -69,7 +69,7 @@ export const ActionMenu = (props: ActionMenuProps) => {
         title={props.content.title}
         open={open}
         footer={null}
-        width={props.width ?? 800}
+        width={props.width ?? 480}
         loading={loading}
         closable={!loading}
         maskClosable={!loading}

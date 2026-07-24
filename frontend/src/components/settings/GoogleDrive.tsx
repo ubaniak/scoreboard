@@ -21,7 +21,6 @@ import {
   Flex,
   Form,
   Input,
-  Modal,
   Select,
   Popconfirm,
   Space,
@@ -46,35 +45,68 @@ import {
 } from "../../api/gdrive";
 import { useListCards } from "../../api/cards";
 import type { TokenBase } from "../../api/entities";
+import { ActionMenu, type CloseAction } from "../actionMenu/actionMenu";
 
 const { Text, Title, Paragraph, Link } = Typography;
 
-const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: Sheet[]) => void }) => {
-  const [sheets, setSheets] = useState<Sheet[]>(value || []);
-  const [modal, setModal] = useState(false);
-  const [cardName, setCardName] = useState("");
-  const [sheetId, setSheetId] = useState("");
-  const [editIdx, setEditIdx] = useState<number | null>(null);
+type SheetFormProps = {
+  initialCardName?: string;
+  initialSheetId?: string;
+  onSubmit: (cardName: string, sheetId: string) => void;
+  close: CloseAction;
+};
 
-  const handleAdd = () => {
+const SheetForm = ({ initialCardName = "", initialSheetId = "", onSubmit, close }: SheetFormProps) => {
+  const [cardName, setCardName] = useState(initialCardName);
+  const [sheetId, setSheetId] = useState(initialSheetId);
+
+  const handleSubmit = () => {
     if (!cardName || !sheetId) return;
-    const newSheets = editIdx !== null
-      ? sheets.map((s, i) => i === editIdx ? { cardName, sheetId } : s)
-      : [...sheets, { cardName, sheetId }];
-    setSheets(newSheets);
-    onChange?.(newSheets);
-    setModal(false);
-    setCardName("");
-    setSheetId("");
-    setEditIdx(null);
+    onSubmit(cardName, sheetId);
+    close();
   };
 
-  const handleEdit = (idx: number) => {
-    const sheet = sheets[idx];
-    setCardName(sheet.cardName);
-    setSheetId(sheet.sheetId);
-    setEditIdx(idx);
-    setModal(true);
+  return (
+    <Space direction="vertical" style={{ width: "100%" }}>
+      <Form layout="vertical">
+        <Form.Item label="Card Name" required>
+          <Input
+            placeholder="e.g., Card A, Card B"
+            value={cardName}
+            onChange={(e) => setCardName(e.target.value)}
+          />
+        </Form.Item>
+        <Form.Item label="Sheet ID" required>
+          <Input
+            placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+            value={sheetId}
+            onChange={(e) => setSheetId(e.target.value)}
+          />
+        </Form.Item>
+      </Form>
+      <Flex justify="end" gap={8}>
+        <Button onClick={() => close()}>Cancel</Button>
+        <Button type="primary" disabled={!cardName || !sheetId} onClick={handleSubmit}>
+          Save
+        </Button>
+      </Flex>
+    </Space>
+  );
+};
+
+const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: Sheet[]) => void }) => {
+  const [sheets, setSheets] = useState<Sheet[]>(value || []);
+
+  const handleAdd = (cardName: string, sheetId: string) => {
+    const newSheets = [...sheets, { cardName, sheetId }];
+    setSheets(newSheets);
+    onChange?.(newSheets);
+  };
+
+  const handleUpdate = (idx: number, cardName: string, sheetId: string) => {
+    const newSheets = sheets.map((s, i) => (i === idx ? { cardName, sheetId } : s));
+    setSheets(newSheets);
+    onChange?.(newSheets);
   };
 
   const handleDelete = (idx: number) => {
@@ -99,7 +131,7 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
           {
             title: "",
             key: "action",
-            width: 140,
+            width: 160,
             render: (_, record: Sheet & { key: number }, idx) => (
               <Space size="small">
                 <Button
@@ -111,13 +143,27 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
                 >
                   Go to
                 </Button>
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={() => handleEdit(idx)}
-                >
-                  Edit
-                </Button>
+                <ActionMenu
+                  trigger={{
+                    override: (onOpen) => (
+                      <Button type="link" size="small" onClick={onOpen}>
+                        Edit
+                      </Button>
+                    ),
+                  }}
+                  content={{
+                    title: "Edit Sheet",
+                    body: (close) => (
+                      <SheetForm
+                        initialCardName={record.cardName}
+                        initialSheetId={record.sheetId}
+                        onSubmit={(cardName, sheetId) => handleUpdate(idx, cardName, sheetId)}
+                        close={close}
+                      />
+                    ),
+                  }}
+                  width={480}
+                />
                 <Popconfirm
                   title="Delete sheet?"
                   okText="Delete"
@@ -137,48 +183,20 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
         scroll={{ x: "max-content" }}
         locale={{ emptyText: "No sheets configured" }}
       />
-      <Button
-        type="dashed"
-        block
-        icon={<PlusOutlined />}
-        onClick={() => {
-          setCardName("");
-          setSheetId("");
-          setEditIdx(null);
-          setModal(true);
+      <ActionMenu
+        trigger={{
+          override: (onOpen) => (
+            <Button type="dashed" block icon={<PlusOutlined />} onClick={onOpen}>
+              Add Sheet
+            </Button>
+          ),
         }}
-      >
-        Add Sheet
-      </Button>
-      <Modal
-        title={editIdx !== null ? "Edit Sheet" : "Add Sheet"}
-        open={modal}
-        onOk={handleAdd}
-        onCancel={() => {
-          setModal(false);
-          setCardName("");
-          setSheetId("");
-          setEditIdx(null);
+        content={{
+          title: "Add Sheet",
+          body: (close) => <SheetForm onSubmit={handleAdd} close={close} />,
         }}
-        okButtonProps={{ disabled: !cardName || !sheetId }}
-      >
-        <Form layout="vertical">
-          <Form.Item label="Card Name" required>
-            <Input
-              placeholder="e.g., Card A, Card B"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item label="Sheet ID" required>
-            <Input
-              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-              value={sheetId}
-              onChange={(e) => setSheetId(e.target.value)}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+        width={480}
+      />
     </Space>
   );
 };

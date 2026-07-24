@@ -1,36 +1,17 @@
-import { Tabs } from "antd";
-import { useParams } from "@tanstack/react-router";
-import { useListAthletes } from "../api/athletes";
-import { useGetAuditLogs } from "../api/auditLogs";
-import {
-  useGetBouts,
-  useMutateCreateBout,
-  useMutateDeleteBout,
-  useMutateImportBouts,
-  useMutateUpdateBout,
-} from "../api/bouts";
+import { Outlet, useParams } from "@tanstack/react-router";
+import { useGetBouts, useMutateUpdateBout } from "../api/bouts";
 import {
   useGetCardById,
   useMutateUpdateCardJudges,
   useMutateUpdateCardStatus,
   useMutateUpdateCards,
 } from "../api/cards";
-import { useGetOfficials } from "../api/officials";
-import {
-  useListRoster,
-  useMutateAddToRoster,
-  useMutateRemoveFromRoster,
-  useMutateSetRosterAvailable,
-} from "../api/roster";
-import { CardAuditTimeline } from "../components/auditLogs/CardAuditTimeline";
-import { BoutsIndex } from "../components/bouts";
 import { NextBout } from "../components/bouts/nextBout";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
 import { CardExports } from "../components/cards/CardExports";
-import { JudgeConsistency } from "../components/cards/JudgeConsistency";
 import { CardSummary } from "../components/cards/summery";
-import { RosterIndex } from "../components/roster";
+import { RoutedTabs } from "../components/shared/RoutedTabs";
 import { PageLayout } from "../layouts/page";
 import { useProfile } from "../providers/login";
 
@@ -39,21 +20,9 @@ export const CardPage = () => {
   const { cardId } = useParams({ strict: false });
 
   const bouts = useGetBouts({ token, cardId });
-  const officials = useGetOfficials({ token });
   const card = useGetCardById({ token, cardId });
-  const athletes = useListAthletes({ token });
-  const auditLogs = useGetAuditLogs({ token, cardId });
-  const roster = useListRoster({ token, cardId });
 
-  const addBout = useMutateCreateBout({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
-  const deleteBout = useMutateDeleteBout(cardId, token);
-  const importBouts = useMutateImportBouts({ token, cardId });
-
-  const addToRoster = useMutateAddToRoster({ token, cardId });
-  const removeFromRoster = useMutateRemoveFromRoster({ token, cardId });
-  const setRosterAvailable = useMutateSetRosterAvailable({ token, cardId });
-
   const updateCardStatus = useMutateUpdateCardStatus({ token });
   const updateCardJudges = useMutateUpdateCardJudges({ token });
   const updateCard = useMutateUpdateCards({ token });
@@ -106,57 +75,24 @@ export const CardPage = () => {
         />
       )}
       <NextBout bouts={bouts.data ?? []} cardId={cardId!} />
-      <Tabs
-        defaultActiveKey="bouts"
+      <RoutedTabs
+        style={{ marginTop: 16 }}
         items={[
-          {
-            key: "bouts",
-            label: "Bouts",
-            children: (
-              <BoutsIndex
-                loading={bouts.isLoading}
-                card={card.data}
-                bouts={bouts.data}
-                officials={officials.data}
-                athletes={athletes.data}
-                availableAthleteIds={(roster.data ?? [])
-                  .filter((r) => r.available)
-                  .map((r) => r.athleteId)}
-                onAddBout={(values) => addBout.mutateAsync(values)}
-                onEditBout={(values) => updateBout.mutateAsync(values)}
-                onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
-                onImport={(file) => importBouts.mutateAsync(file)}
-              />
-            ),
-          },
-          {
-            key: "roster",
-            label: "Roster",
-            children: (
-              <RosterIndex
-                loading={roster.isLoading}
-                entries={roster.data}
-                athletes={athletes.data}
-                onAdd={(athleteId) => addToRoster.mutateAsync(athleteId)}
-                onSetAvailable={(athleteId, available) =>
-                  setRosterAvailable.mutateAsync({ athleteId, available })
-                }
-                onRemove={(athleteId) => removeFromRoster.mutateAsync(athleteId)}
-              />
-            ),
-          },
+          { key: "bouts", label: "Bouts", to: `/card/${cardId}` },
+          { key: "roster", label: "Roster", to: `/card/${cardId}/roster` },
           {
             key: "judge-consistency",
             label: "Judge Consistency",
-            children: <JudgeConsistency cardId={cardId!} token={token} />,
+            to: `/card/${cardId}/judge-consistency`,
           },
           {
             key: "activity-log",
             label: "Activity Log",
-            children: <CardAuditTimeline logs={auditLogs.data ?? []} />,
+            to: `/card/${cardId}/activity-log`,
           },
         ]}
       />
+      <Outlet />
     </PageLayout>
   );
 };

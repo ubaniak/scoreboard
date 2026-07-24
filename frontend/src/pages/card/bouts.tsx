@@ -1,0 +1,47 @@
+import { useParams } from "@tanstack/react-router";
+import { useListAthletes } from "../../api/athletes";
+import {
+  useGetBouts,
+  useMutateCreateBout,
+  useMutateDeleteBout,
+  useMutateImportBouts,
+  useMutateUpdateBout,
+} from "../../api/bouts";
+import { useGetCardById } from "../../api/cards";
+import { useGetOfficials } from "../../api/officials";
+import { useListRoster } from "../../api/roster";
+import { BoutsIndex } from "../../components/bouts";
+import { useProfile } from "../../providers/login";
+
+export const CardBoutsPage = () => {
+  const { token } = useProfile();
+  const { cardId } = useParams({ strict: false });
+
+  const bouts = useGetBouts({ token, cardId });
+  const officials = useGetOfficials({ token });
+  const card = useGetCardById({ token, cardId });
+  const athletes = useListAthletes({ token });
+  const roster = useListRoster({ token, cardId });
+
+  const addBout = useMutateCreateBout({ token, cardId });
+  const updateBout = useMutateUpdateBout({ token, cardId });
+  const deleteBout = useMutateDeleteBout(cardId, token);
+  const importBouts = useMutateImportBouts({ token, cardId });
+
+  return (
+    <BoutsIndex
+      loading={bouts.isLoading}
+      card={card.data}
+      bouts={bouts.data}
+      officials={officials.data}
+      athletes={athletes.data}
+      availableAthleteIds={(roster.data ?? [])
+        .filter((r) => r.available)
+        .map((r) => r.athleteId)}
+      onAddBout={(values) => addBout.mutateAsync(values)}
+      onEditBout={(values) => updateBout.mutateAsync(values)}
+      onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
+      onImport={(file) => importBouts.mutateAsync(file)}
+    />
+  );
+};

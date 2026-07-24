@@ -1,5 +1,6 @@
 import { Col, Flex, Row } from "antd";
 import type { Current } from "../../entities/current";
+import { useTheme } from "../../theme";
 import { Card } from "../card/card";
 import { StatusTag } from "../status/tag";
 
@@ -7,6 +8,7 @@ export type BoutInfoProps = {
   current?: Current;
 };
 export const BoutInfo = (props: BoutInfoProps) => {
+  const { colors } = useTheme();
   return (
     <Card>
       <Flex justify="center" gap="large" vertical align="center">
@@ -19,7 +21,7 @@ export const BoutInfo = (props: BoutInfoProps) => {
               style={{
                 fontSize: 30,
                 fontWeight: 700,
-                color: "#ff4d4f",
+                color: colors.red,
               }}
             >
               {props.current?.bout?.redCorner.toUpperCase()}
@@ -30,7 +32,7 @@ export const BoutInfo = (props: BoutInfoProps) => {
               style={{
                 fontSize: 30,
                 fontWeight: 700,
-                color: "#1677ff",
+                color: colors.blue,
               }}
             >
               {props.current?.bout?.blueCorner.toUpperCase()}
