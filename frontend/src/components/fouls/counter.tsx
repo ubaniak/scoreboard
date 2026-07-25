@@ -7,12 +7,20 @@ export type CounterProps = {
   removeDisabled?: boolean;
 };
 
+const buttonStyle = { width: 44, height: 44 };
+
 export const Counter = (props: CounterProps) => {
   return (
     <Space>
-      <Button type="primary" onClick={props.onAdd} icon={<PlusOutlined />} />
       <Button
         type="primary"
+        style={buttonStyle}
+        onClick={props.onAdd}
+        icon={<PlusOutlined />}
+      />
+      <Button
+        type="primary"
+        style={buttonStyle}
         onClick={props.onRemove}
         disabled={props.removeDisabled}
         icon={<MinusOutlined />}

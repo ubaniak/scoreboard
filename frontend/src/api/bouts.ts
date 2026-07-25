@@ -146,9 +146,12 @@ export const useMutateUpdateBout = (props: TokenBase & CardRequestType) => {
         },
       );
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: keys.list(props.token),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keys.get(props.token, variables.boutInfo.boutId),
       });
     },
   });

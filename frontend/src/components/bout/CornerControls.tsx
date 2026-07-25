@@ -65,7 +65,7 @@ export const CornerControls = (props: CornerPanelProps) => {
           corner={props.corner}
           icon={<ThunderboltOutlined />}
           label={`Eight Counts (${props.eightCounts})`}
-          toolTip="Eight counts"
+          toolTip="Referee's standing count"
           action={
             <Counter
               onAdd={() => {

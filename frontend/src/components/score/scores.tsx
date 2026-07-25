@@ -1,4 +1,4 @@
-import { Table, Tag, Typography } from "antd";
+import { Table, Tag, Typography, theme } from "antd";
 import type { ColumnType } from "antd/es/table";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
@@ -27,6 +27,7 @@ export const Scores = ({
   isAdmin,
   currentRound,
 }: ScoresProps) => {
+  const { token } = theme.useToken();
   const ROUNDS = rounds && rounds.length > 0 ? rounds.map((r) => r.roundNumber) : [1, 2, 3];
 
   // Collect judge roles in order from all rounds
@@ -133,7 +134,7 @@ export const Scores = ({
     const isDeduction = rowKey === "__deductions__";
     const isTotal = rowKey === "__total__";
     const color = isDeduction
-      ? "rgba(255,255,255,0.45)"
+      ? token.colorTextTertiary
       : corner === "red"
         ? "#ff4d4f"
         : "#1677ff";

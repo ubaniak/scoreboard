@@ -67,7 +67,13 @@ export const BoutIndex = (props: BoutIndexProps) => {
                 allowClear
               />
             )}
-            <Button onClick={() => props.controls.onStartBout()}>
+            <Button
+              type="primary"
+              disabled={
+                props.bout?.boutType !== "sparring" && !props.bout?.referee
+              }
+              onClick={() => props.controls.onStartBout()}
+            >
               Start Bout
             </Button>
           </Flex>
