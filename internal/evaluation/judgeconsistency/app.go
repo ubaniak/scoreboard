@@ -1,4 +1,4 @@
-package scores
+package judgeconsistency
 
 import (
 	"net/http"
@@ -9,6 +9,7 @@ import (
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
+	scoreEntities "github.com/ubaniak/scoreboard/internal/running/scores/entities"
 )
 
 // BoutLister returns the bouts on a card. Kept narrow so this package does not
@@ -22,13 +23,19 @@ type AthleteNamer interface {
 	GetAthleteName(athleteID uint) string
 }
 
+// ScoreLister returns the recorded scores for a bout. Kept narrow so this
+// package does not depend on the running scores package's full UseCase.
+type ScoreLister interface {
+	List(cardId, boutId uint) ([]*scoreEntities.Score, error)
+}
+
 type App struct {
-	scoreUseCase UseCase
+	scoreUseCase ScoreLister
 	bouts        BoutLister
 	athletes     AthleteNamer
 }
 
-func NewApp(scoreUseCase UseCase, bouts BoutLister, athletes AthleteNamer) *App {
+func NewApp(scoreUseCase ScoreLister, bouts BoutLister, athletes AthleteNamer) *App {
 	return &App{scoreUseCase: scoreUseCase, bouts: bouts, athletes: athletes}
 }
 

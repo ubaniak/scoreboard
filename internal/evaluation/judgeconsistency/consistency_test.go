@@ -1,8 +1,8 @@
-package scores_test
+package judgeconsistency_test
 
 import (
-	"github.com/ubaniak/scoreboard/internal/scores"
-	"github.com/ubaniak/scoreboard/internal/scores/entities"
+	"github.com/ubaniak/scoreboard/internal/evaluation/judgeconsistency"
+	"github.com/ubaniak/scoreboard/internal/running/scores/entities"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -19,7 +19,7 @@ var _ = Describe("Consistency", func() {
 		}
 	}
 
-	findRow := func(rows []scores.JudgeConsistencyRow, name string) *scores.JudgeConsistencyRow {
+	findRow := func(rows []judgeconsistency.JudgeConsistencyRow, name string) *judgeconsistency.JudgeConsistencyRow {
 		for i := range rows {
 			if rows[i].JudgeName == name {
 				return &rows[i]
@@ -29,12 +29,12 @@ var _ = Describe("Consistency", func() {
 	}
 
 	It("returns empty slice for no scores", func() {
-		Expect(scores.Consistency(nil)).To(BeEmpty())
-		Expect(scores.Consistency([]*entities.Score{})).To(BeEmpty())
+		Expect(judgeconsistency.Consistency(nil)).To(BeEmpty())
+		Expect(judgeconsistency.Consistency([]*entities.Score{})).To(BeEmpty())
 	})
 
 	It("falls back to JudgeRole when JudgeName empty", func() {
-		rows := scores.Consistency([]*entities.Score{
+		rows := judgeconsistency.Consistency([]*entities.Score{
 			{BoutNumber: 1, RoundNumber: 1, JudgeRole: "judge1", Red: 10, Blue: 9},
 		})
 		Expect(rows).To(HaveLen(1))
@@ -43,7 +43,7 @@ var _ = Describe("Consistency", func() {
 
 	It("sorts rows by AgreementPct descending", func() {
 		// 3 judges, 1 round. j1 + j2 pick red (majority), j3 picks blue.
-		rows := scores.Consistency([]*entities.Score{
+		rows := judgeconsistency.Consistency([]*entities.Score{
 			mkScore(1, 1, "j1", 10, 9),
 			mkScore(1, 1, "j2", 10, 9),
 			mkScore(1, 1, "j3", 9, 10),
@@ -55,8 +55,8 @@ var _ = Describe("Consistency", func() {
 	})
 
 	DescribeTable("per-judge metrics",
-		func(input []*entities.Score, judge string, expected scores.JudgeConsistencyRow) {
-			rows := scores.Consistency(input)
+		func(input []*entities.Score, judge string, expected judgeconsistency.JudgeConsistencyRow) {
+			rows := judgeconsistency.Consistency(input)
 			row := findRow(rows, judge)
 			Expect(row).NotTo(BeNil())
 			Expect(row.TotalRed).To(Equal(expected.TotalRed))
@@ -67,7 +67,7 @@ var _ = Describe("Consistency", func() {
 		Entry("single judge single round: zero deviation, 100% agree",
 			[]*entities.Score{mkScore(1, 1, "j1", 10, 9)},
 			"j1",
-			scores.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0, AgreementPct: 100},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0, AgreementPct: 100},
 		),
 		Entry("identical scores: zero deviation, 100% agree",
 			[]*entities.Score{
@@ -76,7 +76,7 @@ var _ = Describe("Consistency", func() {
 				mkScore(1, 1, "j3", 10, 9),
 			},
 			"j1",
-			scores.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0, AgreementPct: 100},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0, AgreementPct: 100},
 		),
 		Entry("dissenting judge: nonzero deviation, 0% agree",
 			// mean red = (10+10+9)/3 = 9.6667; blue = (9+9+10)/3 = 9.3333
@@ -87,7 +87,7 @@ var _ = Describe("Consistency", func() {
 				mkScore(1, 1, "j3", 9, 10),
 			},
 			"j3",
-			scores.JudgeConsistencyRow{TotalRed: 9, TotalBlue: 10, AvgDeviation: 1.3333, AgreementPct: 0},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 9, TotalBlue: 10, AvgDeviation: 1.3333, AgreementPct: 0},
 		),
 		Entry("majority judge: small deviation, 100% agree",
 			[]*entities.Score{
@@ -97,7 +97,7 @@ var _ = Describe("Consistency", func() {
 			},
 			"j1",
 			// dev = |10-9.6667| + |9-9.3333| = 0.3333 + 0.3333 = 0.6667
-			scores.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0.6667, AgreementPct: 100},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 0.6667, AgreementPct: 100},
 		),
 		Entry("totals aggregate across rounds",
 			[]*entities.Score{
@@ -106,7 +106,7 @@ var _ = Describe("Consistency", func() {
 				mkScore(2, 1, "j1", 10, 8),
 			},
 			"j1",
-			scores.JudgeConsistencyRow{TotalRed: 29, TotalBlue: 27, AvgDeviation: 0, AgreementPct: 100},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 29, TotalBlue: 27, AvgDeviation: 0, AgreementPct: 100},
 		),
 		Entry("draw round: judge picking red disagrees with draw majority",
 			// 2 judges tied 10-10 each, j3 picks 10-9. redWins=1, blueWins=0 → majority=red.
@@ -120,7 +120,7 @@ var _ = Describe("Consistency", func() {
 			"j1",
 			// mean red = 30/3 = 10; mean blue = 29/3 = 9.6667
 			// j1 dev = |10-10| + |10-9.6667| = 0.3333
-			scores.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 10, AvgDeviation: 0.3333, AgreementPct: 0},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 10, AvgDeviation: 0.3333, AgreementPct: 0},
 		),
 		Entry("tie in winners across judges: majority is draw",
 			// j1 red, j2 blue → redWins=blueWins=1 → majority=draw. Neither agrees.
@@ -130,7 +130,7 @@ var _ = Describe("Consistency", func() {
 			},
 			"j1",
 			// mean red 9.5, mean blue 9.5; dev = 0.5 + 0.5 = 1
-			scores.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 1, AgreementPct: 0},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 10, TotalBlue: 9, AvgDeviation: 1, AgreementPct: 0},
 		),
 		Entry("agreement averaged across rounds: 1 of 2",
 			// Round 1: j1 agrees with majority red. Round 2: j1 picks blue, majority red → disagrees.
@@ -142,7 +142,7 @@ var _ = Describe("Consistency", func() {
 				mkScore(1, 2, "j3", 10, 9),
 			},
 			"j1",
-			scores.JudgeConsistencyRow{TotalRed: 19, TotalBlue: 19, AvgDeviation: 0.6667, AgreementPct: 50},
+			judgeconsistency.JudgeConsistencyRow{TotalRed: 19, TotalBlue: 19, AvgDeviation: 0.6667, AgreementPct: 50},
 		),
 	)
 })

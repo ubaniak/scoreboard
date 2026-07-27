@@ -9,7 +9,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/running/current/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
-	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/running/scores"
 )
 
 type UseCase interface {

@@ -6,7 +6,7 @@ import (
 	athleteEntities "github.com/ubaniak/scoreboard/internal/creation/athletes/entities"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
-	scoreEntities "github.com/ubaniak/scoreboard/internal/scores/entities"
+	scoreEntities "github.com/ubaniak/scoreboard/internal/running/scores/entities"
 )
 
 // External queriers — narrow interfaces to avoid circular imports.

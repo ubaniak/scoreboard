@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/evaluation/judgeconsistency"
 )
 
 type JudgeConsistencyData struct {
 	CardName string
 	CardDate string
-	Report   scores.JudgeConsistencyReport
+	Report   judgeconsistency.JudgeConsistencyReport
 }
 
 func (uc *useCase) JudgeConsistencyReport(cardId uint) (*JudgeConsistencyData, error) {
@@ -27,7 +27,7 @@ func (uc *useCase) JudgeConsistencyReport(cardId uint) (*JudgeConsistencyData, e
 		return nil, err
 	}
 
-	metas := make([]scores.BoutMeta, 0, len(boutList))
+	metas := make([]judgeconsistency.BoutMeta, 0, len(boutList))
 	for _, b := range boutList {
 		if b.BoutType != boutEntities.BoutTypeScored {
 			continue
@@ -47,7 +47,7 @@ func (uc *useCase) JudgeConsistencyReport(cardId uint) (*JudgeConsistencyData, e
 				blueName = a.Name
 			}
 		}
-		metas = append(metas, scores.BoutMeta{
+		metas = append(metas, judgeconsistency.BoutMeta{
 			BoutID:     b.ID,
 			BoutNumber: b.BoutNumber,
 			RedName:    redName,
@@ -58,7 +58,7 @@ func (uc *useCase) JudgeConsistencyReport(cardId uint) (*JudgeConsistencyData, e
 		})
 	}
 
-	report := scores.BuildReport(metas)
+	report := judgeconsistency.BuildReport(metas)
 	return &JudgeConsistencyData{
 		CardName: card.Name,
 		CardDate: card.Date,
@@ -135,8 +135,8 @@ func keyOf(name, role string) string {
 	return role
 }
 
-func boutsForJudge(judgeName string, allBouts []scores.BoutRow) []scores.BoutRow {
-	var out []scores.BoutRow
+func boutsForJudge(judgeName string, allBouts []judgeconsistency.BoutRow) []judgeconsistency.BoutRow {
+	var out []judgeconsistency.BoutRow
 	for _, b := range allBouts {
 		match := false
 		for _, ow := range b.OverallWinners {
@@ -191,10 +191,10 @@ func WriteFullConsistencyCSV(w io.Writer, d *JudgeConsistencyData) error {
 			cw.Write([]string{"Decision", decisionLabel(b.Decision)})
 
 			cw.Write([]string{"Round", "Judge Role", "Judge Name", "Red Score", "Blue Score"})
-			rounds := append([]scores.RoundEntry(nil), b.Rounds...)
+			rounds := append([]judgeconsistency.RoundEntry(nil), b.Rounds...)
 			sort.Slice(rounds, func(a, b int) bool { return rounds[a].RoundNumber < rounds[b].RoundNumber })
 			for _, r := range rounds {
-				rs := append([]scores.ScoreEntry(nil), r.Scores...)
+				rs := append([]judgeconsistency.ScoreEntry(nil), r.Scores...)
 				sort.Slice(rs, func(a, b int) bool { return rs[a].JudgeRole < rs[b].JudgeRole })
 				for _, s := range rs {
 					name := s.JudgeName
@@ -210,7 +210,7 @@ func WriteFullConsistencyCSV(w io.Writer, d *JudgeConsistencyData) error {
 					})
 				}
 			}
-			ows := append([]scores.OverallWinnerEntry(nil), b.OverallWinners...)
+			ows := append([]judgeconsistency.OverallWinnerEntry(nil), b.OverallWinners...)
 			sort.Slice(ows, func(a, b int) bool { return ows[a].JudgeRole < ows[b].JudgeRole })
 			for _, ow := range ows {
 				name := ow.JudgeName
@@ -255,7 +255,7 @@ func WriteFullConsistencyPDF(w io.Writer, d *JudgeConsistencyData) error {
 			sectionLabel(pdf, fmt.Sprintf("Bout %d  —  %s vs %s", b.BoutNumber, defaultStr(b.RedName, "Red"), defaultStr(b.BlueName, "Blue")))
 			metaRowPair(pdf, "Winner", winnerLabel(b.Winner), "Decision", decisionLabel(b.Decision))
 
-			rounds := append([]scores.RoundEntry(nil), b.Rounds...)
+			rounds := append([]judgeconsistency.RoundEntry(nil), b.Rounds...)
 			sort.Slice(rounds, func(a, b int) bool { return rounds[a].RoundNumber < rounds[b].RoundNumber })
 			if len(rounds) == 0 {
 				continue
@@ -329,7 +329,7 @@ func WriteFullConsistencyPDF(w io.Writer, d *JudgeConsistencyData) error {
 	return pdf.Output(w)
 }
 
-func uniqueJudges(b scores.BoutRow) []string {
+func uniqueJudges(b judgeconsistency.BoutRow) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, r := range b.Rounds {

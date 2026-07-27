@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/ubaniak/scoreboard/internal/rbac"
-	"github.com/ubaniak/scoreboard/internal/scores/entities"
+	"github.com/ubaniak/scoreboard/internal/running/scores/entities"
 )
 
 type UseCase interface {

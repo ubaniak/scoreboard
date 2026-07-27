@@ -46,7 +46,8 @@ import (
 	reportsPackage "github.com/ubaniak/scoreboard/internal/evaluation/reports"
 	"github.com/ubaniak/scoreboard/internal/creation/roster"
 	"github.com/ubaniak/scoreboard/internal/running/round"
-	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/running/scores"
+	"github.com/ubaniak/scoreboard/internal/evaluation/judgeconsistency"
 	"github.com/ubaniak/scoreboard/internal/creation/setup"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 )
@@ -215,7 +216,7 @@ func main() {
 	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, rosterApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
-	scoresApp := scores.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
+	scoresApp := judgeconsistency.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})

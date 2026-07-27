@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/ubaniak/scoreboard/internal/scores/entities"
+	"github.com/ubaniak/scoreboard/internal/running/scores/entities"
 	"gorm.io/gorm"
 )
 

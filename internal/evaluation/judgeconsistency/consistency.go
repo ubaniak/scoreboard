@@ -1,10 +1,10 @@
-package scores
+package judgeconsistency
 
 import (
 	"math"
 	"sort"
 
-	"github.com/ubaniak/scoreboard/internal/scores/entities"
+	"github.com/ubaniak/scoreboard/internal/running/scores/entities"
 )
 
 type JudgeConsistencyRow struct {

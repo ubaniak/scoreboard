@@ -32,7 +32,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/running/round"
-	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/running/scores"
 )
 
 var firstNames = []string{
