@@ -3,7 +3,7 @@ package utils
 import (
 	"golang.design/x/clipboard"
 
-	"github.com/ubaniak/scoreboard/internal/devices"
+	"github.com/ubaniak/scoreboard/internal/running/devices"
 )
 
 func RegisterAdmin(useCase devices.UseCase) {

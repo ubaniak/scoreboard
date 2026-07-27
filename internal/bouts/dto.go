@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
-	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
+	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
 )
 
 func RoundLength(ageCat entities.AgeCategory, experience entities.Experience) entities.RoundLength {

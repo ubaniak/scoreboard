@@ -1,0 +1,23 @@
+package cards
+
+import (
+	"gorm.io/gorm"
+
+	"github.com/ubaniak/scoreboard/internal/creation/cards/entities"
+	"github.com/ubaniak/scoreboard/internal/creation/cards/storage"
+)
+
+type Storage interface {
+	Create(c *entities.Card) error
+	List() ([]entities.Card, error)
+	Delete(id uint) error
+	Update(id uint, toUpdate *entities.UpdateCard) error
+	Get(id uint) (*entities.Card, error)
+	FindByName(name string) (*entities.Card, error)
+	Current() (*entities.Card, error)
+	SetImageUrl(id uint, url string) error
+}
+
+func NewCardStorage(db *gorm.DB) (Storage, error) {
+	return storage.NewSqlite(db)
+}

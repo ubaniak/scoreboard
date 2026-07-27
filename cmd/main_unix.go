@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ubaniak/scoreboard/internal/devices"
+	"github.com/ubaniak/scoreboard/internal/running/devices"
 )
 
 func runApp(srv *http.Server, deviceUseCase devices.UseCase) {

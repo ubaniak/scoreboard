@@ -13,12 +13,12 @@ import (
 
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/bouts"
-	"github.com/ubaniak/scoreboard/internal/cards"
-	cardEntities "github.com/ubaniak/scoreboard/internal/cards/entities"
-	"github.com/ubaniak/scoreboard/internal/comment"
+	"github.com/ubaniak/scoreboard/internal/creation/cards"
+	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
+	"github.com/ubaniak/scoreboard/internal/running/comment"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/rbac"
-	"github.com/ubaniak/scoreboard/internal/round"
+	"github.com/ubaniak/scoreboard/internal/running/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
 

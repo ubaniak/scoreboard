@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/comment"
-	"github.com/ubaniak/scoreboard/internal/round"
-	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
+	"github.com/ubaniak/scoreboard/internal/running/comment"
+	"github.com/ubaniak/scoreboard/internal/running/round"
+	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
 

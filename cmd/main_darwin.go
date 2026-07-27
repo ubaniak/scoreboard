@@ -11,7 +11,7 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	utils "github.com/ubaniak/scoreboard/cmd/admin"
-	"github.com/ubaniak/scoreboard/internal/devices"
+	"github.com/ubaniak/scoreboard/internal/running/devices"
 )
 
 func runApp(srv *http.Server, deviceUseCase devices.UseCase) {
