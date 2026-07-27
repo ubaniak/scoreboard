@@ -32,7 +32,8 @@ import (
 	"github.com/ubaniak/scoreboard/internal/creation/gdrive"
 	auditStorage "github.com/ubaniak/scoreboard/internal/evaluation/auditlogs/storage"
 	"github.com/ubaniak/scoreboard/internal/auth"
-	"github.com/ubaniak/scoreboard/internal/bouts"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner"
 	"github.com/ubaniak/scoreboard/internal/creation/cards"
 	"github.com/ubaniak/scoreboard/internal/running/comment"
 	"github.com/ubaniak/scoreboard/internal/running/current"
@@ -49,7 +50,8 @@ import (
 	"github.com/ubaniak/scoreboard/internal/running/scores"
 	"github.com/ubaniak/scoreboard/internal/evaluation/judgeconsistency"
 	"github.com/ubaniak/scoreboard/internal/creation/setup"
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
+	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
 )
 
 //go:embed all:frontend
@@ -198,6 +200,9 @@ func main() {
 	roster.SetBoutQuerier(rosterUseCase, &boutAthleteQuerier{boutsUseCase})
 	rosterApp := roster.NewApp(rosterUseCase)
 	athleteQuerier := &athleteClubQuerier{athleteUseCase}
+
+	boutRunnerUseCase := boutrunner.NewUseCase(boutStorage, roundUseCase, commentsUseCase)
+
 	// -- audit logs
 	auditLogStorage, err := auditStorage.NewSqlite(db)
 	if err != nil {
@@ -206,20 +211,21 @@ func main() {
 	auditLogUseCase := auditlogs.NewUseCase(auditLogStorage)
 	auditLogApp := auditlogs.NewApp(auditLogUseCase)
 
-	boutsApp := bouts.NewApp(boutsUseCase, roundUseCase, scoreUseCase, broadcaster, &cardJudgeQuerier{cardUseCase}, athleteQuerier, auditLogUseCase)
+	boutsApp := bouts.NewApp(boutsUseCase, &cardJudgeQuerier{cardUseCase}, athleteQuerier)
 	boutsApp.WithAthleteFinderCreator(athleteUseCase)
+	boutRunnerApp := boutrunner.NewApp(boutRunnerUseCase, roundUseCase, scoreUseCase, broadcaster, auditLogUseCase)
 
 	// -- reports
 	reportsUseCase := reportsPackage.NewUseCase(cardUseCase, boutsUseCase, athleteUseCase, scoreUseCase, &commentQuerier{commentsUseCase})
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
-	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, rosterApp, broadcaster)
+	cardApp := cards.NewApp(cardUseCase, boutsApp, boutRunnerApp, reportsApp, rosterApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	scoresApp := judgeconsistency.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
+	currentUseCase := current.NewUseCase(cardUseCase, &boutQuerierAdapter{boutsUseCase, boutRunnerUseCase}, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
@@ -249,7 +255,7 @@ func main() {
 	}
 	backupApp := backup.NewApp(backupUseCase)
 	apiRegister.Add(backupApp)
-	bouts.SetBoutStartHook(boutsUseCase, backupApp.TriggerIfEnabled)
+	boutrunner.SetBoutStartHook(boutRunnerUseCase, backupApp.TriggerIfEnabled)
 
 	gdriveApp := gdrive.NewApp(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase}, cardUseCase, reportsUseCase)
 	apiRegister.Add(gdriveApp)
@@ -627,6 +633,26 @@ func (q *commentQuerier) Get(entityKind string, entityId uint) ([]reportsPackage
 		result[i] = reportsPackage.Comment{Comment: e.Comment}
 	}
 	return result, nil
+}
+
+// boutQuerierAdapter satisfies current.BoutQuerier by combining List from the matchmaking
+// bouts usecase with Current/CurrentRound from the running boutrunner usecase — the two
+// packages split what was previously a single bouts.UseCase.
+type boutQuerierAdapter struct {
+	matchmaking bouts.UseCase
+	running     boutrunner.UseCase
+}
+
+func (a *boutQuerierAdapter) Current(cardId uint) (*boutEntities.Bout, error) {
+	return a.running.Current(cardId)
+}
+
+func (a *boutQuerierAdapter) List(cardId uint) ([]*boutEntities.Bout, error) {
+	return a.matchmaking.List(cardId)
+}
+
+func (a *boutQuerierAdapter) CurrentRound(boutId uint) (*roundEntities.Round, error) {
+	return a.running.CurrentRound(boutId)
 }
 
 type importBoutAdapter struct {

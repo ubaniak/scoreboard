@@ -24,8 +24,9 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 
 	"github.com/ubaniak/scoreboard/internal/creation/athletes"
-	"github.com/ubaniak/scoreboard/internal/bouts"
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner"
 	"github.com/ubaniak/scoreboard/internal/creation/cards"
 	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
 	"github.com/ubaniak/scoreboard/internal/running/comment"
@@ -139,6 +140,7 @@ func main() {
 		log.Fatalf("bout storage: %v", err)
 	}
 	boutUC := bouts.NewUseCase(boutStorage, roundUC, commentUC, scoreUC)
+	boutRunnerUC := boutrunner.NewUseCase(boutStorage, roundUC, commentUC)
 
 	athleteStorage, err := athletes.NewSqlite(db)
 	if err != nil {
@@ -249,10 +251,10 @@ func main() {
 				log.Fatalf("overall bout=%d %s: %v", b.ID, role, err)
 			}
 		}
-		if err := boutUC.MakeDecision(cardID, b.ID, winner, "unanimous", ""); err != nil {
+		if err := boutRunnerUC.MakeDecision(cardID, b.ID, winner, "unanimous", ""); err != nil {
 			log.Fatalf("make decision bout=%d: %v", b.ID, err)
 		}
-		if err := boutUC.Complete(cardID, b.ID); err != nil {
+		if err := boutRunnerUC.Complete(cardID, b.ID); err != nil {
 			log.Fatalf("complete bout=%d: %v", b.ID, err)
 		}
 	}

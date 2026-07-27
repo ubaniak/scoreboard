@@ -1,17 +1,17 @@
-package bouts_test
+package boutrunner_test
 
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 
-	"github.com/ubaniak/scoreboard/internal/bouts"
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/bouts/mocks"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner/mocks"
 )
 
 var _ = Describe("UseCase", func() {
-	Describe("End", func() {
+	Describe("MakeDecision", func() {
 		type makeDecisionEntry struct {
 			cardId   uint
 			boutId   uint
@@ -27,7 +27,6 @@ var _ = Describe("UseCase", func() {
 				storage := mocks.NewMockStorage(ctrl)
 				comments := mocks.NewMockCommentUseCase(ctrl)
 				roundUC := mocks.NewMockRoundUseCase(ctrl)
-				scoresUC := mocks.NewMockScoresUseCase(ctrl)
 
 				storage.EXPECT().
 					Update(entry.cardId, entry.boutId, gomock.Any()).
@@ -41,7 +40,7 @@ var _ = Describe("UseCase", func() {
 						Return(nil)
 				}
 
-				uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
+				uc := boutrunner.NewUseCase(storage, roundUC, comments)
 				err := uc.MakeDecision(entry.cardId, entry.boutId, entry.winner, entry.decision, entry.comment)
 
 				Expect(err).ToNot(HaveOccurred())

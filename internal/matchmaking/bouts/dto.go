@@ -3,9 +3,45 @@ package bouts
 import (
 	"fmt"
 
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
 )
+
+// GetRoundResponse and CornerDetailsResponse are duplicated (in shape only) from
+// running/boutrunner, which owns the live round-detail view. This package needs its own
+// copy purely to embed a round summary in GetBoutResponse without importing boutrunner,
+// which would create an import cycle (boutrunner depends on this package's Storage/entities).
+type GetRoundResponse struct {
+	BoutID      uint                  `json:"boutId"`
+	RoundNumber int                   `json:"roundNumber"`
+	Status      string                `json:"status"`
+	Red         CornerDetailsResponse `json:"red"`
+	Blue        CornerDetailsResponse `json:"blue"`
+}
+
+type CornerDetailsResponse struct {
+	Warnings    []string `json:"warnings"`
+	Cautions    []string `json:"cautions"`
+	EightCounts int      `json:"eightCounts"`
+}
+
+func EntityToGetRoundResponse(entity *roundEntities.RoundDetails) *GetRoundResponse {
+	return &GetRoundResponse{
+		BoutID:      entity.BoutID,
+		RoundNumber: entity.RoundNumber,
+		Status:      string(entity.Status),
+		Red: CornerDetailsResponse{
+			Warnings:    entity.Red.Warnings,
+			Cautions:    entity.Red.Cautions,
+			EightCounts: entity.Red.EightCounts,
+		},
+		Blue: CornerDetailsResponse{
+			Warnings:    entity.Blue.Warnings,
+			Cautions:    entity.Blue.Cautions,
+			EightCounts: entity.Blue.EightCounts,
+		},
+	}
+}
 
 func RoundLength(ageCat entities.AgeCategory, experience entities.Experience) entities.RoundLength {
 	if ageCat == entities.JuniorA {

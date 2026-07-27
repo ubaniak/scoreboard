@@ -3,8 +3,7 @@ package current
 import (
 	"errors"
 
-	"github.com/ubaniak/scoreboard/internal/bouts"
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/creation/cards"
 	"github.com/ubaniak/scoreboard/internal/running/current/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/running/round/entities"
@@ -15,6 +14,17 @@ import (
 type UseCase interface {
 	Current() (*entities.Current, error)
 	List() (*entities.BoutList, error)
+}
+
+// BoutQuerier is the narrow view this package needs across both bout packages: List comes
+// from matchmaking/bouts, Current/CurrentRound come from running/boutrunner. Kept as one
+// interface (rather than two fields) since both halves describe "the state of bouts on a
+// card" from this package's point of view; the two concrete usecases are combined behind
+// a single adapter at wiring time (see cmd/main.go).
+type BoutQuerier interface {
+	Current(cardId uint) (*boutEntities.Bout, error)
+	List(cardId uint) ([]*boutEntities.Bout, error)
+	CurrentRound(boutId uint) (*roundEntities.Round, error)
 }
 
 // AthleteQuerier is a narrow interface to look up athlete info without
@@ -36,14 +46,14 @@ type OfficialQuerier interface {
 
 type usecase struct {
 	cards     cards.UseCase
-	bouts     bouts.UseCase
+	bouts     BoutQuerier
 	scores    scores.UseCase
 	athletes  AthleteQuerier
 	rounds    RoundDetailsQuerier
 	officials OfficialQuerier
 }
 
-func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier, roundQuerier RoundDetailsQuerier, officialQuerier OfficialQuerier) UseCase {
+func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase BoutQuerier, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier, roundQuerier RoundDetailsQuerier, officialQuerier OfficialQuerier) UseCase {
 	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier, rounds: roundQuerier, officials: officialQuerier}
 }
 

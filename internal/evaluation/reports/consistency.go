@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/evaluation/judgeconsistency"
 )
 

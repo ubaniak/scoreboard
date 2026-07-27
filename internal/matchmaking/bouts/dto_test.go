@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/ubaniak/scoreboard/internal/bouts"
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 )
 
 var _ = Describe("RoundLength", func() {

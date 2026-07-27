@@ -3,8 +3,8 @@ package bouts
 import (
 	"gorm.io/gorm"
 
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/bouts/storage"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/storage"
 )
 
 type Storage interface {

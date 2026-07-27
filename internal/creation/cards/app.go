@@ -11,7 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ubaniak/scoreboard/internal/bouts"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
 	"github.com/ubaniak/scoreboard/internal/creation/cards/entities"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/running/events"
@@ -20,12 +20,14 @@ import (
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/evaluation/reports"
 	"github.com/ubaniak/scoreboard/internal/creation/roster"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
 type App struct {
 	useCase         UseCase
 	boutsApp        *bouts.App
+	boutRunnerApp   *boutrunner.App
 	reportsApp      *reports.App
 	rosterApp       *roster.App
 	broadcaster     *events.Broadcaster
@@ -35,13 +37,14 @@ type App struct {
 	importBouts     ImportBoutCreator
 }
 
-func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, rosterApp *roster.App, broadcaster *events.Broadcaster) *App {
+func NewApp(useCase UseCase, boutsApp *bouts.App, boutRunnerApp *boutrunner.App, reportsApp *reports.App, rosterApp *roster.App, broadcaster *events.Broadcaster) *App {
 	return &App{
-		useCase:     useCase,
-		boutsApp:    boutsApp,
-		reportsApp:  reportsApp,
-		rosterApp:   rosterApp,
-		broadcaster: broadcaster,
+		useCase:       useCase,
+		boutsApp:      boutsApp,
+		boutRunnerApp: boutRunnerApp,
+		reportsApp:    reportsApp,
+		rosterApp:     rosterApp,
+		broadcaster:   broadcaster,
 	}
 }
 
@@ -65,6 +68,7 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("image.cards.delete", "/{id}/image", "DELETE", h.RemoveImage, rbac.Admin)
 
 	h.boutsApp.RegisterRoutes(sr)
+	h.boutRunnerApp.RegisterRoutes(sr)
 
 	if h.rosterApp != nil {
 		h.rosterApp.RegisterRoutes(sr)

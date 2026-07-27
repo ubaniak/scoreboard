@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"

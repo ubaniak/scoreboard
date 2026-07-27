@@ -5,9 +5,9 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 
-	"github.com/ubaniak/scoreboard/internal/bouts"
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/bouts/mocks"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/mocks"
 )
 
 func uintPtr(v uint) *uint { return &v }

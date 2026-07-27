@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/option"
 	sheetsAPI "google.golang.org/api/sheets/v4"
 
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
 	reportsPackage "github.com/ubaniak/scoreboard/internal/evaluation/reports"
 )

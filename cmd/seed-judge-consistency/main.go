@@ -11,10 +11,11 @@ import (
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
-	"github.com/ubaniak/scoreboard/internal/bouts"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/creation/cards"
 	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
+	"github.com/ubaniak/scoreboard/internal/running/boutrunner"
 	"github.com/ubaniak/scoreboard/internal/running/comment"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/rbac"
@@ -77,6 +78,7 @@ func main() {
 		log.Fatalf("bout storage: %v", err)
 	}
 	boutUC := bouts.NewUseCase(boutStorage, roundUC, commentUC, scoreUC)
+	boutRunnerUC := boutrunner.NewUseCase(boutStorage, roundUC, commentUC)
 
 	const cardName = "Judge Consistency Demo"
 	const numJudges = 3
@@ -172,10 +174,10 @@ func main() {
 		if !panelRed {
 			decisionWinner = "blue"
 		}
-		if err := boutUC.MakeDecision(cardId, b.ID, decisionWinner, "unanimous", ""); err != nil {
+		if err := boutRunnerUC.MakeDecision(cardId, b.ID, decisionWinner, "unanimous", ""); err != nil {
 			log.Fatalf("make decision bout %d: %v", b.ID, err)
 		}
-		if err := boutUC.Complete(cardId, b.ID); err != nil {
+		if err := boutRunnerUC.Complete(cardId, b.ID); err != nil {
 			log.Fatalf("complete bout %d: %v", b.ID, err)
 		}
 	}

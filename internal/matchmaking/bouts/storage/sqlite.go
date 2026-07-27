@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	"github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 

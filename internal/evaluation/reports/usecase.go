@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	athleteEntities "github.com/ubaniak/scoreboard/internal/creation/athletes/entities"
-	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
+	boutEntities "github.com/ubaniak/scoreboard/internal/matchmaking/bouts/entities"
 	cardEntities "github.com/ubaniak/scoreboard/internal/creation/cards/entities"
 	scoreEntities "github.com/ubaniak/scoreboard/internal/running/scores/entities"
 )
