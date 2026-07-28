@@ -14,7 +14,7 @@ import {
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import { TimerProvider } from "./providers/timer";
 import { ThemeProvider } from "./providers/theme";
-import { useTheme } from "./theme";
+import { radius, useTheme } from "./theme";
 import { ApiError } from "./api/fetchClient";
 import "./App.css";
 import { getEmitter, registerEmitter } from "./events/events";
@@ -216,6 +216,20 @@ const ThemedApp = () => {
         algorithm: mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
           colorBgBase: colors.bg,
+          colorPrimary: colors.blue,
+          borderRadius: radius.sm,
+          borderRadiusLG: radius.lg,
+          boxShadow: colors.shadowSm,
+          boxShadowSecondary: colors.shadowMd,
+        },
+        components: {
+          Button: { borderRadius: radius.md },
+          Card: { borderRadiusLG: radius.lg },
+          Table: { borderRadiusLG: radius.md, headerBg: colors.bgElevated },
+          Drawer: { borderRadiusLG: radius.lg },
+          Modal: { borderRadiusLG: radius.lg },
+          Select: { borderRadius: radius.sm },
+          Input: { borderRadius: radius.sm },
         },
       }}
     >

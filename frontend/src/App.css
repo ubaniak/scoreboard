@@ -1,9 +1,20 @@
 /* src/index.css or src/global.css */
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
 
-/* Dark color scheme — browser native controls adopt dark mode */
-html {
-  color-scheme: dark;
+/* Gloss overlay — subtle sheen on top of AntD's flat token colors.
+   ThemeProvider sets document.documentElement.style.colorScheme directly, so
+   no static html{color-scheme} rule is needed here. */
+.ant-btn-primary {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] .ant-btn-primary {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%);
+}
+
+.ant-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Skip link — hidden until focused by keyboard */

@@ -1,5 +1,6 @@
 import { Card as AntCard } from "antd";
 import type React from "react";
+import { useTheme } from "../../theme";
 
 export type CardProps = {
   children: React.ReactNode;
@@ -9,13 +10,14 @@ export type CardProps = {
 };
 
 export const Card = (props: CardProps) => {
+  const { colors } = useTheme();
   return (
     <AntCard
       title={props.title}
       extra={props.extra}
       style={{
         borderRadius: 16,
-        boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
+        boxShadow: `${colors.shadowMd}, inset 0 1px 0 ${colors.insetHighlight}`,
         marginBottom: 16,
         ...props.style,
       }}

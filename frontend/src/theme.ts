@@ -16,6 +16,13 @@ export type Palette = {
   textFaint: string;
   border: string;
   borderSubtle: string;
+  shadowSm: string;
+  shadowMd: string;
+  shadowLg: string;
+  glowRed: string;
+  glowBlue: string;
+  insetHighlight: string;
+  sheenOverlay: string;
 };
 
 export const palettes: Record<ThemeMode, Palette> = {
@@ -33,6 +40,13 @@ export const palettes: Record<ThemeMode, Palette> = {
     textFaint: "rgba(255,255,255,0.5)",
     border: "rgba(255,255,255,0.15)",
     borderSubtle: "rgba(255,255,255,0.08)",
+    shadowSm: "0 2px 8px rgba(0,0,0,0.35)",
+    shadowMd: "0 6px 18px rgba(0,0,0,0.45)",
+    shadowLg: "0 16px 40px rgba(0,0,0,0.55)",
+    glowRed: "0 0 32px rgba(252,165,165,0.35)",
+    glowBlue: "0 0 32px rgba(147,197,253,0.35)",
+    insetHighlight: "rgba(255,255,255,0.06)",
+    sheenOverlay: "linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 55%)",
   },
   light: {
     bg: "#f5f6fa",
@@ -48,6 +62,13 @@ export const palettes: Record<ThemeMode, Palette> = {
     textFaint: "rgba(11,15,26,0.55)",
     border: "rgba(11,15,26,0.18)",
     borderSubtle: "rgba(11,15,26,0.10)",
+    shadowSm: "0 2px 8px rgba(11,15,26,0.08)",
+    shadowMd: "0 6px 20px rgba(11,15,26,0.12)",
+    shadowLg: "0 16px 40px rgba(11,15,26,0.16)",
+    glowRed: "0 0 28px rgba(220,38,38,0.25)",
+    glowBlue: "0 0 28px rgba(37,99,235,0.25)",
+    insetHighlight: "rgba(255,255,255,0.7)",
+    sheenOverlay: "linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 55%)",
   },
 };
 
@@ -71,6 +92,14 @@ export const space = {
 
 export const tracking = {
   caps: "0.2em",
+} as const;
+
+export const radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  pill: 999,
 } as const;
 
 /**

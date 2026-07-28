@@ -1,3 +1,5 @@
+import { useTheme } from "../../theme";
+
 type CurtainProps = {
   side: "red" | "blue";
   name: string;
@@ -7,8 +9,20 @@ type CurtainProps = {
 };
 
 const CONFIG = {
-  red: { background: "#b91c1c", label: "Red Corner", transform: (open: boolean) => open ? "translateX(-100%)" : "translateX(0)", position: { left: 0 } },
-  blue: { background: "#1d4ed8", label: "Blue Corner", transform: (open: boolean) => open ? "translateX(100%)" : "translateX(0)", position: { right: 0 } },
+  red: {
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 40%), linear-gradient(160deg, #b91c1c 0%, #7f1414 100%)",
+    label: "Red Corner",
+    transform: (open: boolean) => open ? "translateX(-100%)" : "translateX(0)",
+    position: { left: 0 },
+  },
+  blue: {
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 40%), linear-gradient(160deg, #1d4ed8 0%, #14329a 100%)",
+    label: "Blue Corner",
+    transform: (open: boolean) => open ? "translateX(100%)" : "translateX(0)",
+    position: { right: 0 },
+  },
 };
 
 const CircleImage = ({ src, size, alt }: { src: string; size: number; alt: string }) => (
@@ -29,6 +43,7 @@ const CircleImage = ({ src, size, alt }: { src: string; size: number; alt: strin
 );
 
 export const Curtain = ({ side, name, open, athleteImageUrl, clubImageUrl }: CurtainProps) => {
+  const { colors } = useTheme();
   const { background, label, transform, position } = CONFIG[side];
 
   return (
@@ -41,6 +56,7 @@ export const Curtain = ({ side, name, open, athleteImageUrl, clubImageUrl }: Cur
         width: "50%",
         height: "100%",
         background,
+        boxShadow: colors.shadowLg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

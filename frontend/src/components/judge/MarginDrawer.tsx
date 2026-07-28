@@ -36,6 +36,7 @@ export const MarginDrawer = ({ open, winner, winnerName, onClose, onSelect }: Ma
               flex: 1,
               height: 88,
               background: winner === "red" ? colors.red : colors.blue,
+              backgroundImage: colors.sheenOverlay,
               color: "white",
               border: "none",
               borderRadius: 14,
@@ -43,6 +44,7 @@ export const MarginDrawer = ({ open, winner, winnerName, onClose, onSelect }: Ma
               fontWeight: 800,
               cursor: "pointer",
               letterSpacing: 1,
+              boxShadow: `${winner === "red" ? colors.glowRed : colors.glowBlue}, inset 0 1px 0 ${colors.insetHighlight}`,
             }}
           >
             10-{margin}

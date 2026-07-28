@@ -12,6 +12,7 @@ type CornerHalfProps = {
 export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: CornerHalfProps) => {
   const { colors } = useTheme();
   const background = corner === "red" ? colors.cornerRed : colors.cornerBlue;
+  const glow = corner === "red" ? colors.glowRed : colors.glowBlue;
   const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (
@@ -24,6 +25,8 @@ export const CornerHalf = ({ corner, name, score, dimmed, locked, onTap }: Corne
       style={{
         flex: 1,
         background,
+        backgroundImage: colors.sheenOverlay,
+        boxShadow: `inset 0 1px 0 ${colors.insetHighlight}, inset 0 0 80px ${glow}`,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

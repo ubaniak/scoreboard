@@ -91,11 +91,13 @@ export const WaitingScreen = ({
                 borderRadius: 14,
                 border: "none",
                 background: colors.cornerRed,
+                backgroundImage: colors.sheenOverlay,
                 color: "white",
                 fontWeight: 800,
                 fontSize: 20,
                 cursor: "pointer",
                 letterSpacing: 1,
+                boxShadow: `${colors.shadowMd}, inset 0 1px 0 ${colors.insetHighlight}`,
               }}
             >
               {redCorner}
@@ -109,11 +111,13 @@ export const WaitingScreen = ({
                 borderRadius: 14,
                 border: "none",
                 background: colors.cornerBlue,
+                backgroundImage: colors.sheenOverlay,
                 color: "white",
                 fontWeight: 800,
                 fontSize: 20,
                 cursor: "pointer",
                 letterSpacing: 1,
+                boxShadow: `${colors.shadowMd}, inset 0 1px 0 ${colors.insetHighlight}`,
               }}
             >
               {blueCorner}

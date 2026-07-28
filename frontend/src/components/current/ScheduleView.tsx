@@ -33,8 +33,11 @@ const FeaturedRow = ({ bout: b, size, label, hasImage }: FeaturedRowProps) => {
         borderRadius: isLg ? 12 : 8,
         border: isLg ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.07)",
         background: hasImage
-          ? isLg ? "#1a2035" : "#131929"
+          ? isLg
+            ? "linear-gradient(160deg, #202a47 0%, #161b30 100%)"
+            : "#131929"
           : isLg ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+        boxShadow: isLg ? "0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" : "none",
         opacity: size === "sm" ? 0.55 : 1,
         maxWidth: 960,
         margin: "0 auto",
@@ -133,8 +136,11 @@ const ScheduleRow = ({ bout: b, isNext, hasImage }: ScheduleRowProps) => {
         borderRadius: 8,
         border: isNext ? "2px solid rgba(255,255,255,0.7)" : "1px solid rgba(255,255,255,0.08)",
         background: hasImage
-          ? isNext ? "#1e2d4a" : "#131929"
+          ? isNext
+            ? "linear-gradient(160deg, #24365c 0%, #16223d 100%)"
+            : "#131929"
           : isNext ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
+        boxShadow: isNext ? "0 0 24px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
         opacity: 1,
       }}
     >
@@ -317,6 +323,7 @@ export const ScheduleView = ({ cardName, cardImageUrl, bouts, nextBoutId }: Sche
               padding: "16px",
               boxSizing: "border-box",
               background: cardImageUrl ? "#0d1120" : "transparent",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
             }}
           >
             {/* Exiting page — slides up and out */}
@@ -371,6 +378,7 @@ export const ScheduleView = ({ cardName, cardImageUrl, bouts, nextBoutId }: Sche
                     height: 6,
                     borderRadius: "50%",
                     background: i === page ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.2)",
+                    boxShadow: i === page ? "0 0 6px rgba(255,255,255,0.6)" : "none",
                     transition: "background 0.3s",
                   }}
                 />

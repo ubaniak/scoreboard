@@ -7,7 +7,7 @@ import { Flex } from "antd";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useIsMobile } from "../../hooks/useBreakpoint";
 import { useProfile } from "../../providers/login";
-import { useTheme } from "../../theme";
+import { radius, useTheme } from "../../theme";
 
 type NavItem = {
   to: string;
@@ -37,6 +37,7 @@ export const GlobalNav = () => {
         background: colors.bgElevated,
         borderBottom: `1px solid ${colors.borderSubtle}`,
         padding: "0 12px",
+        boxShadow: colors.shadowSm,
       }}
     >
       <Flex align="center" gap={isMobile ? 4 : 20} style={{ maxWidth: 1280, margin: "0 auto", height: 40 }}>
@@ -53,6 +54,11 @@ export const GlobalNav = () => {
                 fontSize: 14,
                 color: isActive ? colors.text : colors.textMuted,
                 fontWeight: isActive ? 600 : 400,
+                padding: "4px 10px",
+                borderRadius: radius.pill,
+                background: isActive ? colors.borderSubtle : "transparent",
+                boxShadow: isActive ? `inset 0 1px 0 ${colors.insetHighlight}` : "none",
+                transition: "background 0.2s ease",
               }}
             >
               {item.icon}

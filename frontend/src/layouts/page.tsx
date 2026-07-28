@@ -65,6 +65,7 @@ export const PageLayout = (props: PageLayoutProps) => {
           height: "auto",
           minHeight: 64,
           lineHeight: "normal",
+          boxShadow: colors.shadowSm,
         }}
       >
         <div

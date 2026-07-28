@@ -91,6 +91,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
             letterSpacing: 2,
             textTransform: "uppercase",
             whiteSpace: "nowrap",
+            boxShadow: colors.shadowSm,
           }}
         >
           {props.role} — {props.judgeName}
@@ -143,6 +144,7 @@ export const ScoreControls = (props: ScoreControlsProps) => {
                 height: 56,
                 fontSize: 14,
                 borderRadius: 28,
+                boxShadow: colors.shadowMd,
               }}
             >
               {props.submitted ? "SUBMITTED" : "SUBMIT SCORE"}

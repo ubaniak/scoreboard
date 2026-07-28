@@ -10,6 +10,8 @@ export const DecisionBanner = ({ winner, redCorner, blueCorner, decision }: Deci
     winner === "red" ? redCorner : winner === "blue" ? blueCorner : "Draw";
   const winnerColor =
     winner === "red" ? "#fca5a5" : winner === "blue" ? "#93c5fd" : "white";
+  const winnerGlow =
+    winner === "red" ? "rgba(252,165,165,0.35)" : winner === "blue" ? "rgba(147,197,253,0.35)" : "rgba(255,255,255,0.35)";
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -25,7 +27,15 @@ export const DecisionBanner = ({ winner, redCorner, blueCorner, decision }: Deci
       >
         Decision
       </div>
-      <div style={{ fontSize: 56, fontWeight: 900, color: winnerColor, lineHeight: 1.1 }}>
+      <div
+        style={{
+          fontSize: 56,
+          fontWeight: 900,
+          color: winnerColor,
+          lineHeight: 1.1,
+          textShadow: `0 2px 20px ${winnerGlow}`,
+        }}
+      >
         {winnerName}
       </div>
       {decision && (

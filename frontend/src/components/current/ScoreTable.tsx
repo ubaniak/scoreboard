@@ -290,7 +290,7 @@ const WinnerCell = ({
       padding: winner ? "8px 16px" : "8px 12px",
       borderRadius: 8,
       background: winner ? `${color}1F` : "transparent",
-      boxShadow: winner ? `inset 0 0 0 2px ${color}` : "none",
+      boxShadow: winner ? `inset 0 0 0 2px ${color}, 0 0 20px ${color}22` : "none",
     }}
   >
     <span

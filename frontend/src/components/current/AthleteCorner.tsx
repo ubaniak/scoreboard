@@ -10,6 +10,7 @@ type AthleteCornerProps = {
 export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCornerProps) => {
   const { colors } = useTheme();
   const color = cornerColor(corner, colors);
+  const glow = corner === "red" ? colors.glowRed : colors.glowBlue;
   const label = corner === "red" ? "Red Corner" : "Blue Corner";
 
   return (
@@ -47,7 +48,7 @@ export const AthleteCorner = ({ corner, name, clubName, imageUrl }: AthleteCorne
           fontWeight: 900,
           color,
           lineHeight: 1.05,
-          textShadow: `0 2px 18px ${color}33`,
+          textShadow: glow,
         }}
       >
         {name || "—"}
