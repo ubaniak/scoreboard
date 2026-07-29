@@ -100,6 +100,33 @@ func (s *Sqlite) List(cardId uint) ([]*entities.Bout, error) {
 	return response, nil
 }
 
+func (s *Sqlite) CountsByCard(cardIds []uint) (map[uint]entities.BoutCounts, error) {
+	counts := make(map[uint]entities.BoutCounts, len(cardIds))
+	if len(cardIds) == 0 {
+		return counts, nil
+	}
+
+	type row struct {
+		CardID    uint
+		Total     int
+		Completed int
+	}
+	var rows []row
+	err := s.db.Model(&Bout{}).
+		Select("card_id as card_id, count(*) as total, count(case when status = ? then 1 end) as completed", string(entities.BoutStatusCompleted)).
+		Where("card_id IN ?", cardIds).
+		Group("card_id").
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range rows {
+		counts[r.CardID] = entities.BoutCounts{Total: r.Total, Completed: r.Completed}
+	}
+	return counts, nil
+}
+
 func (s *Sqlite) Get(cardId, id uint) (*entities.Bout, error) {
 	var bout Bout
 	if err := s.db.Where("card_id = ? AND id = ?", cardId, id).First(&bout).Error; err != nil {

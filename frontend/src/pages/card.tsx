@@ -9,7 +9,6 @@ import {
 import { NextBout } from "../components/bouts/nextBout";
 import { CardActions } from "../components/cards/CardActions";
 import { CardControls } from "../components/cards/cardControls";
-import { CardExports } from "../components/cards/CardExports";
 import { CardSummary } from "../components/cards/summery";
 import { RoutedTabs } from "../components/shared/RoutedTabs";
 import { PageLayout } from "../layouts/page";
@@ -55,12 +54,7 @@ export const CardPage = () => {
         ...(bouts.data?.map((b) => b.numberOfJudges) ?? [5]),
       )}
       breadCrumbs={[{ title: <a href="/">home</a> }, { title: "card" }]}
-      action={
-        <div style={{ display: "flex", gap: 8 }}>
-          <CardExports cardId={cardId!} token={token} />
-          <CardActions status={card.data?.status} onStart={start} onEnd={end} />
-        </div>
-      }
+      action={<CardActions status={card.data?.status} onStart={start} onEnd={end} />}
     >
       {card.data && (
         <CardControls
@@ -69,7 +63,7 @@ export const CardPage = () => {
           onPatch={(patch) =>
             updateCard.mutate({
               id: { cardId: String(card.data!.id) },
-              toUpdate: patch as never,
+              toUpdate: patch,
             })
           }
         />
@@ -90,6 +84,7 @@ export const CardPage = () => {
             label: "Activity Log",
             to: `/card/${cardId}/activity-log`,
           },
+          { key: "reports", label: "Reports", to: `/card/${cardId}/reports` },
         ]}
       />
       <Outlet />

@@ -1,6 +1,7 @@
-import { Button, Dropdown, Space } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import { Button, Divider, Flex, Space, Typography } from "antd";
 import { baseUrl } from "../../api/constants";
+
+const { Text, Title } = Typography;
 
 type Props = {
   cardId: string;
@@ -19,79 +20,82 @@ async function downloadReport(url: string, token: string, filename: string) {
   URL.revokeObjectURL(objectUrl);
 }
 
+type ReportGroupProps = {
+  title: string;
+  description: string;
+  onCsv: () => void;
+  onPdf: () => void;
+  onJpeg?: () => void;
+};
+
+const ReportGroup = ({ title, description, onCsv, onPdf, onJpeg }: ReportGroupProps) => (
+  <Flex justify="space-between" align="center" gap={16} wrap>
+    <div>
+      <Title level={5} style={{ margin: 0 }}>{title}</Title>
+      <Text type="secondary" style={{ fontSize: 12 }}>{description}</Text>
+    </div>
+    <Space>
+      <Button onClick={onCsv}>CSV</Button>
+      <Button onClick={onPdf}>PDF</Button>
+      {onJpeg && <Button onClick={onJpeg}>JPEG</Button>}
+    </Space>
+  </Flex>
+);
+
 export const CardExports = ({ cardId, token }: Props) => {
   const base = `${baseUrl}/api/cards/${cardId}/reports`;
 
-  const items = [
-    {
-      key: "full-csv",
-      label: "Full Report (CSV)",
-      onClick: () => downloadReport(`${base}/full/csv`, token, `card-${cardId}-full.csv`),
-    },
-    {
-      key: "full-pdf",
-      label: "Full Report (PDF)",
-      onClick: () => downloadReport(`${base}/full/pdf`, token, `card-${cardId}-full.pdf`),
-    },
-    { type: "divider" as const },
-    {
-      key: "public-csv",
-      label: "Public Report (CSV)",
-      onClick: () => downloadReport(`${base}/public/csv`, token, `card-${cardId}-public.csv`),
-    },
-    {
-      key: "public-pdf",
-      label: "Public Report (PDF)",
-      onClick: () => downloadReport(`${base}/public/pdf`, token, `card-${cardId}-public.pdf`),
-    },
-    { type: "divider" as const },
-    {
-      key: "consistency-short-csv",
-      label: "Judge Consistency — Short (CSV)",
-      onClick: () =>
-        downloadReport(
-          `${base}/consistency/short/csv`,
-          token,
-          `card-${cardId}-consistency-short.csv`,
-        ),
-    },
-    {
-      key: "consistency-short-pdf",
-      label: "Judge Consistency — Short (PDF)",
-      onClick: () =>
-        downloadReport(
-          `${base}/consistency/short/pdf`,
-          token,
-          `card-${cardId}-consistency-short.pdf`,
-        ),
-    },
-    {
-      key: "consistency-full-csv",
-      label: "Judge Consistency — Full (CSV)",
-      onClick: () =>
-        downloadReport(
-          `${base}/consistency/full/csv`,
-          token,
-          `card-${cardId}-consistency-full.csv`,
-        ),
-    },
-    {
-      key: "consistency-full-pdf",
-      label: "Judge Consistency — Full (PDF)",
-      onClick: () =>
-        downloadReport(
-          `${base}/consistency/full/pdf`,
-          token,
-          `card-${cardId}-consistency-full.pdf`,
-        ),
-    },
-  ];
-
   return (
-    <Dropdown menu={{ items }} trigger={["click"]}>
-      <Button icon={<DownloadOutlined />}>
-        <Space>Export</Space>
-      </Button>
-    </Dropdown>
+    <Space direction="vertical" size={16} style={{ width: "100%" }} split={<Divider style={{ margin: 0 }} />}>
+      <ReportGroup
+        title="Full Report"
+        description="Every bout's status, round length, gloves, referee, per-judge round scores, decisions, and comments."
+        onCsv={() => downloadReport(`${base}/full/csv`, token, `card-${cardId}-full.csv`)}
+        onPdf={() => downloadReport(`${base}/full/pdf`, token, `card-${cardId}-full.pdf`)}
+      />
+      <ReportGroup
+        title="Public Report"
+        description="Just the matchups, winners, and decisions — no judge scores, safe to share publicly. JPEG looks like the scoreboard bout list."
+        onCsv={() => downloadReport(`${base}/public/csv`, token, `card-${cardId}-public.csv`)}
+        onPdf={() => downloadReport(`${base}/public/pdf`, token, `card-${cardId}-public.pdf`)}
+        onJpeg={() => downloadReport(`${base}/public/jpeg`, token, `card-${cardId}-public.jpg`)}
+      />
+      <ReportGroup
+        title="Judge Consistency — Short"
+        description="One row per judge: agreement %, average deviation, and consistency score across the card."
+        onCsv={() =>
+          downloadReport(
+            `${base}/consistency/short/csv`,
+            token,
+            `card-${cardId}-consistency-short.csv`,
+          )
+        }
+        onPdf={() =>
+          downloadReport(
+            `${base}/consistency/short/pdf`,
+            token,
+            `card-${cardId}-consistency-short.pdf`,
+          )
+        }
+      />
+      <ReportGroup
+        title="Judge Consistency — Full"
+        description="Per-judge breakdown with every bout they scored, round by round."
+        onCsv={() =>
+          downloadReport(
+            `${base}/consistency/full/csv`,
+            token,
+            `card-${cardId}-consistency-full.csv`,
+          )
+        }
+        onPdf={() =>
+          downloadReport(
+            `${base}/consistency/full/pdf`,
+            token,
+            `card-${cardId}-consistency-full.pdf`,
+          )
+        }
+      />
+    </Space>
   );
 };

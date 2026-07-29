@@ -212,7 +212,7 @@ func main() {
 	reportsUseCase := reportsPackage.NewUseCase(cardUseCase, boutsUseCase, athleteUseCase, scoreUseCase, &commentQuerier{commentsUseCase})
 	reportsApp := reportsPackage.NewApp(reportsUseCase)
 
-	cardApp := cards.NewApp(cardUseCase, boutsApp, reportsApp, rosterApp, broadcaster)
+	cardApp := cards.NewApp(cardUseCase, boutsApp, boutsUseCase, reportsApp, rosterApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
 
 	scoresApp := scores.NewApp(scoreUseCase, boutsUseCase, athleteQuerier)

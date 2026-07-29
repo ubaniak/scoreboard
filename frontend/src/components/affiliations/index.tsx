@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
-import { Avatar, Button, Input, Popconfirm, Segmented, Space, Table, Tag, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Segmented, Space, Tag } from "antd";
 import { useMemo, useState } from "react";
 import type {
   Affiliation,
@@ -9,9 +9,9 @@ import type {
 } from "../../api/affiliations";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { ImageUpload } from "../image/imageUpload";
-import { ImportCSV } from "../shared/ImportCSV";
 import { TableLayout } from "../../layouts/table";
-import { AddAffiliation } from "./AddAffiliation";
+import { RowList, RowThumbnail, type RowListColumn } from "../list/RowList";
+import { AddAffiliationShell } from "./AddAffiliationShell";
 import { EditAffiliation } from "./EditAffiliation";
 
 type FilterValue = "all" | AffiliationType;
@@ -56,27 +56,19 @@ export const AffiliationIndex = ({
     });
   }, [affiliations, filter, search]);
 
-  const columns: TableProps<Affiliation>["columns"] = [
+  const columns: RowListColumn<Affiliation>[] = [
+    { key: "thumb", width: "40px", render: (r) => <RowThumbnail name={r.name} imageUrl={r.imageUrl} /> },
+    { key: "name", title: "Name", width: "1.6fr", render: (r) => r.name },
     {
-      title: "Name",
-      key: "name",
-      render: (_, r) => (
-        <Space>
-          <Avatar src={r.imageUrl} size="small">{r.name[0]}</Avatar>
-          {r.name}
-        </Space>
-      ),
-    },
-    {
-      title: "Type",
-      dataIndex: "type",
       key: "type",
-      render: (t: AffiliationType) => <Tag>{TYPE_LABEL[t] ?? t}</Tag>,
+      title: "Type",
+      width: "140px",
+      render: (r) => <Tag>{TYPE_LABEL[r.type] ?? r.type}</Tag>,
     },
     {
-      title: "Actions",
       key: "actions",
-      render: (_, r) => (
+      width: "auto",
+      render: (r) => (
         <Space>
           <ActionMenu
             trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload image" }}
@@ -115,38 +107,21 @@ export const AffiliationIndex = ({
   return (
     <TableLayout
       actions={
-        <>
-          <ActionMenu
-            trigger={{ text: "Import" }}
-            content={{
-              title: "Import Affiliations",
-              body: (close) => (
-                <ImportCSV
-                  onClose={close}
-                  onImport={onImport}
-                  hint="Required columns: name, type (club | province | nation)"
-                  template={{
-                    filename: "affiliations-template.csv",
-                    content: "name,type\nCity Boxing Club,club\nOntario,province\nCanada,nation",
-                  }}
-                />
-              ),
-            }}
-          />
-          <ActionMenu
-            trigger={{ text: "Add" }}
-            content={{
-              title: "Add Affiliation",
-              body: (close) => (
-                <AddAffiliation
-                  defaultType={filter !== "all" ? filter : "club"}
-                  onClose={close}
-                  onSubmit={onCreate}
-                />
-              ),
-            }}
-          />
-        </>
+        <ActionMenu
+          trigger={{ text: "Add" }}
+          content={{
+            title: "Add Affiliation",
+            body: (close) => (
+              <AddAffiliationShell
+                defaultType={filter !== "all" ? filter : "club"}
+                onClose={close}
+                onSubmit={onCreate}
+                onImport={onImport}
+              />
+            ),
+          }}
+          width={640}
+        />
       }
     >
       <>
@@ -170,7 +145,7 @@ export const AffiliationIndex = ({
             style={{ width: "100%", maxWidth: 260 }}
           />
         </Space>
-        <Table rowKey="id" dataSource={filtered} columns={columns} loading={loading} pagination={false} scroll={{ x: "max-content" }} />
+        <RowList rowKey={(r) => r.id} data={filtered} columns={columns} loading={loading} emptyText="No affiliations found." />
       </>
     </TableLayout>
   );

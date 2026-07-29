@@ -130,5 +130,27 @@ var _ = Describe("CreateRequestToEntity", func() {
 				expectedStatus: entities.BoutStatusNotStarted,
 			},
 		),
+		Entry("explicit roundLength/gloveSize override the derived defaults",
+			createRequestEntry{
+				cardId: 4,
+				request: bouts.CreateRequest{
+					BoutNumber:  4,
+					WeightClass: 65,
+					AgeCategory: string(entities.Elite),
+					Experience:  string(entities.Novice),
+					Gender:      string(entities.Male),
+					RoundLength: floatPtr(1.5),
+					GloveSize:   stringPtr(string(entities.SixteenOz)),
+				},
+				// Novice/Elite/Male/65kg would normally derive TwoMinutes + TenOz —
+				// the explicit request values should win instead.
+				expectedGlove:  entities.SixteenOz,
+				expectedRound:  entities.OneHalfMinute,
+				expectedStatus: entities.BoutStatusNotStarted,
+			},
+		),
 	)
 })
+
+func floatPtr(v float64) *float64 { return &v }
+func stringPtr(v string) *string  { return &v }

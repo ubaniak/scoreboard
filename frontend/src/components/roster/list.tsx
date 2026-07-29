@@ -1,6 +1,7 @@
 import { DeleteOutlined } from "@ant-design/icons";
-import { App, Button, Popconfirm, Switch, Table, type TableProps } from "antd";
+import { App, Button, Popconfirm, Switch } from "antd";
 import type { RosterEntry } from "../../api/roster";
+import { RowList, type RowListColumn } from "../list/RowList";
 
 export type ListRosterProps = {
   entries?: RosterEntry[];
@@ -12,26 +13,26 @@ export type ListRosterProps = {
 export const ListRoster = (props: ListRosterProps) => {
   const { message } = App.useApp();
 
-  const columns: TableProps<RosterEntry>["columns"] = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Gender", dataIndex: "gender", key: "gender" },
-    { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
-    { title: "Experience", dataIndex: "experience", key: "experience" },
+  const columns: RowListColumn<RosterEntry>[] = [
+    { key: "name", title: "Name", width: "1.6fr", render: (r) => r.name },
+    { key: "gender", title: "Gender", width: "100px", render: (r) => r.gender },
+    { key: "ageCategory", title: "Age Category", width: "120px", render: (r) => r.ageCategory },
+    { key: "experience", title: "Experience", width: "100px", render: (r) => r.experience },
     {
-      title: "Weight (kg)",
-      dataIndex: "weightClass",
       key: "weightClass",
-      render: (value?: number) => (value != null ? value : "-"),
+      title: "Weight (kg)",
+      width: "110px",
+      render: (r) => (r.weightClass != null ? r.weightClass : "-"),
     },
     {
-      title: "Available",
-      dataIndex: "available",
       key: "available",
-      render: (available: boolean, record) => (
+      title: "Available",
+      width: "100px",
+      render: (r) => (
         <Switch
-          checked={available}
+          checked={r.available}
           onChange={(checked) =>
-            props.onSetAvailable(record.athleteId, checked).catch((err: unknown) => {
+            props.onSetAvailable(r.athleteId, checked).catch((err: unknown) => {
               message.error((err as Error).message || "Failed to update availability");
             })
           }
@@ -39,13 +40,13 @@ export const ListRoster = (props: ListRosterProps) => {
       ),
     },
     {
-      title: "Action",
       key: "action",
-      render: (_, record) => (
+      width: "auto",
+      render: (r) => (
         <Popconfirm
           title="Remove this athlete from the roster?"
           onConfirm={() =>
-            props.onRemove(record.athleteId).catch((err: unknown) => {
+            props.onRemove(r.athleteId).catch((err: unknown) => {
               message.error((err as Error).message || "Failed to remove from roster");
             })
           }
@@ -59,12 +60,12 @@ export const ListRoster = (props: ListRosterProps) => {
   ];
 
   return (
-    <Table
+    <RowList
       loading={props.loading}
-      dataSource={props.entries}
-      rowKey="athleteId"
+      data={props.entries ?? []}
+      rowKey={(r) => r.athleteId}
       columns={columns}
-      scroll={{ x: "max-content" }}
+      emptyText="No athletes on the roster yet."
     />
   );
 };

@@ -14,6 +14,8 @@ export type Card = {
   showClubImages: boolean;
   showOfficialAffiliation: "none" | "province" | "nation";
   showAthleteAffiliation: "club" | "province" | "nation";
+  boutsTotal: number;
+  boutsComplete: number;
 };
 
 export type Official = {

@@ -6,6 +6,7 @@
 //	mockgen -source=storage.go -destination=./mocks/mock_storage.go -package=mocks
 //
 
+// Package mocks is a generated GoMock package.
 package mocks
 
 import (
@@ -37,6 +38,21 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
+}
+
+// CountsByCard mocks base method.
+func (m *MockStorage) CountsByCard(cardIds []uint) (map[uint]entities.BoutCounts, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountsByCard", cardIds)
+	ret0, _ := ret[0].(map[uint]entities.BoutCounts)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountsByCard indicates an expected call of CountsByCard.
+func (mr *MockStorageMockRecorder) CountsByCard(cardIds any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountsByCard", reflect.TypeOf((*MockStorage)(nil).CountsByCard), cardIds)
 }
 
 // Current mocks base method.

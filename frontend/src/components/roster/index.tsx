@@ -2,7 +2,7 @@ import type { Athlete } from "../../api/athletes";
 import type { RosterEntry } from "../../api/roster";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { AddToRoster } from "./add";
+import { AddToRosterShell } from "./AddToRosterShell";
 import { ListRoster } from "./list";
 
 export type RosterIndexParams = {
@@ -27,13 +27,14 @@ export const RosterIndex = (props: RosterIndexParams) => {
           content={{
             title: "Add to Roster",
             body: (close) => (
-              <AddToRoster
+              <AddToRosterShell
                 athletes={availableToAdd}
                 onClose={close}
                 onSubmit={(athleteId) => props.onAdd(athleteId)}
               />
             ),
           }}
+          width={480}
         />
       }
     >

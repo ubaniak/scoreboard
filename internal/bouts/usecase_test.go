@@ -60,4 +60,46 @@ var _ = Describe("UseCase", func() {
 			),
 		)
 	})
+
+	Describe("CountsByCard", func() {
+		It("returns an empty map when no card ids are given", func() {
+			ctrl := gomock.NewController(GinkgoT())
+			storage := mocks.NewMockStorage(ctrl)
+			comments := mocks.NewMockCommentUseCase(ctrl)
+			roundUC := mocks.NewMockRoundUseCase(ctrl)
+			scoresUC := mocks.NewMockScoresUseCase(ctrl)
+
+			storage.EXPECT().
+				CountsByCard(nil).
+				Return(map[uint]entities.BoutCounts{}, nil)
+
+			uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
+			counts, err := uc.CountsByCard(nil)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(counts).To(BeEmpty())
+		})
+
+		It("passes through per-card totals and completed counts from storage", func() {
+			ctrl := gomock.NewController(GinkgoT())
+			storage := mocks.NewMockStorage(ctrl)
+			comments := mocks.NewMockCommentUseCase(ctrl)
+			roundUC := mocks.NewMockRoundUseCase(ctrl)
+			scoresUC := mocks.NewMockScoresUseCase(ctrl)
+
+			expected := map[uint]entities.BoutCounts{
+				1: {Total: 9, Completed: 4},
+				2: {Total: 3, Completed: 0},
+			}
+			storage.EXPECT().
+				CountsByCard([]uint{1, 2}).
+				Return(expected, nil)
+
+			uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
+			counts, err := uc.CountsByCard([]uint{1, 2})
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(counts).To(Equal(expected))
+		})
+	})
 })

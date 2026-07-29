@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
-import { Avatar, Button, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Space } from "antd";
 import { useMemo, useState } from "react";
 import { useListAffiliations } from "../../api/affiliations";
 import {
@@ -13,10 +13,10 @@ import {
   useMutateUploadAthleteImage,
 } from "../../api/athletes";
 import { ActionMenu } from "../../components/actionMenu/actionMenu";
-import { AddAthlete } from "../../components/athletes/AddAthlete";
+import { AddAthleteShell } from "../../components/athletes/AddAthleteShell";
 import { EditAthlete } from "../../components/athletes/EditAthlete";
 import { ImageUpload } from "../../components/image/imageUpload";
-import { ImportCSV } from "../../components/shared/ImportCSV";
+import { RowList, RowThumbnail, type RowListColumn } from "../../components/list/RowList";
 import { TableLayout } from "../../layouts/table";
 import { useProfile } from "../../providers/login";
 
@@ -52,25 +52,29 @@ export const HomeAthletesPage = () => {
     [allAffiliations],
   );
 
-  const athleteColumns: TableProps<Athlete>["columns"] = [
+  const athleteColumns: RowListColumn<Athlete>[] = [
+    { key: "thumb", width: "40px", render: (a) => <RowThumbnail name={a.name} imageUrl={a.imageUrl} /> },
+    { key: "name", title: "Name", width: "1.4fr", render: (a) => a.name },
+    { key: "ageCategory", title: "Age Category", width: "110px", render: (a) => a.ageCategory },
     {
-      title: "Name", key: "name",
-      render: (_, record) => (
-        <Space>
-          <Avatar src={record.imageUrl} size="small">{record.name[0]}</Avatar>
-          {record.name}
-        </Space>
-      ),
+      key: "gender",
+      title: "Gender",
+      width: "90px",
+      render: (a) => (a.gender ? <span style={{ textTransform: "capitalize" }}>{a.gender}</span> : null),
     },
-    { title: "Age Category", dataIndex: "ageCategory", key: "ageCategory" },
-    { title: "Gender", dataIndex: "gender", key: "gender", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
-    { title: "Experience", dataIndex: "experience", key: "experience", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
-    { title: "Club", dataIndex: "clubName", key: "clubName" },
-    { title: "Province", dataIndex: "provinceName", key: "provinceName" },
-    { title: "Nation", dataIndex: "nationName", key: "nationName" },
     {
-      title: "Actions", key: "action",
-      render: (_, record) => (
+      key: "experience",
+      title: "Experience",
+      width: "100px",
+      render: (a) => (a.experience ? <span style={{ textTransform: "capitalize" }}>{a.experience}</span> : null),
+    },
+    { key: "clubName", title: "Club", width: "1fr", render: (a) => a.clubName },
+    { key: "provinceName", title: "Province", width: "1fr", render: (a) => a.provinceName },
+    { key: "nationName", title: "Nation", width: "1fr", render: (a) => a.nationName },
+    {
+      key: "action",
+      width: "auto",
+      render: (record) => (
         <Space>
           <ActionMenu
             trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload athlete image" }}
@@ -103,45 +107,34 @@ export const HomeAthletesPage = () => {
   return (
     <TableLayout
       actions={
-        <>
-          <ActionMenu
-            trigger={{ text: "Import" }}
-            content={{
-              title: "Import Athletes",
-              body: (close) => (
-                <ImportCSV
-                  onClose={close}
-                  onImport={(f) => importAthletes.mutateAsync(f)}
-                  hint="Required: name. Optional: dateOfBirth, ageCategory, gender, experience, clubAffiliationId, provinceAffiliationId, nationAffiliationId"
-                  template={{
-                    filename: "athletes-template.csv",
-                    content: "name,dateOfBirth,gender,experience,clubAffiliationId,provinceAffiliationId,nationAffiliationId\nJane Smith,2005-03-15,female,open,,,\nJohn Doe,2007-08-22,male,novice,,,",
-                  }}
-                />
-              ),
-            }}
-          />
-          <ActionMenu
-            trigger={{ text: "Add" }}
-            content={{
-              title: "Add Athlete",
-              body: (close) => (
-                <AddAthlete
-                  clubs={clubOptions}
-                  provinces={provinceOptions}
-                  nations={nationOptions}
-                  onClose={close}
-                  onSubmit={(vals) => createAthlete.mutateAsync(vals)}
-                />
-              ),
-            }}
-          />
-        </>
+        <ActionMenu
+          trigger={{ text: "Add" }}
+          content={{
+            title: "Add Athlete",
+            body: (close) => (
+              <AddAthleteShell
+                clubs={clubOptions}
+                provinces={provinceOptions}
+                nations={nationOptions}
+                onClose={close}
+                onSubmit={(vals) => createAthlete.mutateAsync(vals)}
+                onImport={(f) => importAthletes.mutateAsync(f)}
+              />
+            ),
+          }}
+          width={640}
+        />
       }
     >
       <>
         <Input.Search aria-label="Search athletes" placeholder="Search athletes…" value={athleteSearch} onChange={(e) => setAthleteSearch(e.target.value)} style={{ marginBottom: 12 }} allowClear />
-        <Table rowKey="id" dataSource={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""} ${a.provinceName ?? ""} ${a.nationName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))} columns={athleteColumns} loading={athletesQuery.isLoading} pagination={false} scroll={{ x: "max-content" }} />
+        <RowList
+          rowKey={(a) => a.id}
+          data={(athletesQuery.data ?? []).filter((a) => `${a.name} ${a.clubName ?? ""} ${a.provinceName ?? ""} ${a.nationName ?? ""}`.toLowerCase().includes(athleteSearch.toLowerCase()))}
+          columns={athleteColumns}
+          loading={athletesQuery.isLoading}
+          emptyText="No athletes found."
+        />
       </>
     </TableLayout>
   );

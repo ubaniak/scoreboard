@@ -1,5 +1,11 @@
 package entities
 
+// BoutCounts summarizes bout progress for a single card.
+type BoutCounts struct {
+	Total     int
+	Completed int
+}
+
 type BoutStatus string
 
 const (

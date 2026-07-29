@@ -32,6 +32,7 @@ type UseCase interface {
 
 	Current(cardId uint) (*entities.Bout, error)
 	CurrentRound(boutId uint) (*roundEntities.Round, error)
+	CountsByCard(cardIds []uint) (map[uint]entities.BoutCounts, error)
 }
 
 type useCase struct {
@@ -285,4 +286,8 @@ func (uc *useCase) CurrentRound(boutId uint) (*roundEntities.Round, error) {
 		return nil, err
 	}
 	return round, nil
+}
+
+func (uc *useCase) CountsByCard(cardIds []uint) (map[uint]entities.BoutCounts, error) {
+	return uc.storage.CountsByCard(cardIds)
 }

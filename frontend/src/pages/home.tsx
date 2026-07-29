@@ -10,6 +10,7 @@ import {
   useMutateUploadCardImage,
   useMutateRemoveCardImage,
 } from "../api/cards";
+import { useJudgeDevices } from "../api/devices";
 import { useGetOfficials } from "../api/officials";
 import { CardIndex } from "../components/cards";
 import { RoutedTabs } from "../components/shared/RoutedTabs";
@@ -26,6 +27,7 @@ export const HomePage = () => {
   const uploadCardImage = useMutateUploadCardImage({ token });
   const removeCardImage = useMutateRemoveCardImage({ token });
   const importCard = useMutateImportCard({ token });
+  const judgeDevices = useJudgeDevices({ token });
 
   // Lightweight, read-only fetches just for the tab counts below — the actual
   // listing + mutations for each entity live in their own routed page.
@@ -38,6 +40,7 @@ export const HomePage = () => {
       <CardIndex
         isLoading={cards.isLoading || cards.isError}
         cards={cards.data}
+        judges={judgeDevices.data}
         onCreateCard={(values) => createCard.mutateAsync(values)}
         onUpdateCard={(values) => updateCard.mutateAsync(values)}
         onDeleteCard={(id) => deleteCard.mutate(id)}
@@ -46,7 +49,7 @@ export const HomePage = () => {
         onImport={(file) => importCard.mutateAsync(file)}
       />
       <RoutedTabs
-        style={{ marginTop: 16 }}
+        style={{ marginTop: 40 }}
         items={[
           {
             key: "affiliations",

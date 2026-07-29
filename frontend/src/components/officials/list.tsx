@@ -1,10 +1,11 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Input, Popconfirm, Space, Table, type TableProps } from "antd";
+import { Button, Input, Popconfirm, Space } from "antd";
 import { useState } from "react";
 import type { Official } from "../../entities/cards";
 import { EditOfficial } from "./edit";
 import type { UpdateOfficialProps } from "../../api/officials";
 import { ActionMenu } from "../actionMenu/actionMenu";
+import { RowList, type RowListColumn } from "../list/RowList";
 
 type Option = { value: number; label: string };
 
@@ -32,48 +33,51 @@ export const ListOfficials = (props: ListOfficialsProps) => {
     );
   });
 
-  const columns: TableProps<Official>["columns"] = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Nationality", dataIndex: "nationality", key: "nationality" },
-    { title: "Gender", dataIndex: "gender", key: "gender", render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : null },
-    { title: "Year of Birth", dataIndex: "yearOfBirth", key: "yearOfBirth", render: (v) => v || null },
-    { title: "Reg. Number", dataIndex: "registrationNumber", key: "registrationNumber" },
-    { title: "Province", dataIndex: "province", key: "province" },
-    { title: "Nation", dataIndex: "nation", key: "nation" },
+  const columns: RowListColumn<Official>[] = [
+    { key: "name", title: "Name", width: "1.6fr", render: (o) => o.name },
+    { key: "nationality", title: "Nationality", width: "1fr", render: (o) => o.nationality },
     {
-      title: "Actions",
+      key: "gender",
+      title: "Gender",
+      width: "90px",
+      render: (o) => (o.gender ? <span style={{ textTransform: "capitalize" }}>{o.gender}</span> : null),
+    },
+    { key: "yearOfBirth", title: "Year of Birth", width: "110px", render: (o) => o.yearOfBirth || null },
+    { key: "registrationNumber", title: "Reg. Number", width: "130px", render: (o) => o.registrationNumber },
+    { key: "province", title: "Province", width: "1fr", render: (o) => o.province },
+    { key: "nation", title: "Nation", width: "1fr", render: (o) => o.nation },
+    {
       key: "action",
-      render: (_, record) => {
-        return (
-          <Space>
-            <ActionMenu
-              trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit official" }}
-              content={{
-                title: "Edit Official",
-                body: (close) => (
-                  <EditOfficial
-                    onClose={close}
-                    onSubmit={(vals) => props.onEditOfficial(vals)}
-                    official={record as Official}
-                    provinces={props.provinces}
-                    nations={props.nations}
-                  />
-                ),
-              }}
-            />
-            {props.onDeleteOfficial && (
-              <Popconfirm
-                title="Delete this official?"
-                onConfirm={() => props.onDeleteOfficial!(record.id)}
-                okText="Delete"
-                cancelText="Cancel"
-              >
-                <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete official" />
-              </Popconfirm>
-            )}
-          </Space>
-        );
-      },
+      width: "auto",
+      render: (record) => (
+        <Space>
+          <ActionMenu
+            trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit official" }}
+            content={{
+              title: "Edit Official",
+              body: (close) => (
+                <EditOfficial
+                  onClose={close}
+                  onSubmit={(vals) => props.onEditOfficial(vals)}
+                  official={record}
+                  provinces={props.provinces}
+                  nations={props.nations}
+                />
+              ),
+            }}
+          />
+          {props.onDeleteOfficial && (
+            <Popconfirm
+              title="Delete this official?"
+              onConfirm={() => props.onDeleteOfficial!(record.id)}
+              okText="Delete"
+              cancelText="Cancel"
+            >
+              <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete official" />
+            </Popconfirm>
+          )}
+        </Space>
+      ),
     },
   ];
 
@@ -86,12 +90,7 @@ export const ListOfficials = (props: ListOfficialsProps) => {
         style={{ marginBottom: 12 }}
         allowClear
       />
-      <Table
-        dataSource={filtered}
-        columns={columns}
-        loading={props.loading}
-        scroll={{ x: "max-content" }}
-      />
+      <RowList data={filtered} columns={columns} loading={props.loading} rowKey={(o) => o.id} emptyText="No officials found." />
     </>
   );
 };

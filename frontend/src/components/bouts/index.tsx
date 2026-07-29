@@ -4,8 +4,7 @@ import type { BoutRequestType } from "../../api/entities";
 import type { Bout, Card, Official } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { AddBout } from "./add";
-import { ImportBoutsCSV } from "./importCSV";
+import { AddBout } from "./addBout";
 import { ListBouts } from "./list";
 
 export type BoutsIndexParams = {
@@ -29,33 +28,24 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
     <TableLayout
       title="Bouts"
       actions={
-        <>
-          <ActionMenu
-            trigger={{ text: "import" }}
-            content={{
-              title: "Import Bouts",
-              body: (close) => (
-                <ImportBoutsCSV onClose={close} onImport={props.onImport} />
-              ),
-            }}
-          />
-          <ActionMenu
-            trigger={{ text: "add" }}
-            content={{
-              title: "Add Bout",
-              body: (close) => (
-                <AddBout
-                  onClose={close}
-                  athletes={props.athletes}
-                  availableAthleteIds={props.availableAthleteIds}
-                  nextBoutNumber={Math.max(0, ...(props.bouts ?? []).map((b) => b.boutNumber)) + 1}
-                  onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
-                />
-              ),
-            }}
-            width={900}
-          />
-        </>
+        <ActionMenu
+          trigger={{ text: "add" }}
+          content={{
+            title: "Add Bout",
+            body: (close) => (
+              <AddBout
+                onClose={close}
+                athletes={props.athletes}
+                availableAthleteIds={props.availableAthleteIds}
+                nextBoutNumber={Math.max(0, ...(props.bouts ?? []).map((b) => b.boutNumber)) + 1}
+                bouts={props.bouts}
+                onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
+                onImport={props.onImport}
+              />
+            ),
+          }}
+          width={900}
+        />
       }
     >
       <ListBouts

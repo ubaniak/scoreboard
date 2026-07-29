@@ -1,4 +1,5 @@
 import { Collapse, Segmented, Switch, Typography } from "antd";
+import type { UpdateCardsProps } from "../../api/cards";
 import type { Card as CardEntity } from "../../entities/cards";
 
 const { Text } = Typography;
@@ -6,7 +7,7 @@ const { Text } = Typography;
 type Props = {
   card: CardEntity;
   onSetJudges: (count: number) => void;
-  onPatch: (patch: Record<string, unknown>) => void;
+  onPatch: (patch: UpdateCardsProps) => void;
 };
 
 export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
@@ -77,7 +78,7 @@ export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
               { value: "province", label: "Province" },
               { value: "nation", label: "Nation" },
             ]}
-            onChange={(value) => onPatch({ showAthleteAffiliation: value })}
+            onChange={(value) => onPatch({ showAthleteAffiliation: value as "club" | "province" | "nation" })}
           />
         </div>
 
@@ -94,7 +95,7 @@ export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
               { value: "province", label: "Province" },
               { value: "nation", label: "Nation" },
             ]}
-            onChange={(value) => onPatch({ showOfficialAffiliation: value })}
+            onChange={(value) => onPatch({ showOfficialAffiliation: value as "none" | "province" | "nation" })}
           />
         </div>
       </div>

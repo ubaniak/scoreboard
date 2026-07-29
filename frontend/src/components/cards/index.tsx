@@ -1,21 +1,21 @@
-import { DeleteOutlined, EditOutlined, PictureOutlined } from "@ant-design/icons";
-import { Link } from "@tanstack/react-router";
-import { Button, Popconfirm, Space, Typography } from "antd";
-import { ImageUpload } from "../image/imageUpload";
+import { Skeleton, Typography } from "antd";
+import { useMemo, useState } from "react";
 import type { CreateCardProps, UpdateCardsProps } from "../../api/cards";
 import type { CardRequestType } from "../../api/entities";
 import { type Card } from "../../entities/cards";
-import { TableLayout } from "../../layouts/table";
-import { StatusTag } from "../status/tag";
-import { Table, type TableProps } from "../table/table";
-import { AddCard } from "./add";
-import { CardImport } from "./CardImport";
-import { EditCard } from "./edit";
+import type { JudgeDevice } from "../../entities/device";
+import { space } from "../../theme";
 import { ActionMenu } from "../actionMenu/actionMenu";
+import { AddCardShell } from "./AddCardShell";
+import { CardSecondaryList } from "./CardSecondaryList";
+import { defaultCardFilters, type CardFilters } from "./cardFilters";
+import { CardToolbar } from "./CardToolbar";
+import { LiveSpotlight } from "./LiveSpotlight";
 
 export type CardTableProps = {
   cards?: Card[];
   isLoading: boolean;
+  judges?: JudgeDevice[];
   onCreateCard: (props: CreateCardProps) => Promise<unknown>;
   onUpdateCard: (props: {
     id: CardRequestType;
@@ -27,141 +27,97 @@ export type CardTableProps = {
   onImport?: (file: File) => Promise<unknown>;
 };
 
-interface DataType {
-  id: string;
-  name: string;
-  date: string;
-  status: string;
-}
+const applyFilters = (cards: Card[], filters: CardFilters): Card[] => {
+  let result = cards;
+
+  if (filters.query.trim()) {
+    const q = filters.query.trim().toLowerCase();
+    result = result.filter((c) => c.name.toLowerCase().includes(q));
+  }
+  if (filters.statuses.length > 0) {
+    result = result.filter((c) => filters.statuses.includes(c.status));
+  }
+  if (filters.dateFrom && filters.dateTo) {
+    result = result.filter((c) => c.date >= filters.dateFrom! && c.date <= filters.dateTo!);
+  }
+  if (filters.needsSetup) {
+    result = result.filter((c) => c.boutsTotal === 0);
+  }
+
+  const sorted = [...result];
+  sorted.sort((a, b) => {
+    if (filters.sort === "name") return a.name.localeCompare(b.name);
+    if (filters.sort === "status") return a.status.localeCompare(b.status);
+    return a.date.localeCompare(b.date);
+  });
+  return sorted;
+};
 
 export const CardIndex = (props: CardTableProps) => {
-  const emptyText = (
-    <div style={{ padding: "24px 0", textAlign: "center" }}>
-      <Typography.Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
-        No event cards yet — create your first card to get started.
-      </Typography.Text>
-      <ActionMenu
-        trigger={{ text: "Create Card" }}
-        content={{
-          title: "Create Card",
-          body: (close) => (
-            <AddCard
-              onClose={() => close()}
-              onSubmit={(values) => props.onCreateCard(values)}
-            />
-          ),
-        }}
-      />
-    </div>
+  const [filters, setFilters] = useState<CardFilters>(defaultCardFilters);
+  const cards = useMemo(() => props.cards ?? [], [props.cards]);
+
+  const liveCard = useMemo(() => cards.find((c) => c.status === "in_progress"), [cards]);
+
+  const filteredCards = useMemo(() => applyFilters(cards, filters), [cards, filters]);
+  const secondaryCards = useMemo(
+    () => filteredCards.filter((c) => c.id !== liveCard?.id),
+    [filteredCards, liveCard],
   );
 
-  const columns: TableProps<DataType>["columns"] = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (text, record) => {
-        return (
-          <Link to="/card/$cardId" params={{ cardId: record.id }} style={{ color: "#1677ff" }}>
-            {text}
-          </Link>
-        );
-      },
-    },
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (text) => {
-        return <StatusTag text={text} />;
-      },
-    },
-    {
-      title: "Actions",
-      key: "action",
-      render: (_, record) => {
-        return (
-          <Space>
-            {props.onUploadCardImage && (
-              <ActionMenu
-                trigger={{ shape: "circle", icon: <PictureOutlined />, ariaLabel: "Upload card image" }}
-                content={{ title: "Upload Image", body: () => <ImageUpload currentImageUrl={(record as Card).imageUrl} onUpload={(file) => props.onUploadCardImage!(record.id, file)} onRemove={props.onRemoveCardImage ? () => props.onRemoveCardImage!(record.id) : undefined} /> }}
-              />
-            )}
-            <ActionMenu
-              trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit card" }}
-              content={{
-                title: "Edit Card",
-                body: (close) => (
-                  <EditCard
-                    card={record as Card}
-                    onClose={close}
-                    onSubmit={(vals) => props.onUpdateCard(vals)}
-                  />
-                ),
-              }}
-            />
-            {props.onDeleteCard && (
-              <Popconfirm
-                title="Delete this card?"
-                onConfirm={() => props.onDeleteCard!(record.id)}
-                okText="Delete"
-                cancelText="Cancel"
-              >
-                <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Delete card" />
-              </Popconfirm>
-            )}
-          </Space>
-        );
-      },
-    },
-  ];
+  if (props.isLoading) {
+    return <Skeleton active paragraph={{ rows: 6 }} />;
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div style={{ padding: "24px 0", textAlign: "center" }}>
+        <Typography.Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+          No event cards yet — create your first card to get started.
+        </Typography.Text>
+        <ActionMenu
+          trigger={{ text: "Create Card" }}
+          content={{
+            title: "Create Card",
+            body: (close) => (
+              <AddCardShell onClose={close} onSubmit={(values) => props.onCreateCard(values)} onImport={props.onImport} />
+            ),
+          }}
+          width={640}
+        />
+      </div>
+    );
+  }
 
   return (
-    <TableLayout
-        title="Cards"
-        actions={
-          <>
-            {props.onImport && (
-              <ActionMenu
-                trigger={{ text: "Import" }}
-                content={{
-                  title: "Import Card",
-                  body: (close) => (
-                    <CardImport onClose={close} onImport={props.onImport!} />
-                  ),
-                }}
-              />
-            )}
-            <ActionMenu
-              trigger={{
-                text: "Add",
-              }}
-              content={{
-                title: "Create Card",
-                body: (close) => (
-                  <AddCard
-                    onClose={() => close()}
-                    onSubmit={(values) => props.onCreateCard(values)}
-                  />
-                ),
-              }}
-            />
-          </>
-        }
-      >
-        <Table
-          dataSource={props.cards || []}
-          columns={columns}
-          loading={props.isLoading}
-          locale={{ emptyText }}
-          scroll={{ x: "max-content" }}
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space.md }}>
+        <Typography.Title level={3} style={{ margin: 0 }}>
+          Cards
+        </Typography.Title>
+        <ActionMenu
+          trigger={{ text: "Add" }}
+          content={{
+            title: "Create Card",
+            body: (close) => (
+              <AddCardShell onClose={close} onSubmit={(values) => props.onCreateCard(values)} onImport={props.onImport} />
+            ),
+          }}
+          width={640}
         />
-      </TableLayout>
+      </div>
+
+      <CardToolbar filters={filters} onChange={setFilters} />
+
+      <LiveSpotlight card={liveCard} judges={props.judges} />
+
+      <CardSecondaryList
+        cards={secondaryCards}
+        onUpdateCard={props.onUpdateCard}
+        onDeleteCard={props.onDeleteCard}
+        onUploadCardImage={props.onUploadCardImage}
+        onRemoveCardImage={props.onRemoveCardImage}
+      />
+    </div>
   );
 };

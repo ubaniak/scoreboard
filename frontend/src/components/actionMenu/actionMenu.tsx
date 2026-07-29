@@ -1,4 +1,4 @@
-import { Button, Drawer } from "antd";
+import { Button, Modal } from "antd";
 import type { ButtonShape } from "antd/es/button";
 import { useEffect, useState } from "react";
 
@@ -65,19 +65,18 @@ export const ActionMenu = (props: ActionMenuProps) => {
           {props.trigger.text}
         </Button>
       )}
-      <Drawer
+      <Modal
         title={props.content.title}
         open={open}
         footer={null}
         width={props.width ?? 480}
-        loading={loading}
         closable={!loading}
         maskClosable={!loading}
-        destroyOnClose
-        onClose={loading ? undefined : () => close()}
+        destroyOnHidden
+        onCancel={loading ? undefined : () => close()}
       >
         {props.content.body(close)}
-      </Drawer>
+      </Modal>
     </>
   );
 };

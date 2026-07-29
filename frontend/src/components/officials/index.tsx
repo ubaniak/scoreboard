@@ -5,8 +5,7 @@ import type {
 import type { Official } from "../../entities/cards";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { AddOfficial } from "./add";
-import { ImportOfficialsCSV } from "./importCSV";
+import { AddOfficialShell } from "./AddOfficialShell";
 import { ListOfficials } from "./list";
 
 type Option = { value: number; label: string };
@@ -29,31 +28,22 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
   return (
     <TableLayout
       actions={
-        <>
-          <ActionMenu
-            trigger={{ text: "Import" }}
-            content={{
-              title: "Import Officials",
-              body: (close) => (
-                <ImportOfficialsCSV onClose={close} onImport={props.onImport} />
-              ),
-            }}
-          />
-          <ActionMenu
-            trigger={{ text: "Add" }}
-            content={{
-              title: "Add Official",
-              body: (close) => (
-                <AddOfficial
-                  provinces={props.provinces}
-                  nations={props.nations}
-                  onClose={close}
-                  onSubmit={(values: CreateOfficialProps) => props.onCreateOfficial(values)}
-                />
-              ),
-            }}
-          />
-        </>
+        <ActionMenu
+          trigger={{ text: "Add" }}
+          content={{
+            title: "Add Official",
+            body: (close) => (
+              <AddOfficialShell
+                provinces={props.provinces}
+                nations={props.nations}
+                onClose={close}
+                onSubmit={(values: CreateOfficialProps) => props.onCreateOfficial(values)}
+                onImport={props.onImport}
+              />
+            ),
+          }}
+          width={640}
+        />
       }
     >
       <ListOfficials

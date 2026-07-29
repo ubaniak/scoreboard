@@ -21,8 +21,6 @@ export const NextBout = ({ bouts, cardId }: Props) => {
     .filter((b) => b.status === "not_started")
     .sort((a, b) => a.boutNumber - b.boutNumber)[0];
 
-  if (!current && !next) return null;
-
   return (
     <Card title="Quick Access">
       <Space direction="vertical" size={12} style={{ width: "100%" }}>
@@ -108,6 +106,21 @@ export const NextBout = ({ bouts, cardId }: Props) => {
             </Col>
           </Row>
         )}
+
+        {(current || next) && <Divider style={{ margin: 0 }} />}
+
+        <Row align="middle" justify="space-between" gutter={[16, 16]}>
+          <Col>
+            <Title level={5} style={{ margin: 0 }}>
+              Reports
+            </Title>
+          </Col>
+          <Col>
+            <Button onClick={() => navigate({ to: `/card/${cardId}/reports` })}>
+              Open
+            </Button>
+          </Col>
+        </Row>
       </Space>
     </Card>
   );

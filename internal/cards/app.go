@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ubaniak/scoreboard/internal/bouts"
+	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/cards/entities"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/events"
@@ -23,9 +24,17 @@ import (
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
+// BoutCounter is a narrow interface for fetching bout progress per card,
+// satisfied by bouts.UseCase. Kept narrow (same pattern as current.AthleteQuerier)
+// so this package doesn't depend on the full bouts usecase surface.
+type BoutCounter interface {
+	CountsByCard(cardIds []uint) (map[uint]boutEntities.BoutCounts, error)
+}
+
 type App struct {
 	useCase         UseCase
 	boutsApp        *bouts.App
+	boutCounter     BoutCounter
 	reportsApp      *reports.App
 	rosterApp       *roster.App
 	broadcaster     *events.Broadcaster
@@ -35,10 +44,11 @@ type App struct {
 	importBouts     ImportBoutCreator
 }
 
-func NewApp(useCase UseCase, boutsApp *bouts.App, reportsApp *reports.App, rosterApp *roster.App, broadcaster *events.Broadcaster) *App {
+func NewApp(useCase UseCase, boutsApp *bouts.App, boutCounter BoutCounter, reportsApp *reports.App, rosterApp *roster.App, broadcaster *events.Broadcaster) *App {
 	return &App{
 		useCase:     useCase,
 		boutsApp:    boutsApp,
+		boutCounter: boutCounter,
 		reportsApp:  reportsApp,
 		rosterApp:   rosterApp,
 		broadcaster: broadcaster,
@@ -106,6 +116,8 @@ type GetCardResponse struct {
 	ShowClubImages          bool   `json:"showClubImages"`
 	ShowOfficialAffiliation string `json:"showOfficialAffiliation"`
 	ShowAthleteAffiliation  string `json:"showAthleteAffiliation"`
+	BoutsTotal              int    `json:"boutsTotal"`
+	BoutsComplete           int    `json:"boutsComplete"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
@@ -156,13 +168,35 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[[]*GetCardResponse](r, w)
 	cards, err := h.useCase.List()
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	var counts map[uint]boutEntities.BoutCounts
+	if h.boutCounter != nil {
+		ids := make([]uint, len(cards))
+		for i, c := range cards {
+			ids[i] = c.ID
+		}
+		counts, err = h.boutCounter.CountsByCard(ids)
+		if err != nil {
+			presenter.WithError(err).Present()
+			return
+		}
+	}
 
 	var response []*GetCardResponse
 	for _, c := range cards {
-		response = append(response, mapCardToResponse(c))
+		card := mapCardToResponse(c)
+		if bc, ok := counts[c.ID]; ok {
+			card.BoutsTotal = bc.Total
+			card.BoutsComplete = bc.Completed
+		}
+		response = append(response, card)
 	}
 
-	presenter.WithError(err).WithData(response).Present()
+	presenter.WithData(response).Present()
 }
 
 func (h *App) Get(w http.ResponseWriter, r *http.Request) {

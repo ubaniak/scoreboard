@@ -37,15 +37,17 @@ func GloveSize(weightClass int, ageCat entities.AgeCategory, gender entities.Gen
 }
 
 type CreateRequest struct {
-	BoutNumber    int    `json:"boutNumber"`
-	WeightClass   int    `json:"weightClass"`
-	AgeCategory   string `json:"ageCategory"`
-	Experience    string `json:"experience"`
-	Gender        string `json:"gender"`
-	Referee       string `json:"referee"`
-	BoutType      string `json:"boutType"`
-	RedAthleteID  *uint  `json:"redAthleteId"`
-	BlueAthleteID *uint  `json:"blueAthleteId"`
+	BoutNumber    int      `json:"boutNumber"`
+	WeightClass   int      `json:"weightClass"`
+	AgeCategory   string   `json:"ageCategory"`
+	Experience    string   `json:"experience"`
+	Gender        string   `json:"gender"`
+	Referee       string   `json:"referee"`
+	BoutType      string   `json:"boutType"`
+	RoundLength   *float64 `json:"roundLength"`
+	GloveSize     *string  `json:"gloveSize"`
+	RedAthleteID  *uint    `json:"redAthleteId"`
+	BlueAthleteID *uint    `json:"blueAthleteId"`
 }
 
 func (r *CreateRequest) Validate() error {
@@ -70,7 +72,13 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 	gender := entities.Gender(req.Gender)
 
 	roundLength := RoundLength(ageCategory, experience)
+	if req.RoundLength != nil {
+		roundLength = entities.RoundLength(*req.RoundLength)
+	}
 	gloveSize := GloveSize(req.WeightClass, ageCategory, gender)
+	if req.GloveSize != nil {
+		gloveSize = entities.GloveSize(*req.GloveSize)
+	}
 
 	return &entities.Bout{
 		CardID:         cardId,

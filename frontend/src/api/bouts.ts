@@ -13,7 +13,7 @@ import { fetchClient } from "./fetchClient";
 
 const keys = {
   all: (token: string) => ["bouts", token] as const,
-  list: (token: string) => [...keys.all(token), "list"] as const,
+  list: (token: string, cardId: string) => [...keys.all(token), "list", cardId] as const,
   fouls: (token: string) => [...keys.all(token), "fouls"] as const,
   get: (token: string, id: string) =>
     [...keys.all(token), `get-${id}`] as const,
@@ -42,7 +42,7 @@ export const useGetBoutById = (
 
 export const useGetBouts = (props: TokenBase & CardRequestType) => {
   return useQuery({
-    queryKey: keys.list(props.token),
+    queryKey: keys.list(props.token, props.cardId),
     queryFn: () => {
       return fetchClient<Bout[]>(`${baseUrl}/api/cards/${props.cardId}/bouts`, {
         headers: {
@@ -82,7 +82,7 @@ export const useMutateCreateBout = (props: TokenBase & CardRequestType) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
     },
   });
 };
@@ -113,7 +113,7 @@ export const useMutateMakeDecision = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keys.list(props.token),
+        queryKey: keys.list(props.token, props.cardId),
       });
       queryClient.invalidateQueries({
         queryKey: keys.get(props.token, props.boutId),
@@ -148,7 +148,7 @@ export const useMutateUpdateBout = (props: TokenBase & CardRequestType) => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: keys.list(props.token),
+        queryKey: keys.list(props.token, props.cardId),
       });
       queryClient.invalidateQueries({
         queryKey: keys.get(props.token, variables.boutInfo.boutId),
@@ -192,7 +192,7 @@ export const useMutateMasterImportBouts = (props: TokenBase & CardRequestType) =
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
     },
   });
 };
@@ -202,7 +202,7 @@ export const useMutateDeleteBout = (cardId: string, token: string) => {
   return useMutation({
     mutationFn: (boutId: string) => deleteBout(cardId, token, boutId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(token, cardId) });
     },
   });
 };
@@ -235,7 +235,7 @@ export const useMutateCompleteBout = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
       queryClient.invalidateQueries({
         queryKey: keys.get(props.token, props.boutId),
       });
@@ -261,7 +261,7 @@ export const useMutateShowDecision = (
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.list(props.token, props.cardId) });
       queryClient.invalidateQueries({
         queryKey: keys.get(props.token, props.boutId),
       });

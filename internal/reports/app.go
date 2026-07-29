@@ -23,6 +23,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("reports.full.pdf",        "/full/pdf",        "GET", a.FullPDF,        rbac.Admin)
 	rb.AddRoute("reports.public.csv",      "/public/csv",      "GET", a.PublicCSV,      rbac.Admin)
 	rb.AddRoute("reports.public.pdf",      "/public/pdf",      "GET", a.PublicPDF,      rbac.Admin)
+	rb.AddRoute("reports.public.jpeg",     "/public/jpeg",     "GET", a.PublicJPEG,     rbac.Admin)
 	rb.AddRoute("reports.consistency.short.csv", "/consistency/short/csv", "GET", a.ConsistencyShortCSV, rbac.Admin)
 	rb.AddRoute("reports.consistency.short.pdf", "/consistency/short/pdf", "GET", a.ConsistencyShortPDF, rbac.Admin)
 	rb.AddRoute("reports.consistency.full.csv",  "/consistency/full/csv",  "GET", a.ConsistencyFullCSV,  rbac.Admin)
@@ -149,5 +150,21 @@ func (a *App) PublicPDF(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"public_report.pdf\"")
 	WritePublicPDF(w, rd)
+}
+
+func (a *App) PublicJPEG(w http.ResponseWriter, r *http.Request) {
+	id, err := a.cardId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	rd, err := a.useCase.PublicReport(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"public_report.jpg\"")
+	WritePublicJPEG(w, rd)
 }
 

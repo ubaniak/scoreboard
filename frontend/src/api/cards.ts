@@ -66,8 +66,14 @@ export const useMutateCreateCards = (props: TokenBase) => {
 };
 
 export type UpdateCardsProps = {
-  name: string;
-  date: string;
+  name?: string;
+  date?: string;
+  numberOfJudges?: number;
+  showCardImage?: boolean;
+  showAthleteImages?: boolean;
+  showClubImages?: boolean;
+  showOfficialAffiliation?: "none" | "province" | "nation";
+  showAthleteAffiliation?: "club" | "province" | "nation";
 };
 
 export const useMutateUpdateCards = (r: TokenBase) => {
@@ -89,8 +95,9 @@ export const useMutateUpdateCards = (r: TokenBase) => {
         body: JSON.stringify(toUpdate),
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: keys.list(r.token) });
+      queryClient.invalidateQueries({ queryKey: keys.get(r.token, id.cardId) });
     },
   });
 };
