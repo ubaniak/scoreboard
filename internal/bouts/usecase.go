@@ -11,14 +11,6 @@ import (
 	"github.com/ubaniak/scoreboard/internal/scores"
 )
 
-// RosterAvailability lets bouts flip an athlete's per-card roster availability without importing
-// roster directly (roster also depends on bouts, to check whether an athlete is currently matched
-// before allowing removal, so this side of the relationship is wired post-construction via
-// SetRosterAvailability to avoid an import cycle).
-type RosterAvailability interface {
-	SetAvailable(cardID, athleteID uint, available bool) error
-}
-
 type UseCase interface {
 	Create(cardId uint, bout *entities.Bout) (uint, error)
 	CreateBulk(cardId uint, bouts []*entities.Bout) error
@@ -45,7 +37,6 @@ type useCase struct {
 	roundUseCase round.UseCase
 	comments     comment.UseCase
 	score        scores.UseCase
-	roster       RosterAvailability
 	onBoutStart  func()
 }
 
@@ -57,13 +48,6 @@ func NewUseCase(storage Storage, roundUseCase round.UseCase, comments comment.Us
 func SetBoutStartHook(uc UseCase, fn func()) {
 	if u, ok := uc.(*useCase); ok {
 		u.onBoutStart = fn
-	}
-}
-
-// SetRosterAvailability wires the roster dependency after construction.
-func SetRosterAvailability(uc UseCase, roster RosterAvailability) {
-	if u, ok := uc.(*useCase); ok {
-		u.roster = roster
 	}
 }
 
@@ -92,19 +76,6 @@ func (uc *useCase) Create(cardId uint, bout *entities.Bout) (uint, error) {
 		}
 	}
 
-	if uc.roster != nil {
-		if bout.RedAthleteID != nil {
-			if err := uc.roster.SetAvailable(cardId, *bout.RedAthleteID, false); err != nil {
-				return 0, err
-			}
-		}
-		if bout.BlueAthleteID != nil {
-			if err := uc.roster.SetAvailable(cardId, *bout.BlueAthleteID, false); err != nil {
-				return 0, err
-			}
-		}
-	}
-
 	return boutId, nil
 }
 
@@ -119,11 +90,8 @@ func (uc *useCase) CreateBulk(cardId uint, bouts []*entities.Bout) error {
 
 func (uc *useCase) Update(cardId, id uint, bout *entities.UpdateBout) error {
 	var oldJudgeCount int
-	var current *entities.Bout
-	athleteChanging := bout.RedAthleteID != nil || bout.BlueAthleteID != nil
-	if bout.NumberOfJudges != nil || (uc.roster != nil && athleteChanging) {
-		var err error
-		current, err = uc.storage.Get(cardId, id)
+	if bout.NumberOfJudges != nil {
+		current, err := uc.storage.Get(cardId, id)
 		if err != nil {
 			return err
 		}
@@ -140,35 +108,6 @@ func (uc *useCase) Update(cardId, id uint, bout *entities.UpdateBout) error {
 		}
 	}
 
-	if uc.roster != nil && current != nil {
-		if err := uc.flipAthlete(cardId, current.RedAthleteID, bout.RedAthleteID); err != nil {
-			return err
-		}
-		if err := uc.flipAthlete(cardId, current.BlueAthleteID, bout.BlueAthleteID); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// flipAthlete restores the old athlete to available (if the corner is changing/clearing) and
-// marks the new athlete unavailable (if one is being set). newAthleteID is **uint per
-// entities.UpdateBout's nil-vs-clear-vs-set convention: nil means unchanged.
-func (uc *useCase) flipAthlete(cardId uint, oldAthleteID *uint, newAthleteID **uint) error {
-	if newAthleteID == nil {
-		return nil
-	}
-	next := *newAthleteID
-	if oldAthleteID != nil && (next == nil || *oldAthleteID != *next) {
-		if err := uc.roster.SetAvailable(cardId, *oldAthleteID, true); err != nil {
-			return err
-		}
-	}
-	if next != nil {
-		if err := uc.roster.SetAvailable(cardId, *next, false); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -196,16 +135,6 @@ func (uc *useCase) Get(cardId, boutId uint) (*entities.Bout, []*roundEntities.Ro
 }
 
 func (uc *useCase) Delete(cardId, id uint) error {
-	if uc.roster != nil {
-		if current, err := uc.storage.Get(cardId, id); err == nil {
-			if current.RedAthleteID != nil {
-				_ = uc.roster.SetAvailable(cardId, *current.RedAthleteID, true)
-			}
-			if current.BlueAthleteID != nil {
-				_ = uc.roster.SetAvailable(cardId, *current.BlueAthleteID, true)
-			}
-		}
-	}
 	return uc.storage.Delete(cardId, id)
 }
 

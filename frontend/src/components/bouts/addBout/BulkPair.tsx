@@ -12,7 +12,6 @@ export type BulkPairProps = {
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: CreateBoutProps) => Promise<unknown>;
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   nextBoutNumber?: number;
   bouts?: Bout[];
 };
@@ -66,11 +65,10 @@ export const BulkPair = (props: BulkPairProps) => {
   }, [pairs]);
 
   const pool = useMemo(() => {
-    const availableSet = new Set(props.availableAthleteIds ?? []);
     return (props.athletes ?? []).filter(
-      (a) => availableSet.has(a.id) && !pairedIds.has(a.id) && a.name.toLowerCase().includes(search.toLowerCase()),
+      (a) => !pairedIds.has(a.id) && a.name.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [props.athletes, props.availableAthleteIds, pairedIds, search]);
+  }, [props.athletes, pairedIds, search]);
 
   const handleChipClick = (athleteId: number) => {
     if (armedId === null) {
@@ -88,10 +86,7 @@ export const BulkPair = (props: BulkPairProps) => {
   const removePair = (id: string) => setPairs((p) => p.filter((pair) => pair.id !== id));
 
   const handleAutoPair = () => {
-    const remaining = (props.athletes ?? []).filter((a) => {
-      const availableSet = new Set(props.availableAthleteIds ?? []);
-      return availableSet.has(a.id) && !pairedIds.has(a.id);
-    });
+    const remaining = (props.athletes ?? []).filter((a) => !pairedIds.has(a.id));
     const suggested = autoPairAthletes(remaining);
     setPairs((p) => [...p, ...suggested]);
   };

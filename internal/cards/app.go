@@ -20,7 +20,6 @@ import (
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/reports"
-	"github.com/ubaniak/scoreboard/internal/roster"
 	sberrs "github.com/ubaniak/scoreboard/internal/sbErrs"
 )
 
@@ -36,7 +35,6 @@ type App struct {
 	boutsApp        *bouts.App
 	boutCounter     BoutCounter
 	reportsApp      *reports.App
-	rosterApp       *roster.App
 	broadcaster     *events.Broadcaster
 	importOfficials ImportOfficialCreator
 	importClubs     ImportClubCreator
@@ -44,13 +42,12 @@ type App struct {
 	importBouts     ImportBoutCreator
 }
 
-func NewApp(useCase UseCase, boutsApp *bouts.App, boutCounter BoutCounter, reportsApp *reports.App, rosterApp *roster.App, broadcaster *events.Broadcaster) *App {
+func NewApp(useCase UseCase, boutsApp *bouts.App, boutCounter BoutCounter, reportsApp *reports.App, broadcaster *events.Broadcaster) *App {
 	return &App{
 		useCase:     useCase,
 		boutsApp:    boutsApp,
 		boutCounter: boutCounter,
 		reportsApp:  reportsApp,
-		rosterApp:   rosterApp,
 		broadcaster: broadcaster,
 	}
 }
@@ -75,10 +72,6 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr.AddRoute("image.cards.delete", "/{id}/image", "DELETE", h.RemoveImage, rbac.Admin)
 
 	h.boutsApp.RegisterRoutes(sr)
-
-	if h.rosterApp != nil {
-		h.rosterApp.RegisterRoutes(sr)
-	}
 
 	if h.reportsApp != nil {
 		reportsSr := sr.AddSubroute("{id}/reports")

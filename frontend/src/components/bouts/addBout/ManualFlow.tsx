@@ -15,7 +15,6 @@ export type ManualFlowProps = {
   onSubmit: (values: CreateBoutProps) => Promise<{ id: number }>;
   onAddComment: (boutId: number, comment: string) => Promise<unknown>;
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   nextBoutNumber?: number;
   bouts?: Bout[];
 };
@@ -32,13 +31,10 @@ export const ManualFlow = (props: ManualFlowProps) => {
 
   const { format: defaultFormat, source: formatSource } = lastUsedFormat(props.bouts);
 
-  const availableSet = new Set(props.availableAthleteIds ?? []);
-  const athleteOptions: AthleteOption[] = (props.athletes ?? [])
-    .filter((a) => availableSet.has(a.id))
-    .map((a) => ({
-      value: a.id,
-      label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
-    }));
+  const athleteOptions: AthleteOption[] = (props.athletes ?? []).map((a) => ({
+    value: a.id,
+    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
+  }));
 
   const redAthleteId = Form.useWatch("redAthleteId", form);
   const blueAthleteId = Form.useWatch("blueAthleteId", form);

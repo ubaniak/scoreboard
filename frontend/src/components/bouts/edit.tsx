@@ -15,7 +15,6 @@ export type EditBoutProps = {
   bout: Bout;
   officials?: Official[];
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   comments: Comment[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: UpdateBoutProps) => Promise<unknown>;
@@ -39,15 +38,10 @@ export const EditBout = (props: EditBoutProps) => {
   const boutType = Form.useWatch("boutType", form);
   const isScored = !boutType || boutType === "scored";
 
-  const availableSet = new Set(props.availableAthleteIds ?? []);
-  // Each corner's own current assignment stays selectable even if it's no longer
-  // roster-available, so editing a bout doesn't force the corner to appear empty.
-  const redAthleteOptions: AthleteOption[] = (props.athletes ?? [])
-    .filter((a) => availableSet.has(a.id) || a.id === props.bout.redAthleteId)
-    .map((a) => ({ value: a.id, label: a.clubName ? `${a.name} (${a.clubName})` : a.name }));
-  const blueAthleteOptions: AthleteOption[] = (props.athletes ?? [])
-    .filter((a) => availableSet.has(a.id) || a.id === props.bout.blueAthleteId)
-    .map((a) => ({ value: a.id, label: a.clubName ? `${a.name} (${a.clubName})` : a.name }));
+  const athleteOptions: AthleteOption[] = (props.athletes ?? []).map((a) => ({
+    value: a.id,
+    label: a.clubName ? `${a.name} (${a.clubName})` : a.name,
+  }));
 
   const redAthleteId = Form.useWatch("redAthleteId", form);
   const blueAthleteId = Form.useWatch("blueAthleteId", form);
@@ -134,12 +128,12 @@ export const EditBout = (props: EditBoutProps) => {
           <CornerCard
             corner="red"
             fieldName="redAthleteId"
-            athleteOptions={redAthleteOptions}
+            athleteOptions={athleteOptions}
             athlete={redAthlete}
             onChange={handleRedAthleteChange}
           />
           <VsBadge vertical={stackCorners} />
-          <CornerCard corner="blue" fieldName="blueAthleteId" athleteOptions={blueAthleteOptions} athlete={blueAthlete} />
+          <CornerCard corner="blue" fieldName="blueAthleteId" athleteOptions={athleteOptions} athlete={blueAthlete} />
         </div>
 
         {bothPicked && (

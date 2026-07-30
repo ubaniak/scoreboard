@@ -13,7 +13,6 @@ export type AddBoutProps = {
   onAddComment: (boutId: number, comment: string) => Promise<unknown>;
   onImport: (file: File) => Promise<unknown>;
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   nextBoutNumber?: number;
   bouts?: Bout[];
 };
@@ -42,7 +41,6 @@ export const AddBout = (props: AddBoutProps) => {
           onSubmit={props.onSubmit}
           onAddComment={props.onAddComment}
           athletes={props.athletes}
-          availableAthleteIds={props.availableAthleteIds}
           nextBoutNumber={props.nextBoutNumber}
           bouts={props.bouts}
         />
@@ -52,7 +50,6 @@ export const AddBout = (props: AddBoutProps) => {
           onClose={props.onClose}
           onSubmit={props.onSubmit}
           athletes={props.athletes}
-          availableAthleteIds={props.availableAthleteIds}
           nextBoutNumber={props.nextBoutNumber}
           bouts={props.bouts}
         />

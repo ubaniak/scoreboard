@@ -10,7 +10,6 @@ import {
 import { useGetCardById } from "../../api/cards";
 import { useMutateAddBoutComment } from "../../api/comments";
 import { useGetOfficials } from "../../api/officials";
-import { useListRoster } from "../../api/roster";
 import { BoutsIndex } from "../../components/bouts";
 import { useProfile } from "../../providers/login";
 
@@ -22,7 +21,6 @@ export const CardBoutsPage = () => {
   const officials = useGetOfficials({ token });
   const card = useGetCardById({ token, cardId });
   const athletes = useListAthletes({ token });
-  const roster = useListRoster({ token, cardId });
 
   const addBout = useMutateCreateBout({ token, cardId });
   const addBoutComment = useMutateAddBoutComment({ token, cardId });
@@ -39,9 +37,6 @@ export const CardBoutsPage = () => {
       bouts={bouts.data}
       officials={officials.data}
       athletes={athletes.data}
-      availableAthleteIds={(roster.data ?? [])
-        .filter((r) => r.available)
-        .map((r) => r.athleteId)}
       onAddBout={(values) => addBout.mutateAsync(values)}
       onAddBoutComment={(boutId, comment) =>
         addBoutComment.mutateAsync({ boutId: String(boutId), comment })

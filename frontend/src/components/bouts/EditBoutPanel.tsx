@@ -10,7 +10,6 @@ export type EditBoutPanelProps = {
   bout: Bout;
   officials?: Official[];
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: UpdateBoutProps) => Promise<unknown>;
   onDelete?: () => void;
@@ -30,7 +29,6 @@ export const EditBoutPanel = (props: EditBoutPanelProps) => {
       bout={props.bout}
       officials={props.officials}
       athletes={props.athletes}
-      availableAthleteIds={props.availableAthleteIds}
       comments={fresh.data?.comments ?? []}
       onClose={props.onClose}
       onSubmit={props.onSubmit}

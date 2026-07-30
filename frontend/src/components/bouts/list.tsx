@@ -19,7 +19,6 @@ export type ListBoutsProps = {
   loading?: boolean;
   officials?: Official[];
   athletes?: Athlete[];
-  availableAthleteIds?: number[];
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
@@ -132,7 +131,6 @@ export const ListBouts = (props: ListBoutsProps) => {
                 bout={record}
                 officials={props.officials}
                 athletes={props.athletes}
-                availableAthleteIds={props.availableAthleteIds}
                 onClose={close}
                 onSubmit={(toUpdate) =>
                   props.onEditBout({

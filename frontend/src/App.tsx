@@ -27,7 +27,6 @@ import { CardActivityLogPage } from "./pages/card/activityLog";
 import { CardBoutsPage } from "./pages/card/bouts";
 import { CardJudgeConsistencyPage } from "./pages/card/judgeConsistency";
 import { CardReportsPage } from "./pages/card/reports";
-import { CardRosterPage } from "./pages/card/roster";
 import { HomePage } from "./pages/home";
 import { HomeAffiliationsPage } from "./pages/home/affiliations";
 import { HomeAthletesPage } from "./pages/home/athletes";
@@ -130,11 +129,6 @@ const routeTree = rootRoute.addChildren([
           getParentRoute: () => cardLayoutRoute,
           path: "/",
           component: CardBoutsPage,
-        }),
-        createRoute({
-          getParentRoute: () => cardLayoutRoute,
-          path: "/roster",
-          component: CardRosterPage,
         }),
         createRoute({
           getParentRoute: () => cardLayoutRoute,

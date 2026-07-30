@@ -73,7 +73,6 @@ export const CardPage = () => {
         style={{ marginTop: 16 }}
         items={[
           { key: "bouts", label: "Bouts", to: `/card/${cardId}` },
-          { key: "roster", label: "Roster", to: `/card/${cardId}/roster` },
           {
             key: "judge-consistency",
             label: "Judge Consistency",

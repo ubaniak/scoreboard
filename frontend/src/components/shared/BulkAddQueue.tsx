@@ -9,6 +9,7 @@ export type BulkAddQueueProps<T> = {
   renderFields: (form: FormInstance<T>) => React.ReactNode;
   renderQueueItem: (item: T) => React.ReactNode;
   initialValues?: Partial<T>;
+  submitLabel?: string;
 };
 
 export const BulkAddQueue = <T,>(props: BulkAddQueueProps<T>) => {
@@ -96,7 +97,7 @@ export const BulkAddQueue = <T,>(props: BulkAddQueueProps<T>) => {
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <Button onClick={() => props.onClose()}>Cancel</Button>
         <Button type="primary" disabled={queue.length === 0} loading={submitting} onClick={handleSubmitAll}>
-          Create {queue.length || ""}
+          {props.submitLabel ?? "Create"} {queue.length || ""}
         </Button>
       </div>
     </div>
