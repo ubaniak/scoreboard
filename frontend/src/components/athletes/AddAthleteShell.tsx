@@ -46,6 +46,7 @@ export const AddAthleteShell = (props: AddAthleteShellProps) => {
       {mode === "bulk" && (
         <BulkAddQueue<CreateAthleteProps>
           onClose={props.onClose}
+          initialValues={{ gender: "male", experience: "novice" }}
           onSubmitAll={async (items) => {
             for (const item of items) {
               await props.onSubmit(toCreateAthleteProps(item));

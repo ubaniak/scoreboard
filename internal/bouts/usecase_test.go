@@ -38,7 +38,7 @@ var _ = Describe("UseCase", func() {
 				if entry.comment != "" {
 					comments.EXPECT().
 						Add("bout", entry.boutId, entry.comment).
-						Return(nil)
+						Return(uint(0), nil)
 				}
 
 				uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
@@ -59,6 +59,49 @@ var _ = Describe("UseCase", func() {
 				makeDecisionEntry{cardId: 3, boutId: 4, winner: "red", decision: "rsc", comment: "corner stopped the bout"},
 			),
 		)
+	})
+
+	Describe("Complete", func() {
+		It("marks the bout completed and starts the next not-started bout on the card", func() {
+			ctrl := gomock.NewController(GinkgoT())
+			storage := mocks.NewMockStorage(ctrl)
+			comments := mocks.NewMockCommentUseCase(ctrl)
+			roundUC := mocks.NewMockRoundUseCase(ctrl)
+			scoresUC := mocks.NewMockScoresUseCase(ctrl)
+
+			storage.EXPECT().SetStatus(uint(1), uint(1), entities.BoutStatusCompleted).Return(nil)
+			storage.EXPECT().List(uint(1)).Return([]*entities.Bout{
+				{ID: 1, BoutNumber: 1, Status: entities.BoutStatusCompleted},
+				{ID: 2, BoutNumber: 2, Status: entities.BoutStatusCancelled},
+				{ID: 3, BoutNumber: 3, Status: entities.BoutStatusNotStarted, Referee: "Ref"},
+			}, nil)
+			storage.EXPECT().Get(uint(1), uint(3)).Return(&entities.Bout{ID: 3, Status: entities.BoutStatusNotStarted, Referee: "Ref"}, nil)
+			storage.EXPECT().SetStatus(uint(1), uint(3), entities.BoutStatusInProgress).Return(nil)
+			roundUC.EXPECT().UpdateStatus(uint(3), 1, gomock.Any()).Return(nil)
+
+			uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
+			err := uc.Complete(1, 1)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("leaves the card without an active bout when no next bout can be started", func() {
+			ctrl := gomock.NewController(GinkgoT())
+			storage := mocks.NewMockStorage(ctrl)
+			comments := mocks.NewMockCommentUseCase(ctrl)
+			roundUC := mocks.NewMockRoundUseCase(ctrl)
+			scoresUC := mocks.NewMockScoresUseCase(ctrl)
+
+			storage.EXPECT().SetStatus(uint(1), uint(1), entities.BoutStatusCompleted).Return(nil)
+			storage.EXPECT().List(uint(1)).Return([]*entities.Bout{
+				{ID: 1, BoutNumber: 1, Status: entities.BoutStatusCompleted},
+			}, nil)
+
+			uc := bouts.NewUseCase(storage, roundUC, comments, scoresUC)
+			err := uc.Complete(1, 1)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
 
 	Describe("CountsByCard", func() {

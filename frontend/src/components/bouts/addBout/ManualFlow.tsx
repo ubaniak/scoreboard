@@ -1,170 +1,31 @@
-import { Button, Form, Input, InputNumber, Segmented, Select, Space, Tag, type FormProps } from "antd";
+import { App, Button, Form, Input, InputNumber, Segmented, Space, type FormProps } from "antd";
 import { useState } from "react";
 import type { CreateBoutProps } from "../../../api/bouts";
 import type { Athlete } from "../../../api/athletes";
 import type { Bout } from "../../../entities/cards";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useTheme } from "../../../theme";
-import { getMismatches, type Mismatch } from "../matchCompatibility";
+import { DraftCommentsList } from "../commentsUI";
+import { getMismatches } from "../matchCompatibility";
+import { CornerCard, MismatchRow, VsBadge, type AthleteOption } from "../matchupUI";
 import { lastUsedFormat } from "./lastUsedFormat";
 
 export type ManualFlowProps = {
   onClose: (promise?: Promise<unknown>) => void;
-  onSubmit: (values: CreateBoutProps) => Promise<unknown>;
+  onSubmit: (values: CreateBoutProps) => Promise<{ id: number }>;
+  onAddComment: (boutId: number, comment: string) => Promise<unknown>;
   athletes?: Athlete[];
   availableAthleteIds?: number[];
   nextBoutNumber?: number;
   bouts?: Bout[];
 };
 
-type AthleteOption = { value: number; label: string };
-
-type CornerCardProps = {
-  corner: "red" | "blue";
-  fieldName: "redAthleteId" | "blueAthleteId";
-  athleteOptions: AthleteOption[];
-  athlete?: Athlete;
-  onChange?: (value: number) => void;
-};
-
-const CornerCard = ({ corner, fieldName, athleteOptions, athlete, onChange }: CornerCardProps) => {
-  const { colors } = useTheme();
-  const bg = corner === "red" ? colors.cornerRed : colors.cornerBlue;
-  const meta = athlete
-    ? [
-        athlete.clubName && { label: "Club", value: athlete.clubName },
-        athlete.weightClass != null && { label: "Weight", value: `${athlete.weightClass}kg` },
-        athlete.ageCategory && { label: "Age", value: athlete.ageCategory.toUpperCase() },
-        athlete.experience && { label: "Exp", value: athlete.experience },
-      ].filter((m): m is { label: string; value: string } => !!m)
-    : [];
-
-  return (
-    <div style={{ flex: 1, minWidth: 0, borderRadius: 12, overflow: "hidden", border: `1px solid ${colors.border}` }}>
-      <div style={{ background: bg, padding: "10px 16px" }}>
-        <span
-          style={{
-            fontSize: 12,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.85)",
-            fontWeight: 700,
-          }}
-        >
-          {corner === "red" ? "Red Corner" : "Blue Corner"}
-        </span>
-      </div>
-      <div style={{ padding: 16, background: colors.bgElevated, minHeight: 96 }}>
-        <Form.Item<CreateBoutProps>
-          name={fieldName}
-          rules={[{ required: true, message: `${corner === "red" ? "Red" : "Blue"} athlete is required` }]}
-          style={{ marginBottom: meta.length > 0 ? 12 : 0 }}
-        >
-          <Select
-            options={athleteOptions}
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Tap to choose athlete…"
-            size="large"
-            onChange={onChange}
-          />
-        </Form.Item>
-        {meta.length > 0 && (
-          <Space size={[6, 6]} wrap>
-            {meta.map((m) => (
-              <Tag key={m.label} bordered={false} style={{ margin: 0 }}>
-                {m.label}: {m.value}
-              </Tag>
-            ))}
-          </Space>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const VsBadge = ({ vertical }: { vertical: boolean }) => {
-  const { colors } = useTheme();
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        ...(vertical ? { padding: "4px 0" } : { padding: "0 4px" }),
-      }}
-    >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 13,
-          fontWeight: 800,
-          letterSpacing: "0.05em",
-          color: colors.textMuted,
-          border: `1px solid ${colors.border}`,
-          background: colors.bg,
-          flexShrink: 0,
-        }}
-      >
-        VS
-      </div>
-    </div>
-  );
-};
-
-const MISMATCH_FIELD: Record<Mismatch["dimension"], keyof CreateBoutProps> = {
-  gender: "gender",
-  experience: "experience",
-  ageCategory: "ageCategory",
-  weightClass: "weightClass",
-};
-
-const MismatchRow = ({
-  mismatch,
-  form,
-}: {
-  mismatch: Mismatch;
-  form: ReturnType<typeof Form.useForm<CreateBoutProps>>[0];
-}) => {
-  const { colors } = useTheme();
-  const fieldName = MISMATCH_FIELD[mismatch.dimension];
-  const current = String(Form.useWatch(fieldName, form) ?? mismatch.redValue);
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "8px 12px",
-        borderRadius: 8,
-        background: colors.bg,
-      }}
-    >
-      <span style={{ fontSize: 13, color: colors.textMuted }}>{mismatch.message}</span>
-      <Segmented
-        size="small"
-        value={current}
-        onChange={(value) => form.setFieldValue(fieldName, mismatch.dimension === "weightClass" ? Number(value) : value)}
-        options={[
-          { label: `Red: ${mismatch.redValue}`, value: mismatch.redValue },
-          { label: `Blue: ${mismatch.blueValue}`, value: mismatch.blueValue },
-        ]}
-      />
-    </div>
-  );
-};
-
 export const ManualFlow = (props: ManualFlowProps) => {
   const [form] = Form.useForm<CreateBoutProps>();
-  const [stage, setStage] = useState<1 | 2>(1);
+  const [stage, setStage] = useState<1 | 2 | 3>(1);
+  const [draftComments, setDraftComments] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const { message } = App.useApp();
   const screens = useBreakpoint();
   const stackCorners = !screens.md;
   const { colors } = useTheme();
@@ -201,7 +62,21 @@ export const ManualFlow = (props: ManualFlowProps) => {
   };
 
   const onFinish: FormProps<CreateBoutProps>["onFinish"] = (values) => {
-    props.onClose(props.onSubmit({ ...values, referee: "" }));
+    const run = async () => {
+      const created = await props.onSubmit({ ...values, referee: "" });
+      for (const text of draftComments) {
+        await props.onAddComment(created.id, text);
+      }
+    };
+    setSubmitting(true);
+    props.onClose(
+      run()
+        .catch((err) => {
+          message.error((err as Error).message || "Failed to create bout");
+          throw err;
+        })
+        .finally(() => setSubmitting(false)),
+    );
   };
 
   return (
@@ -253,6 +128,10 @@ export const ManualFlow = (props: ManualFlowProps) => {
         <span style={{ width: 20, height: 1, background: colors.border }} />
         <span style={{ fontWeight: stage === 2 ? 700 : 400, color: stage === 2 ? colors.text : colors.textFaint }}>
           ② Confirm format
+        </span>
+        <span style={{ width: 20, height: 1, background: colors.border }} />
+        <span style={{ fontWeight: stage === 3 ? 700 : 400, color: stage === 3 ? colors.text : colors.textFaint }}>
+          ③ Comments
         </span>
       </div>
 
@@ -331,19 +210,38 @@ export const ManualFlow = (props: ManualFlowProps) => {
         </div>
       </div>
 
+      <div style={{ display: stage === 3 ? "block" : "none" }}>
+        <DraftCommentsList
+          comments={draftComments}
+          onAdd={(text) => setDraftComments((c) => [...c, text])}
+          onRemove={(index) => setDraftComments((c) => c.filter((_, i) => i !== index))}
+        />
+      </div>
+
       <Form.Item label={null} style={{ marginTop: 8, marginBottom: 0 }}>
         <Space>
-          <Button type="text" onClick={() => props.onClose()}>
+          <Button type="text" onClick={() => props.onClose()} disabled={submitting}>
             Cancel
           </Button>
-          {stage === 1 ? (
+          {stage === 1 && (
             <Button type="primary" disabled={!bothPicked} onClick={() => setStage(2)}>
               Next: Confirm Format →
             </Button>
-          ) : (
+          )}
+          {stage === 2 && (
             <>
               <Button onClick={() => setStage(1)}>← Back</Button>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" onClick={() => setStage(3)}>
+                Next: Comments →
+              </Button>
+            </>
+          )}
+          {stage === 3 && (
+            <>
+              <Button onClick={() => setStage(2)} disabled={submitting}>
+                ← Back
+              </Button>
+              <Button type="primary" htmlType="submit" loading={submitting}>
                 Submit
               </Button>
             </>

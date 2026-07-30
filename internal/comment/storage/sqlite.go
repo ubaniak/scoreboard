@@ -17,7 +17,7 @@ func NewSqlite(db *gorm.DB) (*Sqlite, error) {
 	return &Sqlite{db: db}, nil
 }
 
-func (s *Sqlite) Add(entityKind string, entityId uint, comment string) error {
+func (s *Sqlite) Add(entityKind string, entityId uint, comment string) (uint, error) {
 	c := &Comment{
 		Comment:    comment,
 		EntityKind: entityKind,
@@ -25,9 +25,9 @@ func (s *Sqlite) Add(entityKind string, entityId uint, comment string) error {
 	}
 
 	if err := s.db.Save(c).Error; err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return c.ID, nil
 }
 
 func (s *Sqlite) Get(entityKind string, entityId uint) ([]entities.Comment, error) {
@@ -40,8 +40,33 @@ func (s *Sqlite) Get(entityKind string, entityId uint) ([]entities.Comment, erro
 	var result = make([]entities.Comment, len(comments))
 
 	for i, comment := range comments {
-		result[i] = entities.Comment{Comment: comment.Comment}
+		result[i] = entities.Comment{ID: comment.ID, Comment: comment.Comment}
 	}
 
 	return result, nil
+}
+
+func (s *Sqlite) Update(entityKind string, entityId, id uint, comment string) error {
+	res := s.db.Model(&Comment{}).
+		Where("id = ? AND entity_kind = ? AND entity_id = ?", id, entityKind, entityId).
+		Update("comment", comment)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (s *Sqlite) Delete(entityKind string, entityId, id uint) error {
+	res := s.db.Where("id = ? AND entity_kind = ? AND entity_id = ?", id, entityKind, entityId).
+		Delete(&Comment{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

@@ -39,7 +39,7 @@ func (a *App) Setup(w http.ResponseWriter, r *http.Request) {
 	code, err := a.useCase.Setup()
 	if err != nil {
 		presenters.NewHTTPPresenter[SetupResponse](r, w).
-			WithStatusCode(http.StatusConflict).
+			WithErrorStatusCode(http.StatusConflict).
 			WithError(err).
 			Present()
 		return

@@ -103,7 +103,7 @@ func (s *Sqlite) resolveAffiliationNames(athletes []Athlete) ([]entities.Athlete
 	return result, nil
 }
 
-func (s *Sqlite) Create(athlete *entities.Athlete) error {
+func (s *Sqlite) Create(athlete *entities.Athlete) (uint, error) {
 	m := &Athlete{
 		Name:                  athlete.Name,
 		AgeCategory:           athlete.AgeCategory,
@@ -114,7 +114,10 @@ func (s *Sqlite) Create(athlete *entities.Athlete) error {
 		NationAffiliationID:   athlete.NationAffiliationID,
 		WeightClass:           athlete.WeightClass,
 	}
-	return s.db.Create(m).Error
+	if err := s.db.Create(m).Error; err != nil {
+		return 0, err
+	}
+	return m.ID, nil
 }
 
 func (s *Sqlite) FindByName(name string) ([]entities.Athlete, error) {

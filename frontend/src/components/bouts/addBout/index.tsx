@@ -9,7 +9,8 @@ import { ManualFlow } from "./ManualFlow";
 
 export type AddBoutProps = {
   onClose: (promise?: Promise<unknown>) => void;
-  onSubmit: (values: CreateBoutProps) => Promise<unknown>;
+  onSubmit: (values: CreateBoutProps) => Promise<{ id: number }>;
+  onAddComment: (boutId: number, comment: string) => Promise<unknown>;
   onImport: (file: File) => Promise<unknown>;
   athletes?: Athlete[];
   availableAthleteIds?: number[];
@@ -39,6 +40,7 @@ export const AddBout = (props: AddBoutProps) => {
         <ManualFlow
           onClose={props.onClose}
           onSubmit={props.onSubmit}
+          onAddComment={props.onAddComment}
           athletes={props.athletes}
           availableAthleteIds={props.availableAthleteIds}
           nextBoutNumber={props.nextBoutNumber}

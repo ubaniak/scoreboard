@@ -1,15 +1,21 @@
-import type { Athlete } from "../../api/athletes";
+import type { Athlete, CreateAthleteProps } from "../../api/athletes";
 import type { RosterEntry } from "../../api/roster";
 import { TableLayout } from "../../layouts/table";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddToRosterShell } from "./AddToRosterShell";
 import { ListRoster } from "./list";
 
+type Option = { value: number; label: string };
+
 export type RosterIndexParams = {
   entries?: RosterEntry[];
   athletes?: Athlete[];
+  clubs: Option[];
+  provinces: Option[];
+  nations: Option[];
   loading?: boolean;
   onAdd: (athleteId: number) => Promise<unknown>;
+  onAddNewAthlete: (v: CreateAthleteProps) => Promise<unknown>;
   onSetAvailable: (athleteId: number, available: boolean) => Promise<unknown>;
   onRemove: (athleteId: number) => Promise<unknown>;
 };
@@ -29,8 +35,12 @@ export const RosterIndex = (props: RosterIndexParams) => {
             body: (close) => (
               <AddToRosterShell
                 athletes={availableToAdd}
+                clubs={props.clubs}
+                provinces={props.provinces}
+                nations={props.nations}
                 onClose={close}
                 onSubmit={(athleteId) => props.onAdd(athleteId)}
+                onAddNewAthlete={props.onAddNewAthlete}
               />
             ),
           }}

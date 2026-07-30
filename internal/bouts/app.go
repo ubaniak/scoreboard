@@ -14,6 +14,7 @@ import (
 
 	"github.com/ubaniak/scoreboard/internal/auditlogs"
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	commentEntities "github.com/ubaniak/scoreboard/internal/comment/entities"
 	"github.com/ubaniak/scoreboard/internal/events"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
 	"github.com/ubaniak/scoreboard/internal/presenters"
@@ -86,6 +87,10 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 
 	rb.AddRoute("bouts.status", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
 
+	rb.AddRoute("bouts.comments.add", "/{cardId}/bouts/{id}/comments", "POST", a.AddComment, rbac.Admin)
+	rb.AddRoute("bouts.comments.update", "/{cardId}/bouts/{id}/comments/{commentId}", "PUT", a.UpdateComment, rbac.Admin)
+	rb.AddRoute("bouts.comments.delete", "/{cardId}/bouts/{id}/comments/{commentId}", "DELETE", a.DeleteComment, rbac.Admin)
+
 	rb.AddRoute("rounds.list", "/{cardId}/bouts/{id}/rounds", "GET", a.ListRounds, rbac.Admin)
 	rb.AddRoute("rounds.get", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}", "GET", a.GetRound, rbac.Admin)
 	rb.AddRoute("rounds.fouls", "/{cardId}/bouts/{boutId}/rounds/{roundNumber}/foul", "POST", a.HandleFoul, rbac.Admin)
@@ -103,7 +108,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	presenter := presenters.NewHTTPPresenter[CreateBoutResponse](r, w)
 	vars := mux.Vars(r)
 	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
 	if err != nil {
@@ -130,8 +135,8 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = h.useCase.Create(cardId, bout)
-	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
+	id, err := h.useCase.Create(cardId, bout)
+	presenter.WithData(CreateBoutResponse{ID: id}).WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +157,7 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	resp := make([]GetBoutResponse, len(bouts))
 	for i, b := range bouts {
 		red, blue := h.resolveNames(b)
-		resp[i] = *EntityToGetBoutResponse(b, red, blue, []*roundEntities.RoundDetails{}, []string{})
+		resp[i] = *EntityToGetBoutResponse(b, red, blue, []*roundEntities.RoundDetails{}, []commentEntities.Comment{})
 	}
 
 	presenter.WithData(resp).Present()
@@ -181,6 +186,84 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	resp := EntityToGetBoutResponse(b, red, blue, rounds, comments)
 
 	presenter.WithData(resp).Present()
+}
+
+func (h *App) AddComment(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[AddCommentResponse](r, w)
+	vars := mux.Vars(r)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	var req AddCommentRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	commentId, err := h.useCase.AddComment(cardId, id, req.Comment)
+	presenter.WithData(AddCommentResponse{ID: commentId}).WithError(err).WithStatusCode(http.StatusCreated).Present()
+}
+
+func (h *App) UpdateComment(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	commentId, err := muxutils.ParseVars[uint](vars, "commentId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	var req UpdateCommentRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.UpdateComment(cardId, id, commentId, req.Comment)
+	presenter.WithError(err).Present()
+}
+
+func (h *App) DeleteComment(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	commentId, err := muxutils.ParseVars[uint](vars, "commentId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.DeleteComment(cardId, id, commentId)
+	presenter.WithError(err).Present()
 }
 
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {

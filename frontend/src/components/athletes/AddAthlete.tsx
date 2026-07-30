@@ -21,6 +21,7 @@ export const AddAthlete = ({ clubs, provinces, nations, onClose, onSubmit }: Add
     <Form
       form={form}
       layout="vertical"
+      initialValues={{ gender: "male", experience: "novice" }}
       onFinish={(v) => {
         onClose(onSubmit(toCreateAthleteProps(v)).then(() => form.resetFields()));
       }}

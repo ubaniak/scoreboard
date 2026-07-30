@@ -1,16 +1,20 @@
-import { EditOutlined } from "@ant-design/icons";
+import { EditOutlined, WarningOutlined } from "@ant-design/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Input, Table, Tag, type TableProps } from "antd";
+import { Button, Input, Tag, Tooltip } from "antd";
 import { useState } from "react";
 import type { UpdateBoutProps } from "../../api/bouts";
 import type { Athlete } from "../../api/athletes";
 import type { Bout, Official } from "../../entities/cards";
 import { StatusTag } from "../status/tag";
-import { EditBout } from "./edit";
+import { EditBoutPanel } from "./EditBoutPanel";
 import type { BoutRequestType } from "../../api/entities";
 import { ActionMenu } from "../actionMenu/actionMenu";
+import { RowList, type RowListColumn } from "../list/RowList";
+import { getMismatches } from "./matchCompatibility";
 
 export type ListBoutsProps = {
+  token: string;
+  cardId: string;
   bouts?: Bout[];
   loading?: boolean;
   officials?: Official[];
@@ -36,133 +40,117 @@ export const ListBouts = (props: ListBoutsProps) => {
     );
   });
 
-  const columns: TableProps<Bout>["columns"] = [
+  const athleteById = new Map((props.athletes ?? []).map((a) => [a.id, a]));
+  const mismatchesFor = (b: Bout) =>
+    getMismatches(
+      b.redAthleteId != null ? athleteById.get(b.redAthleteId) : undefined,
+      b.blueAthleteId != null ? athleteById.get(b.blueAthleteId) : undefined,
+    );
+
+  const decisionLabels: Record<string, string> = {
+    ud: "Unanimous Decision",
+    sd: "Split Decision",
+    md: "Majority Decision",
+    rsc: "RSC",
+    "rsc-i": "RSC (Injury)",
+    abd: "Abandon",
+    dq: "Disqualified",
+    c: "Cancelled",
+    wo: "Walk Over",
+  };
+
+  const columns: RowListColumn<Bout>[] = [
     {
-      title: "Bout Number",
-      dataIndex: "boutNumber",
-      key: "boutNumber",
-      render: (text, record) => (
-        <>
-          <Button
-            type="link"
-            onClick={() => navigate({ to: `bout/${record.id}` })}
-          >
-            {text}
-          </Button>
-        </>
-      ),
-    },
-    {
-      title: "Bout Type",
-      dataIndex: "boutType",
-      key: "boutType",
-      render: (value: string) => (
-        <span style={{ textTransform: "capitalize" }}>{value || "scored"}</span>
-      ),
-    },
-    {
-      title: "Red Corner",
-      dataIndex: "redCorner",
-      key: "redCorner",
-    },
-    {
-      title: "Blue Corner",
-      dataIndex: "blueCorner",
-      key: "blueCorner",
-    },
-    {
-      title: "Age Category",
-      dataIndex: "ageCategory",
-      key: "ageCategory",
-    },
-    {
-      title: "Experience",
-      dataIndex: "experience",
-      key: "experience",
-    },
-    {
-      title: "Gender",
-      dataIndex: "gender",
-      key: "gender",
-    },
-    {
-      title: "Round length",
-      dataIndex: "roundLength",
-      key: "roundLength",
-    },
-    {
-      title: "Glove size",
-      dataIndex: "gloveSize",
-      key: "gloveSize",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (value) => <StatusTag text={value} />,
-    },
-    {
-      title: "Winner",
-      dataIndex: "winner",
-      key: "winner",
-      render: (value) => {
-        if (!value || value === "na") return null;
-        return <Tag color={value}>{value === "red" ? "Red" : "Blue"}</Tag>;
-      },
-    },
-    {
-      title: "Decision",
-      dataIndex: "decision",
-      key: "decision",
-      render: (value) => {
-        const labels: Record<string, string> = {
-          ud: "Unanimous Decision",
-          sd: "Split Decision",
-          md: "Majority Decision",
-          rsc: "RSC",
-          "rsc-i": "RSC (Injury)",
-          abd: "Abandon",
-          dq: "Disqualified",
-          c: "Cancelled",
-          wo: "Walk Over",
-        };
-        return value ? (labels[value] ?? value) : null;
-      },
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => {
+      key: "warning",
+      width: "28px",
+      render: (b) => {
+        const mismatches = mismatchesFor(b);
+        if (mismatches.length === 0) return null;
         return (
-          <ActionMenu
-            trigger={{ shape: "circle", icon: <EditOutlined /> }}
-            content={{
-              title: "Edit Bout",
-              body: (close) => (
-                <EditBout
-                  bout={record as Bout}
-                  officials={props.officials}
-                  athletes={props.athletes}
-                  availableAthleteIds={props.availableAthleteIds}
-                  onClose={close}
-                  onSubmit={(toUpdate) =>
-                    props.onEditBout({
-                      toUpdate,
-                      boutInfo: { boutId: record.id },
-                    })
-                  }
-                  onDelete={
-                    props.onDeleteBout
-                      ? () => props.onDeleteBout!(record.id)
-                      : undefined
-                  }
-                />
-              ),
-            }}
-            width={900}
-          />
+          <Tooltip title={mismatches.map((m) => m.message).join(" • ")}>
+            <WarningOutlined style={{ color: "#eab308", fontSize: 16 }} />
+          </Tooltip>
         );
       },
+    },
+    {
+      key: "boutNumber",
+      title: "Bout Number",
+      width: "90px",
+      render: (b) => (
+        <Button type="link" style={{ padding: 0 }} onClick={() => navigate({ to: `bout/${b.id}` })}>
+          {b.boutNumber}
+        </Button>
+      ),
+    },
+    {
+      key: "boutType",
+      title: "Bout Type",
+      width: "110px",
+      render: (b) => <span style={{ textTransform: "capitalize" }}>{b.boutType || "scored"}</span>,
+    },
+    { key: "redCorner", title: "Red Corner", width: "1.2fr", render: (b) => b.redCorner },
+    { key: "blueCorner", title: "Blue Corner", width: "1.2fr", render: (b) => b.blueCorner },
+    { key: "ageCategory", title: "Age Category", width: "110px", render: (b) => b.ageCategory },
+    { key: "experience", title: "Experience", width: "110px", render: (b) => b.experience },
+    {
+      key: "gender",
+      title: "Gender",
+      width: "90px",
+      render: (b) => (b.gender ? <span style={{ textTransform: "capitalize" }}>{b.gender}</span> : null),
+    },
+    { key: "roundLength", title: "Round Length", width: "110px", render: (b) => b.roundLength },
+    { key: "gloveSize", title: "Glove Size", width: "100px", render: (b) => b.gloveSize },
+    { key: "status", title: "Status", width: "150px", render: (b) => <StatusTag text={b.status} /> },
+    {
+      key: "winner",
+      title: "Winner",
+      width: "90px",
+      render: (b) => {
+        if (!b.winner || b.winner === "na") return null;
+        return <Tag color={b.winner}>{b.winner === "red" ? "Red" : "Blue"}</Tag>;
+      },
+    },
+    {
+      key: "decision",
+      title: "Decision",
+      width: "160px",
+      render: (b) => (b.decision ? (decisionLabels[b.decision] ?? b.decision) : null),
+    },
+    {
+      key: "action",
+      width: "auto",
+      render: (record) => (
+        <ActionMenu
+          trigger={{ shape: "circle", icon: <EditOutlined />, ariaLabel: "Edit bout" }}
+          content={{
+            title: "Edit Bout",
+            body: (close) => (
+              <EditBoutPanel
+                token={props.token}
+                cardId={props.cardId}
+                bout={record}
+                officials={props.officials}
+                athletes={props.athletes}
+                availableAthleteIds={props.availableAthleteIds}
+                onClose={close}
+                onSubmit={(toUpdate) =>
+                  props.onEditBout({
+                    toUpdate,
+                    boutInfo: { boutId: record.id },
+                  })
+                }
+                onDelete={
+                  props.onDeleteBout
+                    ? () => props.onDeleteBout!(record.id)
+                    : undefined
+                }
+              />
+            ),
+          }}
+          width={900}
+        />
+      ),
     },
   ];
   return (
@@ -174,11 +162,13 @@ export const ListBouts = (props: ListBoutsProps) => {
         style={{ marginBottom: 12 }}
         allowClear
       />
-      <Table
-        loading={props.loading}
-        dataSource={filtered}
+      <RowList
+        data={filtered}
         columns={columns}
-        scroll={{ x: "max-content", y: 55 * 5 }}
+        loading={props.loading}
+        rowKey={(b) => b.id}
+        emptyText="No bouts found."
+        rowWarning={(b) => mismatchesFor(b).length > 0}
       />
     </>
   );

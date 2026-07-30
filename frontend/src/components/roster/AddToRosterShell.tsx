@@ -1,17 +1,30 @@
 import { Button, Form, Segmented, Select, Space } from "antd";
 import { useState } from "react";
-import type { Athlete } from "../../api/athletes";
+import type { Athlete, CreateAthleteProps } from "../../api/athletes";
+import { AddAthlete } from "../athletes/AddAthlete";
 import { AddToRoster } from "./add";
 
+type Option = { value: number; label: string };
+
 export type AddToRosterShellProps = {
+  athletes: Athlete[];
+  clubs: Option[];
+  provinces: Option[];
+  nations: Option[];
+  onClose: (promise?: Promise<unknown>) => void;
+  onSubmit: (athleteId: number) => Promise<unknown>;
+  onAddNewAthlete: (v: CreateAthleteProps) => Promise<unknown>;
+};
+
+type Mode = "single" | "bulk" | "new";
+
+type AddToRosterBulkProps = {
   athletes: Athlete[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (athleteId: number) => Promise<unknown>;
 };
 
-type Mode = "single" | "bulk";
-
-const AddToRosterBulk = ({ athletes, onClose, onSubmit }: AddToRosterShellProps) => {
+const AddToRosterBulk = ({ athletes, onClose, onSubmit }: AddToRosterBulkProps) => {
   const [form] = Form.useForm<{ athleteIds: number[] }>();
   const [submitting, setSubmitting] = useState(false);
   const options = athletes.map((a) => ({ value: a.id, label: a.name }));
@@ -53,6 +66,7 @@ export const AddToRosterShell = (props: AddToRosterShellProps) => {
         options={[
           { value: "single", label: "Add" },
           { value: "bulk", label: "Add Bulk" },
+          { value: "new", label: "New Athlete" },
         ]}
       />
 
@@ -61,6 +75,15 @@ export const AddToRosterShell = (props: AddToRosterShellProps) => {
       )}
       {mode === "bulk" && (
         <AddToRosterBulk athletes={props.athletes} onClose={props.onClose} onSubmit={props.onSubmit} />
+      )}
+      {mode === "new" && (
+        <AddAthlete
+          clubs={props.clubs}
+          provinces={props.provinces}
+          nations={props.nations}
+          onClose={props.onClose}
+          onSubmit={props.onAddNewAthlete}
+        />
       )}
     </div>
   );

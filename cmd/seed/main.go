@@ -200,7 +200,7 @@ func main() {
 			b.RedAthleteID = &redID
 			b.BlueAthleteID = &blueID
 		}
-		if err := boutUC.Create(cardID, b); err != nil {
+		if _, err := boutUC.Create(cardID, b); err != nil {
 			log.Fatalf("create bout %d: %v", i, err)
 		}
 	}

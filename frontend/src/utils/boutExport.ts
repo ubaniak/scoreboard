@@ -65,7 +65,7 @@ export function downloadFullCsv(card: Card, bout: Bout, scores: ScoresByRound) {
   lines.push(csvRow(["Winner", winnerLabel(bout.winner)]));
   lines.push(csvRow(["Decision", decisionLabels[bout.decision] ?? bout.decision]));
   lines.push(csvRow(["Round Ended On", roundEndedOnLabel(bout.roundEndedOn)]));
-  lines.push(csvRow(["Comments", (bout.comments ?? []).join(" | ")]));
+  lines.push(csvRow(["Comments", (bout.comments ?? []).map((c) => c.comment).join(" | ")]));
   lines.push("");
 
   // Scores per round
@@ -257,7 +257,7 @@ export function downloadFullPdf(card: Card, bout: Bout, scores: ScoresByRound) {
 
   const commentsHtml =
     bout.comments && bout.comments.length > 0
-      ? `<div class="section"><h2>Comments</h2><ul>${bout.comments.map((c) => `<li>${c}</li>`).join("")}</ul></div>`
+      ? `<div class="section"><h2>Comments</h2><ul>${bout.comments.map((c) => `<li>${c.comment}</li>`).join("")}</ul></div>`
       : "";
 
   const body = `
@@ -317,7 +317,7 @@ const fullBoutRow = (bout: Bout) =>
     winnerLabel(bout.winner),
     decisionLabels[bout.decision] ?? bout.decision,
     roundEndedOnLabel(bout.roundEndedOn),
-    (bout.comments ?? []).join(" | "),
+    (bout.comments ?? []).map((c) => c.comment).join(" | "),
   ]);
 
 const publicBoutRow = (bout: Bout) =>
@@ -391,7 +391,7 @@ function cardBoutsTableHtml(bouts: Bout[], full: boolean) {
           <td class="${winnerClass}">${winner}</td>
           <td>${decision}</td>
           <td>${roundEndedOnLabel(b.roundEndedOn)}</td>
-          <td>${(b.comments ?? []).join(", ")}</td>
+          <td>${(b.comments ?? []).map((c) => c.comment).join(", ")}</td>
         </tr>`;
       }
       return `<tr>

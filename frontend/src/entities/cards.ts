@@ -1,4 +1,5 @@
 import type { BoutStatus } from "./bouts";
+import type { Comment } from "../api/comments";
 
 export type CardStatus = "upcoming" | "in_progress" | "completed" | "cancelled";
 
@@ -57,7 +58,7 @@ export type Bout = {
   weightClass: number;
   numberOfJudges: number;
   rounds: RoundDetails[];
-  comments: string[];
+  comments: Comment[];
   referee: string;
   boutType: BoutType;
   redAthleteId?: number;

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
+	commentEntities "github.com/ubaniak/scoreboard/internal/comment/entities"
 	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
 )
 
@@ -97,6 +98,27 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 	}
 }
 
+type CreateBoutResponse struct {
+	ID uint `json:"id"`
+}
+
+type CommentResponse struct {
+	ID      uint   `json:"id"`
+	Comment string `json:"comment"`
+}
+
+type AddCommentRequest struct {
+	Comment string `json:"comment"`
+}
+
+type AddCommentResponse struct {
+	ID uint `json:"id"`
+}
+
+type UpdateCommentRequest struct {
+	Comment string `json:"comment"`
+}
+
 type GetBoutResponse struct {
 	ID             uint               `json:"id"`
 	BoutNumber     int                `json:"boutNumber"`
@@ -113,7 +135,7 @@ type GetBoutResponse struct {
 	Rounds         []GetRoundResponse `json:"rounds"`
 	Winner         string             `json:"winner"`
 	NumberOfJudges int                `json:"numberOfJudges"`
-	Comments       []string           `json:"comments"`
+	Comments       []CommentResponse  `json:"comments"`
 	Referee        string             `json:"referee"`
 	BoutType       string             `json:"boutType"`
 	RedAthleteID   *uint              `json:"redAthleteId,omitempty"`
@@ -121,13 +143,14 @@ type GetBoutResponse struct {
 	RoundEndedOn   *int               `json:"roundEndedOn,omitempty"`
 }
 
-func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, rounds []*roundEntities.RoundDetails, comments []string) *GetBoutResponse {
+func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, rounds []*roundEntities.RoundDetails, comments []commentEntities.Comment) *GetBoutResponse {
 	roundResponses := make([]GetRoundResponse, len(rounds))
 	for i, round := range rounds {
 		roundResponses[i] = *EntityToGetRoundResponse(round)
 	}
-	if comments == nil {
-		comments = []string{}
+	commentResponses := make([]CommentResponse, len(comments))
+	for i, c := range comments {
+		commentResponses[i] = CommentResponse{ID: c.ID, Comment: c.Comment}
 	}
 	return &GetBoutResponse{
 		ID:             entity.ID,
@@ -145,7 +168,7 @@ func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, ro
 		Rounds:         roundResponses,
 		Winner:         entity.Winner,
 		NumberOfJudges: entity.NumberOfJudges,
-		Comments:       comments,
+		Comments:       commentResponses,
 		Referee:        entity.Referee,
 		BoutType:       string(entity.BoutType),
 		RedAthleteID:   entity.RedAthleteID,

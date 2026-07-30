@@ -8,13 +8,16 @@ import { AddBout } from "./addBout";
 import { ListBouts } from "./list";
 
 export type BoutsIndexParams = {
+  token: string;
+  cardId: string;
   card?: Card;
   bouts?: Bout[];
   officials?: Official[];
   athletes?: Athlete[];
   availableAthleteIds?: number[];
   loading?: boolean;
-  onAddBout: (values: CreateBoutProps) => Promise<unknown>;
+  onAddBout: (values: CreateBoutProps) => Promise<{ id: number }>;
+  onAddBoutComment: (boutId: number, comment: string) => Promise<unknown>;
   onEditBout: (values: {
     toUpdate: UpdateBoutProps;
     boutInfo: BoutRequestType;
@@ -40,6 +43,7 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
                 nextBoutNumber={Math.max(0, ...(props.bouts ?? []).map((b) => b.boutNumber)) + 1}
                 bouts={props.bouts}
                 onSubmit={(values: CreateBoutProps) => props.onAddBout(values)}
+                onAddComment={(boutId, comment) => props.onAddBoutComment(boutId, comment)}
                 onImport={props.onImport}
               />
             ),
@@ -49,6 +53,8 @@ export const BoutsIndex = (props: BoutsIndexParams) => {
       }
     >
       <ListBouts
+        token={props.token}
+        cardId={props.cardId}
         bouts={props.bouts}
         loading={props.loading}
         officials={props.officials}

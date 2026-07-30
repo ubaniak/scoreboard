@@ -7,11 +7,12 @@ import (
 )
 
 type HTTPProvider[T any] struct {
-	r          *http.Request
-	w          http.ResponseWriter
-	statusCode *int
-	data       *T
-	err        error
+	r             *http.Request
+	w             http.ResponseWriter
+	statusCode    *int
+	errStatusCode *int
+	data          *T
+	err           error
 }
 
 type Response[T any] struct {
@@ -26,8 +27,18 @@ func NewHTTPPresenter[T any](r *http.Request, w http.ResponseWriter) *HTTPProvid
 	return &HTTPProvider[T]{r: r, w: w}
 }
 
+// WithStatusCode sets the status code used on a successful response. It has
+// no effect when Present() ends up taking the error path — use
+// WithErrorStatusCode for that.
 func (p *HTTPProvider[T]) WithStatusCode(code int) *HTTPProvider[T] {
 	p.statusCode = &code
+	return p
+}
+
+// WithErrorStatusCode sets the status code used when Present() takes the
+// error path (WithError was given a non-nil error). Defaults to 400.
+func (p *HTTPProvider[T]) WithErrorStatusCode(code int) *HTTPProvider[T] {
+	p.errStatusCode = &code
 	return p
 }
 
@@ -51,17 +62,17 @@ func (p *HTTPProvider[T]) sendError(toSend error) {
 }
 
 func (p *HTTPProvider[T]) Present() {
-	statusCode := http.StatusOK
 	if p.err != nil {
-		statusCode = http.StatusBadRequest
-		if p.statusCode != nil {
-			statusCode = *p.statusCode
+		statusCode := http.StatusBadRequest
+		if p.errStatusCode != nil {
+			statusCode = *p.errStatusCode
 		}
 		log.Printf("ERROR %s %s: %v", p.r.Method, p.r.URL.Path, p.err)
 		http.Error(p.w, p.err.Error(), statusCode)
 		return
 	}
 
+	statusCode := http.StatusOK
 	if p.statusCode != nil {
 		statusCode = *p.statusCode
 	}

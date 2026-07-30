@@ -1,14 +1,13 @@
 package athletes
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/ubaniak/scoreboard/internal/athletes/entities"
 )
 
 type UseCase interface {
-	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) error
+	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error)
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
@@ -36,14 +35,7 @@ func (uc *useCase) FindOrCreateByNameAndClub(name string, clubAffiliationID *uin
 	if len(matches) > 0 {
 		return matches[0].ID, nil
 	}
-	if err := uc.storage.Create(&entities.Athlete{Name: name, ClubAffiliationID: clubAffiliationID}); err != nil {
-		return 0, err
-	}
-	created, err := uc.storage.FindByName(name)
-	if err != nil || len(created) == 0 {
-		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
-	}
-	return created[len(created)-1].ID, nil
+	return uc.storage.Create(&entities.Athlete{Name: name, ClubAffiliationID: clubAffiliationID})
 }
 
 func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error) {
@@ -69,18 +61,11 @@ func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID
 		}
 		return existing.ID, nil
 	}
-	if err := uc.storage.Create(&entities.Athlete{
+	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		ClubAffiliationID:     clubAffiliationID,
 		ProvinceAffiliationID: provinceAffiliationID,
-	}); err != nil {
-		return 0, err
-	}
-	created, err := uc.storage.FindByName(name)
-	if err != nil || len(created) == 0 {
-		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
-	}
-	return created[len(created)-1].ID, nil
+	})
 }
 
 func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) (uint, error) {
@@ -120,7 +105,7 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 		}
 		return existing.ID, nil
 	}
-	if err := uc.storage.Create(&entities.Athlete{
+	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		AgeCategory:           ageCategory,
 		Gender:                gender,
@@ -128,14 +113,7 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 		ClubAffiliationID:     clubAffiliationID,
 		ProvinceAffiliationID: provinceAffiliationID,
 		NationAffiliationID:   nationAffiliationID,
-	}); err != nil {
-		return 0, err
-	}
-	created, err := uc.storage.FindByName(name)
-	if err != nil || len(created) == 0 {
-		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
-	}
-	return created[len(created)-1].ID, nil
+	})
 }
 
 func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
@@ -155,17 +133,10 @@ func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
 		return matches[0].ID, nil
 	}
 	// Not found — create a new athlete with just the name.
-	if err := uc.storage.Create(&entities.Athlete{Name: name}); err != nil {
-		return 0, err
-	}
-	created, err := uc.storage.FindByName(name)
-	if err != nil || len(created) == 0 {
-		return 0, fmt.Errorf("failed to retrieve newly created athlete %q", name)
-	}
-	return created[len(created)-1].ID, nil
+	return uc.storage.Create(&entities.Athlete{Name: name})
 }
 
-func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) error {
+func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error) {
 	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		AgeCategory:           ageCategory,

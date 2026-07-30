@@ -117,7 +117,7 @@ func main() {
 			NumberOfJudges: numJudges,
 			Status:         boutEntities.BoutStatusNotStarted,
 		}
-		if err := boutUC.Create(cardId, b); err != nil {
+		if _, err := boutUC.Create(cardId, b); err != nil {
 			log.Fatalf("create bout %d: %v", i, err)
 		}
 	}

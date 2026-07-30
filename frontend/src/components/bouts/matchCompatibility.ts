@@ -74,6 +74,3 @@ export const getMismatches = (red?: Athlete, blue?: Athlete): Mismatch[] => {
 
   return mismatches;
 };
-
-export const matchWarnings = (red?: Athlete, blue?: Athlete): string[] =>
-  getMismatches(red, blue).map((m) => m.message);

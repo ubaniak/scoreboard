@@ -41,11 +41,12 @@ func (m *MockUseCase) EXPECT() *MockUseCaseMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUseCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) error {
+func (m *MockUseCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID, weightClass)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uint)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.

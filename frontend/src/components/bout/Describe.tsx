@@ -348,16 +348,6 @@ export const DescribeBout = ({
             </Col>
           </Row>
 
-          {bout.comments && bout.comments.length > 0 && (
-            <Space direction="vertical" size={2} style={{ marginBottom: 4 }}>
-              {bout.comments.map((c, i) => (
-                <Text key={i} type="secondary" style={{ fontSize: 12 }}>
-                  — {c}
-                </Text>
-              ))}
-            </Space>
-          )}
-
           {rounds.length > 0 && (
             <>
               <Divider style={{ margin: "12px 0" }} />

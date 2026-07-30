@@ -634,7 +634,8 @@ type importBoutAdapter struct {
 }
 
 func (a *importBoutAdapter) Create(cardId uint, bout *boutEntities.Bout) error {
-	return a.uc.Create(cardId, bout)
+	_, err := a.uc.Create(cardId, bout)
+	return err
 }
 
 func (a *importBoutAdapter) CreateBulk(cardId uint, boutsSlice []*boutEntities.Bout) error {

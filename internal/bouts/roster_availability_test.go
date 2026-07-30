@@ -47,7 +47,8 @@ var _ = Describe("Roster availability flip", func() {
 			rosterUC.EXPECT().SetAvailable(uint(1), uint(10), false).Return(nil)
 			rosterUC.EXPECT().SetAvailable(uint(1), uint(20), false).Return(nil)
 
-			Expect(uc.Create(1, bout)).To(Succeed())
+			_, err := uc.Create(1, bout)
+			Expect(err).To(Succeed())
 		})
 
 		It("propagates an error from the roster flip", func() {
@@ -59,7 +60,8 @@ var _ = Describe("Roster availability flip", func() {
 			roundUC.EXPECT().CreateRounds(uint(99)).Return(nil)
 			rosterUC.EXPECT().SetAvailable(uint(1), uint(10), false).Return(errBoom)
 
-			Expect(uc.Create(1, bout)).To(MatchError(errBoom))
+			_, err := uc.Create(1, bout)
+			Expect(err).To(MatchError(errBoom))
 		})
 	})
 

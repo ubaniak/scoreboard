@@ -14,6 +14,7 @@ export type RowListProps<T> = {
   columns: RowListColumn<T>[];
   loading?: boolean;
   emptyText?: React.ReactNode;
+  rowWarning?: (record: T) => boolean;
 };
 
 const THUMBNAIL_HUES = [217, 262, 12, 190, 32, 152];
@@ -114,24 +115,29 @@ export const RowList = <T,>(props: RowListProps<T>) => {
           ))}
         </div>
       )}
-      {props.data.map((record, i) => (
-        <div
-          key={props.rowKey(record)}
-          style={{
-            display: "grid",
-            gridTemplateColumns,
-            alignItems: "center",
-            gap: space.md,
-            padding: `12px ${space.md}px`,
-            borderBottom: i === props.data.length - 1 ? "none" : `1px solid ${colors.borderSubtle}`,
-            minWidth: "fit-content",
-          }}
-        >
-          {props.columns.map((column) => (
-            <div key={column.key}>{column.render(record)}</div>
-          ))}
-        </div>
-      ))}
+      {props.data.map((record, i) => {
+        const warning = props.rowWarning?.(record) ?? false;
+        return (
+          <div
+            key={props.rowKey(record)}
+            style={{
+              display: "grid",
+              gridTemplateColumns,
+              alignItems: "center",
+              gap: space.md,
+              padding: `12px ${space.md}px`,
+              borderBottom: i === props.data.length - 1 ? "none" : `1px solid ${colors.borderSubtle}`,
+              minWidth: "fit-content",
+              background: warning ? "rgba(250, 204, 21, 0.12)" : undefined,
+              boxShadow: warning ? "inset 3px 0 0 0 rgba(234, 179, 8, 0.8)" : undefined,
+            }}
+          >
+            {props.columns.map((column) => (
+              <div key={column.key}>{column.render(record)}</div>
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 };

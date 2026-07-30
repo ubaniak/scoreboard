@@ -118,15 +118,19 @@ func (a *App) List(w http.ResponseWriter, r *http.Request) {
 	presenter.WithData(resp).Present()
 }
 
+type CreateAthleteResponse struct {
+	ID uint `json:"id"`
+}
+
 func (a *App) Create(w http.ResponseWriter, r *http.Request) {
-	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	presenter := presenters.NewHTTPPresenter[CreateAthleteResponse](r, w)
 	var req CreateAthleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		presenter.WithError(err).Present()
 		return
 	}
-	err := a.useCase.Create(req.Name, req.AgeCategory, req.Gender, req.Experience, req.ClubAffiliationID, req.ProvinceAffiliationID, req.NationAffiliationID, req.WeightClass)
-	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
+	id, err := a.useCase.Create(req.Name, req.AgeCategory, req.Gender, req.Experience, req.ClubAffiliationID, req.ProvinceAffiliationID, req.NationAffiliationID, req.WeightClass)
+	presenter.WithData(CreateAthleteResponse{ID: id}).WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
 func (a *App) Update(w http.ResponseWriter, r *http.Request) {
@@ -344,7 +348,7 @@ func (a *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if err := a.useCase.Create(name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID, nil); err != nil {
+		if _, err := a.useCase.Create(name, ageCategory, gender, experience, clubAffiliationID, provinceAffiliationID, nationAffiliationID, nil); err != nil {
 			presenter.WithError(err).Present()
 			return
 		}

@@ -155,7 +155,7 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			presenter = presenter.WithStatusCode(http.StatusNotFound)
+			presenter = presenter.WithErrorStatusCode(http.StatusNotFound)
 		}
 		presenter.WithError(err).Present()
 		return
@@ -211,7 +211,7 @@ func (h *App) Get(w http.ResponseWriter, r *http.Request) {
 	card, err := h.useCase.Get(id)
 	if err != nil {
 		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			presenter.WithStatusCode(http.StatusNotFound).WithError(err).Present()
+			presenter.WithErrorStatusCode(http.StatusNotFound).WithError(err).Present()
 			return
 		}
 		presenter.WithError(err).Present()

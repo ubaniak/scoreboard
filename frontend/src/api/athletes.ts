@@ -56,7 +56,7 @@ export const useMutateCreateAthlete = (props: TokenBase) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateAthleteProps) =>
-      fetchClient(`${baseUrl}/api/athletes`, {
+      fetchClient<{ id: number }>(`${baseUrl}/api/athletes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

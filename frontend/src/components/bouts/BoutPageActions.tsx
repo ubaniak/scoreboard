@@ -1,10 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { EditBout } from "./edit";
+import { EditBoutPanel } from "./EditBoutPanel";
 import type { Bout, Official } from "../../entities/cards";
 import type { UpdateBoutProps } from "../../api/bouts";
 
 type BoutPageActionsProps = {
+  token: string;
   bout: Bout;
   officials: Official[];
   cardId: string;
@@ -13,6 +14,7 @@ type BoutPageActionsProps = {
 };
 
 export const BoutPageActions = ({
+  token,
   bout,
   officials,
   cardId,
@@ -27,7 +29,9 @@ export const BoutPageActions = ({
       content={{
         title: "Edit Bout",
         body: (close) => (
-          <EditBout
+          <EditBoutPanel
+            token={token}
+            cardId={cardId}
             bout={bout}
             officials={officials}
             onClose={close}

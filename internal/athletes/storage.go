@@ -8,7 +8,7 @@ import (
 )
 
 type Storage interface {
-	Create(athlete *entities.Athlete) error
+	Create(athlete *entities.Athlete) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	FindByName(name string) ([]entities.Athlete, error)

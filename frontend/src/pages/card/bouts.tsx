@@ -8,6 +8,7 @@ import {
   useMutateUpdateBout,
 } from "../../api/bouts";
 import { useGetCardById } from "../../api/cards";
+import { useMutateAddBoutComment } from "../../api/comments";
 import { useGetOfficials } from "../../api/officials";
 import { useListRoster } from "../../api/roster";
 import { BoutsIndex } from "../../components/bouts";
@@ -24,12 +25,15 @@ export const CardBoutsPage = () => {
   const roster = useListRoster({ token, cardId });
 
   const addBout = useMutateCreateBout({ token, cardId });
+  const addBoutComment = useMutateAddBoutComment({ token, cardId });
   const updateBout = useMutateUpdateBout({ token, cardId });
   const deleteBout = useMutateDeleteBout(cardId, token);
   const importBouts = useMutateImportBouts({ token, cardId });
 
   return (
     <BoutsIndex
+      token={token}
+      cardId={cardId}
       loading={bouts.isLoading}
       card={card.data}
       bouts={bouts.data}
@@ -39,6 +43,9 @@ export const CardBoutsPage = () => {
         .filter((r) => r.available)
         .map((r) => r.athleteId)}
       onAddBout={(values) => addBout.mutateAsync(values)}
+      onAddBoutComment={(boutId, comment) =>
+        addBoutComment.mutateAsync({ boutId: String(boutId), comment })
+      }
       onEditBout={(values) => updateBout.mutateAsync(values)}
       onDeleteBout={(boutId) => deleteBout.mutate(boutId)}
       onImport={(file) => importBouts.mutateAsync(file)}
