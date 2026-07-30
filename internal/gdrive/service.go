@@ -215,21 +215,6 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 		}
 	}
 
-	// ── Clubs (legacy single-type sheet) ─────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Clubs")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateByName(name); err == nil {
-				res.Clubs++
-			}
-		}
-	}
-
 	// ── Provinces ────────────────────────────────────────────────────────────
 	hdr, rows, err = s.sheetRows(ctx, sheetID, "Provinces")
 	if err == nil && len(rows) > 0 {
@@ -632,7 +617,6 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 		},
 		Sheets: []*sheetsAPI.Sheet{
 			{Properties: &sheetsAPI.SheetProperties{Title: "Affiliations"}},
-			{Properties: &sheetsAPI.SheetProperties{Title: "Clubs"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Athletes"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Officials"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Cards"}},
@@ -658,14 +642,6 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 				{"City Boxing", "club"},
 				{"Auckland", "province"},
 				{"New Zealand", "nation"},
-			},
-		},
-		{
-			name: "Clubs",
-			rows: [][]any{
-				{"Name", "Location"},
-				{"City Boxing", "Auckland"},
-				{"North Stars", "Wellington"},
 			},
 		},
 		{

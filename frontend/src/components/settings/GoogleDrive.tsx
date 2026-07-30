@@ -272,6 +272,26 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
       </Space>
     ),
   },
+  {
+    title: "Find your Sheet ID and Folder ID",
+    description: (
+      <Space direction="vertical" size={2}>
+        <Text>
+          Open the Google Sheet you want to map to a card, and copy the ID out of its URL:
+        </Text>
+        <Text code>
+          https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit
+        </Text>
+        <Text>
+          For the Drive folder, open it in Drive and copy the ID the same way:
+        </Text>
+        <Text code>
+          https://drive.google.com/drive/folders/<Text strong>FOLDER_ID</Text>
+        </Text>
+        <Text>Leave the folder blank to upload reports to your Drive's root instead.</Text>
+      </Space>
+    ),
+  },
 ];
 
 type SettingsPanelProps = {
