@@ -1,6 +1,4 @@
 import {
-  ArrowLeftOutlined,
-  CheckCircleOutlined,
   CloudUploadOutlined,
   DisconnectOutlined,
   FileAddOutlined,
@@ -10,27 +8,28 @@ import {
   ImportOutlined,
   LinkOutlined,
   PlusOutlined,
-  QuestionCircleOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import {
-  Alert,
   App,
   Badge,
   Button,
+  Collapse,
   Divider,
+  Empty,
   Flex,
   Form,
   Input,
   Select,
   Popconfirm,
   Space,
-  Steps,
   Table,
+  Tooltip,
   Tree,
   Typography,
 } from "antd";
 import type { TreeDataNode } from "antd";
-import { useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import {
   useGetGDriveAuthUrl,
   useGetGDriveConfig,
@@ -41,13 +40,17 @@ import {
   useMutateGDriveTemplate,
   useMutateGDriveVerify,
   type ExportResult,
+  type GDriveConfig,
   type Sheet,
 } from "../../api/gdrive";
 import { useListCards } from "../../api/cards";
+import { useGetCurrent } from "../../api/current";
 import type { TokenBase } from "../../api/entities";
 import { ActionMenu, type CloseAction } from "../actionMenu/actionMenu";
 
 const { Text, Title, Paragraph, Link } = Typography;
+
+// ── Sheet mapping editor (reused inside the settings panel) ──────────────
 
 type SheetFormProps = {
   initialCardName?: string;
@@ -201,19 +204,7 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
   );
 };
 
-type SetupGuideProps = {
-  close: () => void;
-  initialValues: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string };
-  onSave: (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => Promise<void>;
-  onVerify: (clientId: string, clientSecret: string) => Promise<void>;
-  onConnect: () => Promise<void>;
-  onCreateTemplate: () => Promise<string>;
-  saving: boolean;
-  verifying: boolean;
-  connecting: boolean;
-  creatingTemplate: boolean;
-  connected: boolean;
-};
+// ── Setup / connection panel — lives entirely inside the settings ActionMenu ──
 
 const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
   {
@@ -233,8 +224,7 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
     description: (
       <Space direction="vertical" size={2}>
         <Text>
-          In your project, go to <Text strong>APIs &amp; Services → Library</Text> and
-          enable:
+          In your project, go to <Text strong>APIs &amp; Services → Library</Text> and enable:
         </Text>
         <Text>
           <Text code>Google Sheets API</Text> — for importing data
@@ -253,11 +243,8 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
           Go to <Text strong>APIs &amp; Services → OAuth consent screen</Text>.
         </Text>
         <Text>
-          Choose <Text strong>External</Text> as user type, fill in your app name and
-          email, then save.
-        </Text>
-        <Text type="secondary">
-          This is a one-time setup required before creating credentials.
+          Choose <Text strong>External</Text> as user type, fill in your app name and email, then
+          save.
         </Text>
       </Space>
     ),
@@ -274,41 +261,51 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
           .
         </Text>
         <Text>
-          Application type: <Text strong>Web application</Text>.
-        </Text>
-        <Text>
-          Under <Text strong>Authorised redirect URIs</Text> add exactly:
+          Application type: <Text strong>Web application</Text>. Under{" "}
+          <Text strong>Authorised redirect URIs</Text> add exactly:
         </Text>
         <Text code>http://localhost:8080/api/gdrive/callback</Text>
         <Text>
-          Copy the <Text strong>Client ID</Text> and <Text strong>Client Secret</Text>.
+          Copy the <Text strong>Client ID</Text> and <Text strong>Client Secret</Text> into the
+          fields above.
         </Text>
       </Space>
     ),
   },
 ];
 
-const SetupGuideContent = ({
-  close,
-  initialValues,
+type SettingsPanelProps = {
+  cfg?: GDriveConfig;
+  connected: boolean;
+  onSave: (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => Promise<void>;
+  onVerify: (clientId: string, clientSecret: string) => Promise<void>;
+  onConnect: () => Promise<void>;
+  onDisconnect: () => Promise<void>;
+  saving: boolean;
+  verifying: boolean;
+  connecting: boolean;
+  disconnecting: boolean;
+  close: CloseAction;
+};
+
+const SettingsPanel = ({
+  cfg,
+  connected,
   onSave,
   onVerify,
   onConnect,
-  onCreateTemplate,
+  onDisconnect,
   saving,
   verifying,
   connecting,
-  creatingTemplate,
-  connected,
-}: SetupGuideProps) => {
-  const { message } = App.useApp();
-  const [clientId, setClientId] = useState(initialValues.clientId);
-  const [clientSecret, setClientSecret] = useState(initialValues.clientSecret);
-  const [sheets, setSheets] = useState<Sheet[]>(initialValues.sheets);
-  const [folderId, setFolderId] = useState(initialValues.folderId);
-  const [verifyStatus, setVerifyStatus] = useState<"idle" | "success" | "error">(
-    "idle",
-  );
+  disconnecting,
+  close,
+}: SettingsPanelProps) => {
+  const [clientId, setClientId] = useState(cfg?.clientId ?? "");
+  const [clientSecret, setClientSecret] = useState(cfg?.clientSecret ?? "");
+  const [sheets, setSheets] = useState<Sheet[]>(cfg?.sheets ?? []);
+  const [folderId, setFolderId] = useState(cfg?.folderId ?? "");
+  const [verifyStatus, setVerifyStatus] = useState<"idle" | "success" | "error">("idle");
 
   const credsReady = !!clientId && !!clientSecret;
 
@@ -330,151 +327,191 @@ const SetupGuideContent = ({
       await onSave({ clientId, clientSecret, sheets, folderId });
       close();
     } catch {
-      // toast handled upstream
+      // toast handled upstream — keep the panel open so the user can retry
     }
   };
 
-  const handleUploadTemplate = async () => {
-    try {
-      const link = await onCreateTemplate();
-      window.open(link, "_blank");
-    } catch (err) {
-      message.error((err as Error).message || "Failed to create template");
-    }
-  };
+  return (
+    <Space direction="vertical" size={16} style={{ width: "100%" }}>
+      <Flex align="center" justify="space-between">
+        <Badge status={connected ? "success" : "default"} text={connected ? "Connected" : "Not connected"} />
+        {connected && (
+          <Popconfirm
+            title="Disconnect from Google Drive?"
+            description="You will need to re-authorise to use import/export."
+            okText="Disconnect"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={onDisconnect}
+          >
+            <Button icon={<DisconnectOutlined />} danger size="small" loading={disconnecting}>
+              Disconnect
+            </Button>
+          </Popconfirm>
+        )}
+      </Flex>
 
-  const stepItems = [
-    ...SETUP_INSTRUCTIONS,
-    {
-      title: "Paste credentials",
-      description: (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
-          <Text>Paste your Client ID and Client Secret from Google Cloud Console.</Text>
+      <Form layout="vertical" size="small" style={{ marginBottom: -8 }}>
+        <Form.Item label="Client ID" style={{ marginBottom: 8 }}>
           <Input
-            placeholder="Client ID"
+            placeholder="xxxx.apps.googleusercontent.com"
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
           />
-          <Input.Password
-            placeholder="Client Secret"
-            value={clientSecret}
-            onChange={(e) => setClientSecret(e.target.value)}
-          />
-          <Space wrap>
-            <Button onClick={handleVerify} loading={verifying} disabled={!credsReady}>
-              Verify Connection
-            </Button>
-            {verifyStatus === "success" && (
-              <Badge status="success" text="Verified" />
-            )}
-            {verifyStatus === "error" && (
-              <Badge status="error" text="Verification failed" />
-            )}
-            <Button
-              type="primary"
-              icon={<LinkOutlined />}
-              loading={connecting}
-              onClick={onConnect}
-              disabled={!credsReady}
-            >
-              Connect to Google
-            </Button>
-          </Space>
-        </Space>
-      ),
-    },
-    {
-      title: "Upload template or prepare your sheet",
-      description: (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
-          <Text>
-            <Text strong>Option A:</Text> Auto-create a Google Sheet with the correct
-            structure.
-          </Text>
-          <Button
-            icon={<FileAddOutlined />}
-            loading={creatingTemplate}
-            disabled={!connected}
-            onClick={handleUploadTemplate}
-          >
-            Upload Template
-          </Button>
-          <Text>
-            <Text strong>Option B:</Text> Create your own sheet with tabs named exactly:{" "}
-            <Text code>Athletes</Text>, <Text code>Officials</Text>,{" "}
-            <Text code>Clubs</Text>, <Text code>Cards</Text>.
-          </Text>
-        </Space>
-      ),
-    },
-    {
-      title: "Add Google Sheets for each card",
-      description: (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
-          <Text type="secondary">
-            Find Google Sheet ID in URL:{" "}
-            <Text code>
-              https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit
-            </Text>
-          </Text>
-          <SheetList value={sheets} onChange={setSheets} />
-          <Text type="secondary" style={{ marginTop: 8 }}>
-            Drive Folder ID (optional). Find in URL:{" "}
-            <Text code>
-              https://drive.google.com/drive/folders/<Text strong>FOLDER_ID</Text>
-            </Text>
-            . Leave blank to upload to root.
-          </Text>
-          <Space.Compact style={{ width: "100%" }}>
-            <Input
-              placeholder="1A2B3C4D5E6F7G8H9I"
-              value={folderId}
-              onChange={(e) => setFolderId(e.target.value)}
-            />
-            <Button
-              icon={<LinkOutlined />}
-              href={folderId ? `https://drive.google.com/drive/folders/${folderId}` : undefined}
-              target="_blank"
-              disabled={!folderId}
-            >
-              Go to
-            </Button>
-          </Space.Compact>
-        </Space>
-      ),
-    },
-    {
-      title: "Save config",
-      description: (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
-          <Text>
-            Click <Text strong>Save Config</Text> below to persist credentials and
-            sheet mappings.
-          </Text>
-          <Space>
-            <Button type="primary" onClick={handleSave} loading={saving}>
-              Save Config
-            </Button>
-            <Button onClick={() => close()} disabled={saving}>
-              Cancel
-            </Button>
-          </Space>
-        </Space>
-      ),
-    },
-  ];
+        </Form.Item>
+        <Form.Item label="Client Secret" style={{ marginBottom: 0 }}>
+          <Input.Password value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} />
+        </Form.Item>
+      </Form>
+      <Space wrap>
+        <Button size="small" onClick={handleVerify} loading={verifying} disabled={!credsReady}>
+          Verify
+        </Button>
+        {verifyStatus === "success" && <Badge status="success" text="Verified" />}
+        {verifyStatus === "error" && <Badge status="error" text="Verification failed" />}
+        <Button
+          size="small"
+          type="primary"
+          icon={<LinkOutlined />}
+          loading={connecting}
+          onClick={onConnect}
+          disabled={!credsReady}
+        >
+          Connect to Google
+        </Button>
+      </Space>
 
-  return (
-    <div style={{ maxHeight: 800, overflowY: "auto", paddingRight: 8 }}>
-      <Steps
-        direction="vertical"
+      <Collapse
         size="small"
-        items={stepItems.map((s) => ({ ...s, status: "process" as const }))}
+        items={[
+          {
+            key: "guide",
+            label: "Setup guide",
+            children: (
+              <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                {SETUP_INSTRUCTIONS.map((step, i) => (
+                  <div key={step.title}>
+                    <Text strong>
+                      {i + 1}. {step.title}
+                    </Text>
+                    <div>{step.description}</div>
+                  </div>
+                ))}
+              </Space>
+            ),
+          },
+        ]}
       />
-    </div>
+
+      <Divider style={{ margin: "0" }} />
+
+      <div>
+        <Text strong style={{ display: "block", marginBottom: 8 }}>
+          Sheet mappings
+        </Text>
+        <SheetList value={sheets} onChange={setSheets} />
+      </div>
+
+      <div>
+        <Text strong style={{ display: "block", marginBottom: 8 }}>
+          Drive folder
+        </Text>
+        <Space.Compact style={{ width: "100%" }}>
+          <Input
+            placeholder="Folder ID (optional — leave blank to upload to root)"
+            value={folderId}
+            onChange={(e) => setFolderId(e.target.value)}
+          />
+          <Button
+            icon={<LinkOutlined />}
+            href={folderId ? `https://drive.google.com/drive/folders/${folderId}` : undefined}
+            target="_blank"
+            disabled={!folderId}
+          />
+        </Space.Compact>
+      </div>
+
+      <Flex justify="end" gap={8}>
+        <Button onClick={() => close()}>Close</Button>
+        <Button type="primary" onClick={handleSave} loading={saving}>
+          Save Config
+        </Button>
+      </Flex>
+    </Space>
   );
 };
 
+// ── Export log — grows across a session, newest run on top ───────────────
+
+type ExportLogEntry = { id: string; result: ExportResult; at: number };
+
+const relativeTime = (at: number) => {
+  const minutes = Math.floor((Date.now() - at) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+};
+
+const buildTreeData = (result: ExportResult): TreeDataNode[] => {
+  const fileIcon = (name: string) => (name.endsWith(".pdf") ? <FilePdfOutlined /> : <FileTextOutlined />);
+  return result.files.map((file) => ({
+    title: (
+      <a href={file.link} target="_blank" rel="noreferrer">
+        {fileIcon(file.name)} {file.name}
+      </a>
+    ),
+    key: file.link,
+    isLeaf: true,
+  }));
+};
+
+const ExportLog = ({ entries }: { entries: ExportLogEntry[] }) => {
+  const [, bumpTick] = useReducer((n: number) => n + 1, 0);
+
+  useEffect(() => {
+    if (entries.length === 0) return;
+    const interval = setInterval(bumpTick, 30_000);
+    return () => clearInterval(interval);
+  }, [entries.length]);
+
+  if (entries.length === 0) {
+    return <Empty description="No exports yet" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: "16px 0" }} />;
+  }
+
+  return (
+    <Collapse
+      size="small"
+      items={entries.map((entry) => ({
+        key: entry.id,
+        label: (
+          <Space size={8}>
+            <FolderOpenOutlined />
+            <Text strong>{entry.result.folderName}</Text>
+            <Text type="secondary">
+              — {entry.result.files.length} file{entry.result.files.length === 1 ? "" : "s"} ·{" "}
+              {relativeTime(entry.at)}
+            </Text>
+          </Space>
+        ),
+        extra: (
+          <a
+            href={entry.result.folderLink}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LinkOutlined /> Folder
+          </a>
+        ),
+        children: <Tree defaultExpandAll treeData={buildTreeData(entry.result)} style={{ backgroundColor: "transparent" }} />,
+      }))}
+    />
+  );
+};
+
+// ── Main page — two rows for daily use, everything else behind the gear ──
 
 export const GoogleDrive = ({ token }: TokenBase) => {
   const { message } = App.useApp();
@@ -487,14 +524,26 @@ export const GoogleDrive = ({ token }: TokenBase) => {
   const createTemplate = useMutateGDriveTemplate({ token });
   const verifyCredentials = useMutateGDriveVerify({ token });
   const cardsQuery = useListCards({ token });
+  const current = useGetCurrent();
 
   const cfg = configQuery.data;
   const connected = cfg?.connected ?? false;
+  const sheets = cfg?.sheets ?? [];
 
-  const [exportCardId, setExportCardId] = useState<string | null>(null);
-  const [exportResult, setExportResult] = useState<ExportResult | null>(null);
-  const [importSheetId, setImportSheetId] = useState<string | null>(null);
-  const [setupOpen, setSetupOpen] = useState(false);
+  const [exportCardIdOverride, setExportCardIdOverride] = useState<string | null>(null);
+  const [importSheetIdOverride, setImportSheetIdOverride] = useState<string | null>(null);
+  const [exportLog, setExportLog] = useState<ExportLogEntry[]>([]);
+
+  // Default the import sheet when there's only one to choose from, until the
+  // user picks a different one explicitly.
+  const importSheetId = importSheetIdOverride ?? (sheets.length === 1 ? sheets[0].sheetId : null);
+
+  // Default the export card to whichever card is currently live, until the
+  // user picks a different one explicitly.
+  const liveCardId = current.data?.card?.id;
+  const exportCardId =
+    exportCardIdOverride ??
+    (liveCardId && (cardsQuery.data ?? []).some((c) => c.id === liveCardId) ? liveCardId : null);
 
   const handleConnect = async () => {
     try {
@@ -502,6 +551,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
       window.open(url, "_blank");
     } catch (err) {
       message.error((err as Error).message || "Failed to start auth flow");
+      throw err;
     }
   };
 
@@ -511,6 +561,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
       message.success("Disconnected from Google Drive");
     } catch (err) {
       message.error((err as Error).message || "Disconnect failed");
+      throw err;
     }
   };
 
@@ -518,8 +569,9 @@ export const GoogleDrive = ({ token }: TokenBase) => {
     try {
       await saveConfig.mutateAsync(values);
       message.success("Config saved");
-    } catch {
+    } catch (err) {
       message.error("Failed to save config");
+      throw err;
     }
   };
 
@@ -533,202 +585,111 @@ export const GoogleDrive = ({ token }: TokenBase) => {
     }
   };
 
-  const handleImport = async () => {
+  const handleUploadTemplate = async () => {
     try {
-      const result = await importData.mutateAsync(importSheetId || undefined);
+      const link = await createTemplate.mutateAsync();
+      window.open(link, "_blank");
+    } catch (err) {
+      message.error((err as Error).message || "Failed to create template");
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importSheetId) return;
+    try {
+      const result = await importData.mutateAsync(importSheetId);
       message.success(
-        `Imported: ${result.clubs} clubs, ${result.athletes} athletes, ${result.officials} officials, ${result.bouts} bouts`
+        `Imported: ${result.clubs} clubs, ${result.athletes} athletes, ${result.officials} officials, ${result.bouts} bouts`,
       );
-      setImportSheetId(null);
     } catch (err) {
       message.error((err as Error).message || "Import failed");
     }
   };
 
   const handleExport = async () => {
-    if (!exportCardId) {
-      message.warning("Enter a card ID first");
-      return;
-    }
+    if (!exportCardId) return;
     try {
-      setExportResult(null);
       const result = await exportCard.mutateAsync(exportCardId);
-      setExportResult(result);
+      setExportLog((log) => [{ id: `${Date.now()}`, result, at: Date.now() }, ...log]);
       message.success(`Exported ${result.files.length} file(s) to Google Drive`);
     } catch (err) {
       message.error((err as Error).message || "Export failed");
     }
   };
 
-  const buildTreeData = (result: ExportResult): TreeDataNode[] => {
-    const getFileIcon = (name: string) => {
-      return name.endsWith(".pdf") ? <FilePdfOutlined /> : <FileTextOutlined />;
-    };
-
-    return [
-      {
-        title: (
-          <a href={result.folderLink} target="_blank" rel="noreferrer">
-            <FolderOpenOutlined style={{ marginRight: 6 }} />
-            {result.folderName}
-          </a>
-        ),
-        key: "folder",
-        children: result.files.map((file) => ({
-          title: (
-            <a href={file.link} target="_blank" rel="noreferrer">
-              {getFileIcon(file.name)} {file.name}
-            </a>
-          ),
-          key: file.link,
-          isLeaf: true,
-        })),
-      },
-    ];
-  };
-
-  if (setupOpen) {
-    return (
-      <Space direction="vertical" style={{ width: "100%" }}>
-        <Flex align="center" gap={8}>
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => setSetupOpen(false)}
-          />
-          <Title level={5} style={{ margin: 0 }}>How to set up Google Drive</Title>
-        </Flex>
-        <SetupGuideContent
-          close={() => setSetupOpen(false)}
-          initialValues={{
-            clientId: cfg?.clientId ?? "",
-            clientSecret: cfg?.clientSecret ?? "",
-            sheets: cfg?.sheets ?? [],
-            folderId: cfg?.folderId ?? "",
-          }}
-          onSave={handleSaveConfig}
-          onVerify={handleVerifyCredentials}
-          onConnect={handleConnect}
-          onCreateTemplate={() => createTemplate.mutateAsync()}
-          saving={saveConfig.isPending}
-          verifying={verifyCredentials.isPending}
-          connecting={getAuthUrl.isPending}
-          creatingTemplate={createTemplate.isPending}
-          connected={connected}
-        />
-      </Space>
-    );
-  }
-
   return (
-    <Space direction="vertical" style={{ width: "100%" }}>
+    <Space direction="vertical" size={20} style={{ width: "100%" }}>
 
       {/* ── Header ──────────────────────────────────────────── */}
       <Flex align="center" justify="space-between" wrap gap={8}>
         <Flex align="center" gap={8}>
           <Title level={5} style={{ margin: 0 }}>Google Drive</Title>
-          {connected ? (
-            <Badge status="success" text="Connected" />
-          ) : (
-            <Badge status="default" text="Not connected" />
-          )}
+          {connected ? <Badge status="success" text="Connected" /> : <Badge status="default" text="Not connected" />}
         </Flex>
-        <Space>
-          <Button
-            icon={<QuestionCircleOutlined />}
-            onClick={() => setSetupOpen(true)}
-          >
-            Setup guide
-          </Button>
-          {connected && (
-            <Popconfirm
-              title="Disconnect from Google Drive?"
-              description="You will need to re-authorise to use import/export."
-              okText="Disconnect"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              onConfirm={handleDisconnect}
-            >
-              <Button icon={<DisconnectOutlined />} danger loading={disconnect.isPending}>
-                Disconnect
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
+        <ActionMenu
+          trigger={{
+            override: (onOpen) => (
+              <Tooltip title="Google Drive settings">
+                <Button shape="circle" icon={<SettingOutlined />} onClick={onOpen} aria-label="Google Drive settings" />
+              </Tooltip>
+            ),
+          }}
+          content={{
+            title: "Google Drive settings",
+            body: (close) => (
+              <SettingsPanel
+                cfg={cfg}
+                connected={connected}
+                onSave={handleSaveConfig}
+                onVerify={handleVerifyCredentials}
+                onConnect={handleConnect}
+                onDisconnect={handleDisconnect}
+                saving={saveConfig.isPending}
+                verifying={verifyCredentials.isPending}
+                connecting={getAuthUrl.isPending}
+                disconnecting={disconnect.isPending}
+                close={close}
+              />
+            ),
+          }}
+          width={560}
+        />
       </Flex>
 
-      {/* ── OAuth connect ───────────────────────────────────── */}
-      <Space direction="vertical">
-        <Text type="secondary">
-          After configuring credentials, click Connect to authorise access to Google Sheets and Drive.
-          A browser tab will open — grant access, then return here and refresh.
-        </Text>
-        <Button
-          type="primary"
-          icon={<LinkOutlined />}
-          loading={getAuthUrl.isPending}
-          onClick={handleConnect}
-          disabled={!cfg?.clientId || !cfg?.clientSecret}
-        >
-          Connect to Google
-        </Button>
-      </Space>
-
-      <Divider />
+      {!connected && (
+        <Paragraph type="secondary" style={{ margin: 0 }}>
+          Not connected — open <SettingOutlined /> Settings to connect a Google account and configure sheets.
+        </Paragraph>
+      )}
 
       {/* ── Import ──────────────────────────────────────────── */}
-      <Space direction="vertical" style={{ width: "100%" }}>
-        <Title level={5} style={{ marginBottom: 4 }}>Import from Sheet</Title>
-        <Paragraph type="secondary" style={{ marginBottom: 8 }}>
-          Reads the <Text code>Athletes</Text>, <Text code>Officials</Text>,{" "}
-          <Text code>Clubs</Text>, and <Text code>Cards</Text> tabs from the configured spreadsheet
-          and upserts records into the database.
-        </Paragraph>
-        <Space wrap>
-          <Button
-            icon={<FileAddOutlined />}
-            loading={createTemplate.isPending}
-            disabled={!connected}
-            onClick={async () => {
-              try {
-                const link = await createTemplate.mutateAsync();
-                window.open(link, "_blank");
-              } catch (err) {
-                message.error((err as Error).message || "Failed to create template");
-              }
-            }}
-          >
-            Upload Template
-          </Button>
-          {(cfg?.sheets ?? []).length > 0 && (
-            <Select
-              placeholder={
-                (cfg?.sheets ?? []).length === 1
-                  ? cfg?.sheets?.[0].cardName
-                  : "Select a sheet to import"
-              }
-              style={{ width: 240 }}
-              value={importSheetId}
-              onChange={(v) => setImportSheetId(v)}
+      <Space direction="vertical" size={6} style={{ width: "100%" }}>
+        <Text strong>Import from Sheet</Text>
+        <Flex align="center" gap={8} wrap>
+          <Select
+            placeholder={sheets.length === 0 ? "No sheets configured" : "Select a sheet"}
+            style={{ width: 240 }}
+            value={importSheetId}
+            onChange={setImportSheetIdOverride}
+            disabled={!connected || sheets.length === 0}
+            showSearch
+            optionFilterProp="label"
+            options={sheets.map((s) => ({ value: s.sheetId, label: s.cardName }))}
+          />
+          <Tooltip title="Upload Template">
+            <Button
+              icon={<FileAddOutlined />}
+              loading={createTemplate.isPending}
               disabled={!connected}
-              showSearch
-              optionFilterProp="label"
-              allowClear
-              options={(cfg?.sheets ?? []).map((s) => ({
-                value: s.sheetId,
-                label: s.cardName,
-              }))}
+              onClick={handleUploadTemplate}
+              aria-label="Upload Template"
             />
-          )}
+          </Tooltip>
           <Button
+            type="primary"
             icon={<ImportOutlined />}
             loading={importData.isPending}
-            disabled={
-              !connected ||
-              !cfg?.sheets ||
-              cfg.sheets.length === 0 ||
-              !importSheetId
-            }
+            disabled={!connected || !importSheetId}
             onClick={handleImport}
           >
             Import Now
@@ -742,29 +703,28 @@ export const GoogleDrive = ({ token }: TokenBase) => {
               Go to Sheet
             </Button>
           )}
-        </Space>
+        </Flex>
       </Space>
 
-      <Divider />
+      <Divider style={{ margin: 0 }} />
 
       {/* ── Export ──────────────────────────────────────────── */}
-      <Space direction="vertical" style={{ width: "100%" }}>
-        <Title level={5} style={{ marginBottom: 4 }}>Export Card Report to Drive</Title>
-        <Paragraph type="secondary" style={{ marginBottom: 8 }}>
-          Uploads the Full and Public CSV reports for a card to the configured Drive folder.
-        </Paragraph>
-        <Space>
+      <Space direction="vertical" size={6} style={{ width: "100%" }}>
+        <Text strong>Export Card Report to Drive</Text>
+        <Flex align="center" gap={8} wrap>
           <Select
             placeholder="Select a card"
             style={{ width: 240 }}
             value={exportCardId}
-            onChange={(v) => setExportCardId(v)}
+            onChange={setExportCardIdOverride}
             loading={cardsQuery.isLoading}
+            disabled={!connected}
             showSearch
             optionFilterProp="label"
             options={(cardsQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
           />
           <Button
+            type="primary"
             icon={<CloudUploadOutlined />}
             loading={exportCard.isPending}
             disabled={!connected || !exportCardId}
@@ -772,32 +732,8 @@ export const GoogleDrive = ({ token }: TokenBase) => {
           >
             Export
           </Button>
-          {cfg?.folderId && (
-            <Button
-              icon={<LinkOutlined />}
-              href={`https://drive.google.com/drive/folders/${cfg.folderId}`}
-              target="_blank"
-            >
-              Go to Folder
-            </Button>
-          )}
-        </Space>
-        {exportResult && (
-          <div>
-            <Alert
-              type="success"
-              icon={<CheckCircleOutlined />}
-              showIcon
-              message="Uploaded to Google Drive"
-              style={{ marginBottom: 12 }}
-            />
-            <Tree
-              defaultExpandAll
-              treeData={buildTreeData(exportResult)}
-              style={{ backgroundColor: "transparent" }}
-            />
-          </div>
-        )}
+        </Flex>
+        <ExportLog entries={exportLog} />
       </Space>
     </Space>
   );

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -67,6 +68,12 @@ type ImportResult struct {
 type ExportedFile struct {
 	Name string `json:"name"`
 	Link string `json:"link"`
+}
+
+// reportArtifact is a single named file to render then upload.
+type reportArtifact struct {
+	name  string
+	write func(io.Writer) error
 }
 
 // ExportCardResult describes a card export with folder and files.
@@ -507,84 +514,74 @@ func (s *driveService) ExportCard(ctx context.Context, cardId uint) (*ExportCard
 		return nil, fmt.Errorf("create folder: %w", err)
 	}
 
-	result := &ExportCardResult{
+	artifacts := []reportArtifact{
+		{
+			name:  fmt.Sprintf("full_report_%s_%s.csv", folderName, fullRd.CardDate),
+			write: func(w io.Writer) error { return reportsPackage.WriteFullCSV(w, fullRd) },
+		},
+		{
+			name:  fmt.Sprintf("full_report_%s_%s.pdf", folderName, fullRd.CardDate),
+			write: func(w io.Writer) error { return reportsPackage.WriteFullPDF(w, fullRd) },
+		},
+	}
+
+	if pubRd, err := s.reports.PublicReport(cardId); err == nil {
+		pubName := sanitiseName(pubRd.CardName)
+		artifacts = append(artifacts,
+			reportArtifact{
+				name:  fmt.Sprintf("public_report_%s_%s.csv", pubName, pubRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WritePublicCSV(w, pubRd) },
+			},
+			reportArtifact{
+				name:  fmt.Sprintf("public_report_%s_%s.pdf", pubName, pubRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WritePublicPDF(w, pubRd) },
+			},
+		)
+	}
+
+	if consRd, err := s.reports.JudgeConsistencyReport(cardId); err == nil {
+		consName := sanitiseName(consRd.CardName)
+		artifacts = append(artifacts,
+			reportArtifact{
+				name:  fmt.Sprintf("judge_consistency_short_%s_%s.csv", consName, consRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WriteShortConsistencyCSV(w, consRd) },
+			},
+			reportArtifact{
+				name:  fmt.Sprintf("judge_consistency_short_%s_%s.pdf", consName, consRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WriteShortConsistencyPDF(w, consRd) },
+			},
+			reportArtifact{
+				name:  fmt.Sprintf("judge_consistency_full_%s_%s.csv", consName, consRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WriteFullConsistencyCSV(w, consRd) },
+			},
+			reportArtifact{
+				name:  fmt.Sprintf("judge_consistency_full_%s_%s.pdf", consName, consRd.CardDate),
+				write: func(w io.Writer) error { return reportsPackage.WriteFullConsistencyPDF(w, consRd) },
+			},
+		)
+	}
+
+	return &ExportCardResult{
 		FolderName: fullRd.CardName,
 		FolderLink: folderLink,
-		Files:      []ExportedFile{},
-	}
+		Files:      s.uploadArtifacts(ctx, svc, folderID, artifacts),
+	}, nil
+}
 
-	// Full Report CSV
-	var fullBuf bytes.Buffer
-	if err := reportsPackage.WriteFullCSV(&fullBuf, fullRd); err == nil {
-		fullName := fmt.Sprintf("full_report_%s_%s.csv", sanitiseName(fullRd.CardName), fullRd.CardDate)
-		if link, err := s.upload(ctx, svc, fullName, &fullBuf, folderID); err == nil {
-			result.Files = append(result.Files, ExportedFile{Name: fullName, Link: link})
+// uploadArtifacts renders and uploads each artifact, skipping any that fail
+// to render or upload without aborting the rest.
+func (s *driveService) uploadArtifacts(ctx context.Context, svc *driveAPI.Service, folderID string, artifacts []reportArtifact) []ExportedFile {
+	files := make([]ExportedFile, 0, len(artifacts))
+	for _, a := range artifacts {
+		var buf bytes.Buffer
+		if err := a.write(&buf); err != nil {
+			continue
 		}
-	}
-
-	// Full Report PDF
-	var fullPdfBuf bytes.Buffer
-	if err := reportsPackage.WriteFullPDF(&fullPdfBuf, fullRd); err == nil {
-		fullPdfName := fmt.Sprintf("full_report_%s_%s.pdf", sanitiseName(fullRd.CardName), fullRd.CardDate)
-		if link, err := s.upload(ctx, svc, fullPdfName, &fullPdfBuf, folderID); err == nil {
-			result.Files = append(result.Files, ExportedFile{Name: fullPdfName, Link: link})
+		if link, err := s.upload(ctx, svc, a.name, &buf, folderID); err == nil {
+			files = append(files, ExportedFile{Name: a.name, Link: link})
 		}
 	}
-
-	// Public Report CSV
-	pubRd, err := s.reports.PublicReport(cardId)
-	if err == nil {
-		var pubBuf bytes.Buffer
-		if err := reportsPackage.WritePublicCSV(&pubBuf, pubRd); err == nil {
-			pubName := fmt.Sprintf("public_report_%s_%s.csv", sanitiseName(pubRd.CardName), pubRd.CardDate)
-			if link, err := s.upload(ctx, svc, pubName, &pubBuf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: pubName, Link: link})
-			}
-		}
-
-		// Public Report PDF
-		var pubPdfBuf bytes.Buffer
-		if err := reportsPackage.WritePublicPDF(&pubPdfBuf, pubRd); err == nil {
-			pubPdfName := fmt.Sprintf("public_report_%s_%s.pdf", sanitiseName(pubRd.CardName), pubRd.CardDate)
-			if link, err := s.upload(ctx, svc, pubPdfName, &pubPdfBuf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: pubPdfName, Link: link})
-			}
-		}
-	}
-
-	// Judge Consistency reports
-	if consRd, err := s.reports.JudgeConsistencyReport(cardId); err == nil {
-		var shortCsv bytes.Buffer
-		if err := reportsPackage.WriteShortConsistencyCSV(&shortCsv, consRd); err == nil {
-			name := fmt.Sprintf("judge_consistency_short_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, name, &shortCsv, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
-			}
-		}
-		var shortPdf bytes.Buffer
-		if err := reportsPackage.WriteShortConsistencyPDF(&shortPdf, consRd); err == nil {
-			name := fmt.Sprintf("judge_consistency_short_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, name, &shortPdf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
-			}
-		}
-		var fullCsv bytes.Buffer
-		if err := reportsPackage.WriteFullConsistencyCSV(&fullCsv, consRd); err == nil {
-			name := fmt.Sprintf("judge_consistency_full_%s_%s.csv", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, name, &fullCsv, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
-			}
-		}
-		var fullPdf bytes.Buffer
-		if err := reportsPackage.WriteFullConsistencyPDF(&fullPdf, consRd); err == nil {
-			name := fmt.Sprintf("judge_consistency_full_%s_%s.pdf", sanitiseName(consRd.CardName), consRd.CardDate)
-			if link, err := s.upload(ctx, svc, name, &fullPdf, folderID); err == nil {
-				result.Files = append(result.Files, ExportedFile{Name: name, Link: link})
-			}
-		}
-	}
-
-	return result, nil
+	return files
 }
 
 func (s *driveService) createFolder(ctx context.Context, svc *driveAPI.Service, folderName, parentID string) (string, string, error) {
