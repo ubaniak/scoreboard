@@ -2,15 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "./constants";
 import type { TokenBase } from "./entities";
 
-export type Sheet = {
-  cardName: string;
-  sheetId: string;
-};
-
 export type GDriveConfig = {
   clientId: string;
   clientSecret: string;
-  sheets: Sheet[];
+  sheets: string[];
   folderId: string;
   connected: boolean;
 };

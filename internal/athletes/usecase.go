@@ -11,7 +11,7 @@ type UseCase interface {
 	FindOrCreateByName(name, clubName string) (uint, error)
 	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
-	FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) (uint, error)
+	FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
 	Update(id uint, toUpdate *entities.UpdateAthlete) error
@@ -68,7 +68,7 @@ func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID
 	})
 }
 
-func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint) (uint, error) {
+func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error) {
 	matches, err := uc.storage.FindByName(name)
 	if err != nil {
 		return 0, err
@@ -97,8 +97,13 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 			nid := nationAffiliationID
 			upd.NationAffiliationID = &nid
 		}
+		if weightClass != nil {
+			wc := weightClass
+			upd.WeightClass = &wc
+		}
 		if upd.AgeCategory != nil || upd.Gender != nil || upd.Experience != nil ||
-			upd.ClubAffiliationID != nil || upd.ProvinceAffiliationID != nil || upd.NationAffiliationID != nil {
+			upd.ClubAffiliationID != nil || upd.ProvinceAffiliationID != nil || upd.NationAffiliationID != nil ||
+			upd.WeightClass != nil {
 			if err := uc.storage.Update(existing.ID, upd); err != nil {
 				return 0, err
 			}
@@ -113,6 +118,7 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 		ClubAffiliationID:     clubAffiliationID,
 		ProvinceAffiliationID: provinceAffiliationID,
 		NationAffiliationID:   nationAffiliationID,
+		WeightClass:           weightClass,
 	})
 }
 

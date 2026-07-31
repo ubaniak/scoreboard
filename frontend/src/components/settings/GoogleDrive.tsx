@@ -41,7 +41,6 @@ import {
   useMutateGDriveVerify,
   type ExportResult,
   type GDriveConfig,
-  type Sheet,
 } from "../../api/gdrive";
 import { useListCards } from "../../api/cards";
 import { useGetCurrent } from "../../api/current";
@@ -51,34 +50,27 @@ import { ActionMenu, type CloseAction } from "../actionMenu/actionMenu";
 const { Text, Title, Paragraph, Link } = Typography;
 
 // ── Sheet mapping editor (reused inside the settings panel) ──────────────
+// Each entry is one card's Sheet ID — the sheet's own Card Info tab is the
+// source of truth for which card it belongs to, so nothing else is stored.
 
 type SheetFormProps = {
-  initialCardName?: string;
   initialSheetId?: string;
-  onSubmit: (cardName: string, sheetId: string) => void;
+  onSubmit: (sheetId: string) => void;
   close: CloseAction;
 };
 
-const SheetForm = ({ initialCardName = "", initialSheetId = "", onSubmit, close }: SheetFormProps) => {
-  const [cardName, setCardName] = useState(initialCardName);
+const SheetForm = ({ initialSheetId = "", onSubmit, close }: SheetFormProps) => {
   const [sheetId, setSheetId] = useState(initialSheetId);
 
   const handleSubmit = () => {
-    if (!cardName || !sheetId) return;
-    onSubmit(cardName, sheetId);
+    if (!sheetId) return;
+    onSubmit(sheetId);
     close();
   };
 
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <Form layout="vertical">
-        <Form.Item label="Card Name" required>
-          <Input
-            placeholder="e.g., Card A, Card B"
-            value={cardName}
-            onChange={(e) => setCardName(e.target.value)}
-          />
-        </Form.Item>
         <Form.Item label="Sheet ID" required>
           <Input
             placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
@@ -89,7 +81,7 @@ const SheetForm = ({ initialCardName = "", initialSheetId = "", onSubmit, close 
       </Form>
       <Flex justify="end" gap={8}>
         <Button onClick={() => close()}>Cancel</Button>
-        <Button type="primary" disabled={!cardName || !sheetId} onClick={handleSubmit}>
+        <Button type="primary" disabled={!sheetId} onClick={handleSubmit}>
           Save
         </Button>
       </Flex>
@@ -97,17 +89,17 @@ const SheetForm = ({ initialCardName = "", initialSheetId = "", onSubmit, close 
   );
 };
 
-const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: Sheet[]) => void }) => {
-  const [sheets, setSheets] = useState<Sheet[]>(value || []);
+const SheetList = ({ value, onChange }: { value?: string[]; onChange?: (sheets: string[]) => void }) => {
+  const [sheets, setSheets] = useState<string[]>(value || []);
 
-  const handleAdd = (cardName: string, sheetId: string) => {
-    const newSheets = [...sheets, { cardName, sheetId }];
+  const handleAdd = (sheetId: string) => {
+    const newSheets = [...sheets, sheetId];
     setSheets(newSheets);
     onChange?.(newSheets);
   };
 
-  const handleUpdate = (idx: number, cardName: string, sheetId: string) => {
-    const newSheets = sheets.map((s, i) => (i === idx ? { cardName, sheetId } : s));
+  const handleUpdate = (idx: number, sheetId: string) => {
+    const newSheets = sheets.map((s, i) => (i === idx ? sheetId : s));
     setSheets(newSheets);
     onChange?.(newSheets);
   };
@@ -122,9 +114,8 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
     <Space direction="vertical" style={{ width: "100%" }}>
       <Table
         size="small"
-        dataSource={sheets.map((s, i) => ({ ...s, key: i }))}
+        dataSource={sheets.map((sheetId, i) => ({ sheetId, key: i }))}
         columns={[
-          { title: "Card Name", dataIndex: "cardName", key: "cardName" },
           {
             title: "Sheet ID",
             dataIndex: "sheetId",
@@ -135,7 +126,7 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
             title: "",
             key: "action",
             width: 160,
-            render: (_, record: Sheet & { key: number }, idx) => (
+            render: (_, record: { sheetId: string; key: number }, idx) => (
               <Space size="small">
                 <Button
                   type="link"
@@ -158,9 +149,8 @@ const SheetList = ({ value, onChange }: { value?: Sheet[]; onChange?: (sheets: S
                     title: "Edit Sheet",
                     body: (close) => (
                       <SheetForm
-                        initialCardName={record.cardName}
                         initialSheetId={record.sheetId}
-                        onSubmit={(cardName, sheetId) => handleUpdate(idx, cardName, sheetId)}
+                        onSubmit={(sheetId) => handleUpdate(idx, sheetId)}
                         close={close}
                       />
                     ),
@@ -273,11 +263,25 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
     ),
   },
   {
+    title: "One sheet per card",
+    description: (
+      <Space direction="vertical" size={2}>
+        <Text>
+          Each Google Sheet describes exactly one card, in three tabs:{" "}
+          <Text code>Card Info</Text> (name and date), <Text code>Officials</Text>, and{" "}
+          <Text code>Athletes</Text> (one row per fighter per bout — weight, age category,
+          gender, experience, and affiliations all live on that row). Use{" "}
+          <Text strong>Upload Template</Text> to generate one pre-filled.
+        </Text>
+      </Space>
+    ),
+  },
+  {
     title: "Find your Sheet ID and Folder ID",
     description: (
       <Space direction="vertical" size={2}>
         <Text>
-          Open the Google Sheet you want to map to a card, and copy the ID out of its URL:
+          Open the card's Google Sheet, and copy the ID out of its URL:
         </Text>
         <Text code>
           https://docs.google.com/spreadsheets/d/<Text strong>SHEET_ID</Text>/edit
@@ -297,7 +301,7 @@ const SETUP_INSTRUCTIONS: { title: string; description: React.ReactNode }[] = [
 type SettingsPanelProps = {
   cfg?: GDriveConfig;
   connected: boolean;
-  onSave: (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => Promise<void>;
+  onSave: (values: { clientId: string; clientSecret: string; sheets: string[]; folderId: string }) => Promise<void>;
   onVerify: (clientId: string, clientSecret: string) => Promise<void>;
   onConnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
@@ -323,7 +327,7 @@ const SettingsPanel = ({
 }: SettingsPanelProps) => {
   const [clientId, setClientId] = useState(cfg?.clientId ?? "");
   const [clientSecret, setClientSecret] = useState(cfg?.clientSecret ?? "");
-  const [sheets, setSheets] = useState<Sheet[]>(cfg?.sheets ?? []);
+  const [sheets, setSheets] = useState<string[]>(cfg?.sheets ?? []);
   const [folderId, setFolderId] = useState(cfg?.folderId ?? "");
   const [verifyStatus, setVerifyStatus] = useState<"idle" | "success" | "error">("idle");
 
@@ -556,7 +560,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
 
   // Default the import sheet when there's only one to choose from, until the
   // user picks a different one explicitly.
-  const importSheetId = importSheetIdOverride ?? (sheets.length === 1 ? sheets[0].sheetId : null);
+  const importSheetId = importSheetIdOverride ?? (sheets.length === 1 ? sheets[0] : null);
 
   // Default the export card to whichever card is currently live, until the
   // user picks a different one explicitly.
@@ -585,7 +589,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
     }
   };
 
-  const handleSaveConfig = async (values: { clientId: string; clientSecret: string; sheets: Sheet[]; folderId: string }) => {
+  const handleSaveConfig = async (values: { clientId: string; clientSecret: string; sheets: string[]; folderId: string }) => {
     try {
       await saveConfig.mutateAsync(values);
       message.success("Config saved");
@@ -694,7 +698,7 @@ export const GoogleDrive = ({ token }: TokenBase) => {
             disabled={!connected || sheets.length === 0}
             showSearch
             optionFilterProp="label"
-            options={sheets.map((s) => ({ value: s.sheetId, label: s.cardName }))}
+            options={sheets.map((id) => ({ value: id, label: id }))}
           />
           <Tooltip title="Upload Template">
             <Button

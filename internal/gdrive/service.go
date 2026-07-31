@@ -32,7 +32,7 @@ type ClubCreator interface {
 type AthleteCreator interface {
 	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
 	FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error)
-	FindOrCreateFull(name, ageCategory, gender, experience string, clubID, provinceID, nationID *uint) (uint, error)
+	FindOrCreateFull(name, ageCategory, gender, experience string, clubID, provinceID, nationID *uint, weightClass *float64) (uint, error)
 }
 
 type BoutCreator interface {
@@ -184,111 +184,21 @@ func cell(row []string, idx int) string {
 	return strings.TrimSpace(row[idx])
 }
 
-// Import reads a single Google Sheet and upserts all entities.
+// Import reads a single Google Sheet — one card per file — and upserts its
+// officials and athlete matchups.
 func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResult, error) {
 	res := &ImportResult{}
 
-	// ── Affiliations (single sheet, name + type) ─────────────────────────────
-	hdr, rows, err := s.sheetRows(ctx, sheetID, "Affiliations")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		typeIdx := colIdx(hdr, "Type")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			switch strings.ToLower(cell(row, typeIdx)) {
-			case "province":
-				if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
-					res.Provinces++
-				}
-			case "nation":
-				if _, err := s.clubs.FindOrCreateNation(name); err == nil {
-					res.Nations++
-				}
-			default:
-				if _, err := s.clubs.FindOrCreateByName(name); err == nil {
-					res.Clubs++
-				}
-			}
-		}
+	cardName, cardDate, err := s.readCardInfo(ctx, sheetID)
+	if err != nil {
+		return nil, fmt.Errorf("read card info: %w", err)
 	}
-
-	// ── Provinces ────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Provinces")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateProvince(name); err == nil {
-				res.Provinces++
-			}
-		}
-	}
-
-	// ── Nations ──────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Nations")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			if _, err := s.clubs.FindOrCreateNation(name); err == nil {
-				res.Nations++
-			}
-		}
-	}
-
-	// ── Athletes ─────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Athletes")
-	if err == nil && len(rows) > 0 {
-		nameIdx := colIdx(hdr, "Name")
-		clubIdx := colIdx(hdr, "Club")
-		provinceIdx := colIdx(hdr, "Province")
-		nationIdx := colIdx(hdr, "Nationality")
-		ageCatIdx := colIdx(hdr, "Age Category")
-		genderIdx := colIdx(hdr, "Gender")
-		expIdx := colIdx(hdr, "Experience")
-		for _, row := range rows {
-			name := cell(row, nameIdx)
-			if name == "" {
-				continue
-			}
-			var clubID *uint
-			if clubName := cell(row, clubIdx); clubName != "" {
-				if id, err := s.clubs.FindOrCreateByName(clubName); err == nil {
-					clubID = &id
-				}
-			}
-			var provinceID *uint
-			if provinceName := cell(row, provinceIdx); provinceName != "" {
-				if id, err := s.clubs.FindOrCreateProvince(provinceName); err == nil {
-					provinceID = &id
-				}
-			}
-			var nationID *uint
-			if nationName := cell(row, nationIdx); nationName != "" {
-				if id, err := s.clubs.FindOrCreateNation(nationName); err == nil {
-					nationID = &id
-				}
-			}
-			ageCategory := strings.ToLower(cell(row, ageCatIdx))
-			gender := strings.ToLower(cell(row, genderIdx))
-			experience := strings.ToLower(cell(row, expIdx))
-			if _, err := s.athletes.FindOrCreateFull(name, ageCategory, gender, experience, clubID, provinceID, nationID); err == nil {
-				res.Athletes++
-			}
-		}
+	if cardName == "" {
+		return nil, fmt.Errorf("Card Info sheet is missing a Card Name")
 	}
 
 	// ── Officials ────────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Officials")
+	hdr, rows, err := s.sheetRows(ctx, sheetID, "Officials")
 	if err == nil && len(rows) > 0 {
 		nameIdx := colIdx(hdr, "Name")
 		natIdx := colIdx(hdr, "Nationality")
@@ -311,10 +221,12 @@ func (s *driveService) Import(ctx context.Context, sheetID string) (*ImportResul
 		}
 	}
 
-	// ── Cards (bouts) ────────────────────────────────────────────────────────
-	hdr, rows, err = s.sheetRows(ctx, sheetID, "Cards")
+	// ── Athletes (one row per fighter per bout — each row also carries that
+	// fighter's full profile: weight, age category, gender, experience, and
+	// affiliations) ──────────────────────────────────────────────────────────
+	hdr, rows, err = s.sheetRows(ctx, sheetID, "Athletes")
 	if err == nil && len(rows) > 0 {
-		res.Bouts += s.importBouts(ctx, hdr, rows)
+		s.importAthleteMatchups(cardName, cardDate, hdr, rows, res)
 	}
 
 	return res, nil
@@ -327,10 +239,10 @@ func (s *driveService) ImportAll(ctx context.Context) (*ImportResult, error) {
 	}
 
 	totalResult := &ImportResult{}
-	for _, sheet := range s.cfg.Sheets {
-		result, err := s.Import(ctx, sheet.SheetID)
+	for _, sheetID := range s.cfg.Sheets {
+		result, err := s.Import(ctx, sheetID)
 		if err != nil {
-			return nil, fmt.Errorf("import sheet %q (%s): %w", sheet.CardName, sheet.SheetID, err)
+			return nil, fmt.Errorf("import sheet %q: %w", sheetID, err)
 		}
 		totalResult.Clubs += result.Clubs
 		totalResult.Provinces += result.Provinces
@@ -342,34 +254,87 @@ func (s *driveService) ImportAll(ctx context.Context) (*ImportResult, error) {
 	return totalResult, nil
 }
 
-func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]string) int {
-	cardNameIdx := colIdx(hdr, "Card Name")
-	dateIdx := colIdx(hdr, "Date")
+// readCardInfo reads the Card Info sheet's Field/Value rows. The whole file
+// describes exactly one card, so its name and date live here rather than
+// being repeated on every matchup row.
+func (s *driveService) readCardInfo(ctx context.Context, sheetID string) (name, date string, err error) {
+	_, rows, err := s.sheetRows(ctx, sheetID, "Card Info")
+	if err != nil {
+		return "", "", err
+	}
+	for _, row := range rows {
+		switch normalise(cell(row, 0)) {
+		case "cardname":
+			name = cell(row, 1)
+		case "date":
+			date = cell(row, 1)
+		}
+	}
+	return name, date, nil
+}
+
+// importAthleteMatchups upserts every fighter in the Athletes sheet and
+// pairs same-Bout-Number rows (Corner: red/blue) into bouts on the card.
+func (s *driveService) importAthleteMatchups(cardName, cardDate string, hdr []string, rows [][]string, res *ImportResult) {
 	boutNumIdx := colIdx(hdr, "Bout Number")
+	cornerIdx := colIdx(hdr, "Corner")
 	boutTypeIdx := colIdx(hdr, "Bout Type")
-	redAthleteIdx := colIdx(hdr, "Red Athlete")
-	blueAthleteIdx := colIdx(hdr, "Blue Athlete")
-	ageCatIdx := colIdx(hdr, "Age Category")
-	expIdx := colIdx(hdr, "Experience")
-	genderIdx := colIdx(hdr, "Gender")
 	roundLenIdx := colIdx(hdr, "Round Length")
 	gloveSizeIdx := colIdx(hdr, "Glove Size")
+	nameIdx := colIdx(hdr, "Name")
+	weightIdx := colIdx(hdr, "Weight")
+	ageCatIdx := colIdx(hdr, "Age Category")
+	genderIdx := colIdx(hdr, "Gender")
+	expIdx := colIdx(hdr, "Experience")
+	clubIdx := colIdx(hdr, "Club")
+	provinceIdx := colIdx(hdr, "Province")
+	nationIdx := colIdx(hdr, "Nationality")
 
-	// Group rows by card name.
-	type cardKey struct{ name, date string }
-	cardBouts := map[cardKey][]*boutEntities.Bout{}
-	var cardOrder []cardKey
+	bouts := map[int]*boutEntities.Bout{}
+	var boutOrder []int
 
 	for i, row := range rows {
-		cardName := cell(row, cardNameIdx)
-		if cardName == "" {
+		name := cell(row, nameIdx)
+		if name == "" {
 			continue
 		}
-		date := cell(row, dateIdx)
-		key := cardKey{cardName, date}
-		if _, seen := cardBouts[key]; !seen {
-			cardOrder = append(cardOrder, key)
+
+		var clubID *uint
+		if clubName := cell(row, clubIdx); clubName != "" {
+			if id, err := s.clubs.FindOrCreateByName(clubName); err == nil {
+				clubID = &id
+				res.Clubs++
+			}
 		}
+		var provinceID *uint
+		if provinceName := cell(row, provinceIdx); provinceName != "" {
+			if id, err := s.clubs.FindOrCreateProvince(provinceName); err == nil {
+				provinceID = &id
+				res.Provinces++
+			}
+		}
+		var nationID *uint
+		if nationName := cell(row, nationIdx); nationName != "" {
+			if id, err := s.clubs.FindOrCreateNation(nationName); err == nil {
+				nationID = &id
+				res.Nations++
+			}
+		}
+		var weightClass *float64
+		if weightStr := cell(row, weightIdx); weightStr != "" {
+			if w, err := strconv.ParseFloat(weightStr, 64); err == nil {
+				weightClass = &w
+			}
+		}
+		ageCategoryStr := strings.ToLower(cell(row, ageCatIdx))
+		genderStr := strings.ToLower(cell(row, genderIdx))
+		experienceStr := strings.ToLower(cell(row, expIdx))
+
+		athleteID, err := s.athletes.FindOrCreateFull(name, ageCategoryStr, genderStr, experienceStr, clubID, provinceID, nationID, weightClass)
+		if err != nil {
+			continue
+		}
+		res.Athletes++
 
 		boutNum := i + 1
 		if v := cell(row, boutNumIdx); v != "" {
@@ -378,106 +343,98 @@ func (s *driveService) importBouts(_ context.Context, hdr []string, rows [][]str
 			}
 		}
 
-		ageCategory := mapAgeCategory(cell(row, ageCatIdx))
-		experience := boutEntities.Experience(strings.ToLower(cell(row, expIdx)))
-		gender := boutEntities.Gender(strings.ToLower(cell(row, genderIdx)))
-		roundLen := mapRoundLength(cell(row, roundLenIdx))
-		if roundLen == 0 {
-			roundLen = roundLengthDefault(ageCategory, experience)
-		}
-		gloveSize := mapGloveSize(cell(row, gloveSizeIdx))
-		if gloveSize == "" {
-			gloveSize = boutEntities.TenOz
-		}
-		boutType := boutEntities.BoutTypeScored
-		if v := cell(row, boutTypeIdx); v != "" {
-			if bt := boutEntities.BoutType(strings.ToLower(v)); bt.IsValid() {
-				boutType = bt
+		bout, seen := bouts[boutNum]
+		if !seen {
+			ageCategory := mapAgeCategory(ageCategoryStr)
+			experience := boutEntities.Experience(experienceStr)
+			roundLen := mapRoundLength(cell(row, roundLenIdx))
+			if roundLen == 0 {
+				roundLen = roundLengthDefault(ageCategory, experience)
 			}
+			gloveSize := mapGloveSize(cell(row, gloveSizeIdx))
+			if gloveSize == "" {
+				gloveSize = boutEntities.TenOz
+			}
+			boutType := boutEntities.BoutTypeScored
+			if v := cell(row, boutTypeIdx); v != "" {
+				if bt := boutEntities.BoutType(strings.ToLower(v)); bt.IsValid() {
+					boutType = bt
+				}
+			}
+			bout = &boutEntities.Bout{
+				BoutNumber:  boutNum,
+				AgeCategory: ageCategory,
+				Experience:  experience,
+				Gender:      boutEntities.Gender(genderStr),
+				RoundLength: roundLen,
+				GloveSize:   gloveSize,
+				BoutType:    boutType,
+				Status:      boutEntities.BoutStatusNotStarted,
+			}
+			bouts[boutNum] = bout
+			boutOrder = append(boutOrder, boutNum)
 		}
 
-		bout := &boutEntities.Bout{
-			BoutNumber:  boutNum,
-			AgeCategory: ageCategory,
-			Experience:  experience,
-			Gender:      gender,
-			RoundLength: roundLen,
-			GloveSize:   gloveSize,
-			BoutType:    boutType,
-			Status:      boutEntities.BoutStatusNotStarted,
+		if strings.ToLower(cell(row, cornerIdx)) == "blue" {
+			bout.BlueAthleteID = &athleteID
+		} else {
+			bout.RedAthleteID = &athleteID
 		}
-
-		if redName := cell(row, redAthleteIdx); redName != "" {
-			if id, err := s.athletes.FindOrCreateByNameAndClub(redName, nil); err == nil {
-				bout.RedAthleteID = &id
-			}
-		}
-		if blueName := cell(row, blueAthleteIdx); blueName != "" {
-			if id, err := s.athletes.FindOrCreateByNameAndClub(blueName, nil); err == nil {
-				bout.BlueAthleteID = &id
-			}
-		}
-
-		cardBouts[key] = append(cardBouts[key], bout)
 	}
 
-	imported := 0
-	for _, key := range cardOrder {
-		bouts := cardBouts[key]
-		cardID, err := s.cards.FindOrCreateByName(key.name, key.date)
-		if err != nil {
-			continue
-		}
-		if existing, err := s.cards.Get(cardID); err == nil && existing != nil &&
-			existing.Status != cardEntities.CardStatusUpComing {
-			// Card already in progress, completed, or cancelled. Skip to avoid
-			// inserting duplicate bouts alongside the live ones.
-			continue
-		}
-		if numJudges, err := s.bouts.GetNumberOfJudges(cardID); err == nil {
-			for _, b := range bouts {
-				if b.BoutType == boutEntities.BoutTypeScored {
-					b.NumberOfJudges = numJudges
-				}
-			}
-		}
-		for _, b := range bouts {
-			b.CardID = cardID
-		}
+	if len(boutOrder) == 0 {
+		return
+	}
 
-		existingByNumber := map[int]*boutEntities.Bout{}
-		if existing, err := s.bouts.List(cardID); err == nil {
-			for _, b := range existing {
-				existingByNumber[b.BoutNumber] = b
-			}
-		}
+	cardID, err := s.cards.FindOrCreateByName(cardName, cardDate)
+	if err != nil {
+		return
+	}
+	if existing, err := s.cards.Get(cardID); err == nil && existing != nil &&
+		existing.Status != cardEntities.CardStatusUpComing {
+		// Card already in progress, completed, or cancelled. Skip to avoid
+		// inserting duplicate bouts alongside the live ones.
+		return
+	}
 
-		for _, b := range bouts {
-			if prev, ok := existingByNumber[b.BoutNumber]; ok {
-				upd := &boutEntities.UpdateBout{
-					Gender:        &b.Gender,
-					GloveSize:     &b.GloveSize,
-					RoundLength:   &b.RoundLength,
-					AgeCategory:   &b.AgeCategory,
-					Experience:    &b.Experience,
-					BoutType:      &b.BoutType,
-					RedAthleteID:  &b.RedAthleteID,
-					BlueAthleteID: &b.BlueAthleteID,
-				}
-				if b.NumberOfJudges != 0 {
-					upd.NumberOfJudges = &b.NumberOfJudges
-				}
-				if err := s.bouts.Update(cardID, prev.ID, upd); err == nil {
-					imported++
-				}
-				continue
-			}
-			if err := s.bouts.Create(cardID, b); err == nil {
-				imported++
-			}
+	numJudges, _ := s.bouts.GetNumberOfJudges(cardID)
+	existingByNumber := map[int]*boutEntities.Bout{}
+	if existing, err := s.bouts.List(cardID); err == nil {
+		for _, b := range existing {
+			existingByNumber[b.BoutNumber] = b
 		}
 	}
-	return imported
+
+	for _, num := range boutOrder {
+		b := bouts[num]
+		b.CardID = cardID
+		if b.BoutType == boutEntities.BoutTypeScored {
+			b.NumberOfJudges = numJudges
+		}
+
+		if prev, ok := existingByNumber[b.BoutNumber]; ok {
+			upd := &boutEntities.UpdateBout{
+				Gender:        &b.Gender,
+				GloveSize:     &b.GloveSize,
+				RoundLength:   &b.RoundLength,
+				AgeCategory:   &b.AgeCategory,
+				Experience:    &b.Experience,
+				BoutType:      &b.BoutType,
+				RedAthleteID:  &b.RedAthleteID,
+				BlueAthleteID: &b.BlueAthleteID,
+			}
+			if b.NumberOfJudges != 0 {
+				upd.NumberOfJudges = &b.NumberOfJudges
+			}
+			if err := s.bouts.Update(cardID, prev.ID, upd); err == nil {
+				res.Bouts++
+			}
+			continue
+		}
+		if err := s.bouts.Create(cardID, b); err == nil {
+			res.Bouts++
+		}
+	}
 }
 
 // ExportCard generates reports for a card, creates a folder, and uploads them to Drive.
@@ -598,7 +555,7 @@ func (s *driveService) upload(ctx context.Context, svc *driveAPI.Service, name s
 }
 
 // CreateTemplate creates a new Google Spreadsheet in Drive pre-filled with
-// headers and sample rows for all four import tabs.
+// headers and sample rows for one card's three import tabs.
 func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 	tok, err := loadToken()
 	if err != nil {
@@ -616,10 +573,9 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			Title: "Scoreboard Import Template",
 		},
 		Sheets: []*sheetsAPI.Sheet{
-			{Properties: &sheetsAPI.SheetProperties{Title: "Affiliations"}},
-			{Properties: &sheetsAPI.SheetProperties{Title: "Athletes"}},
+			{Properties: &sheetsAPI.SheetProperties{Title: "Card Info"}},
 			{Properties: &sheetsAPI.SheetProperties{Title: "Officials"}},
-			{Properties: &sheetsAPI.SheetProperties{Title: "Cards"}},
+			{Properties: &sheetsAPI.SheetProperties{Title: "Athletes"}},
 		},
 	}
 
@@ -636,22 +592,11 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 
 	tabs := []tabData{
 		{
-			name: "Affiliations",
+			name: "Card Info",
 			rows: [][]any{
-				{"Name", "Type"},
-				{"City Boxing", "club"},
-				{"Auckland", "province"},
-				{"New Zealand", "nation"},
-			},
-		},
-		{
-			name: "Athletes",
-			rows: [][]any{
-				{"Name", "Age Category", "Gender", "Experience", "Nationality", "Club", "Province"},
-				{"Jane Smith", "elite", "female", "open", "NZL", "City Boxing", "Auckland"},
-				{"Amelia Clarke", "elite", "female", "open", "NZL", "North Stars", "Wellington"},
-				{"Mark Jones", "elite", "male", "open", "NZL", "City Boxing", "Auckland"},
-				{"Liam Turner", "elite", "male", "open", "NZL", "North Stars", "Wellington"},
+				{"Field", "Value"},
+				{"Card Name", "Test Card"},
+				{"Date", "2026-05-01"},
 			},
 		},
 		{
@@ -662,23 +607,17 @@ func (s *driveService) CreateTemplate(ctx context.Context) (string, error) {
 			},
 		},
 		{
-			name: "Cards",
+			name: "Athletes",
 			rows: [][]any{
 				{
-					"Card Name", "Date", "Bout Number", "Bout Type",
-					"Red Athlete", "Blue Athlete",
-					"Age Category", "Experience", "Gender", "Round Length", "Glove Size",
+					"Bout Number", "Corner", "Bout Type", "Round Length", "Glove Size",
+					"Name", "Weight", "Age Category", "Gender", "Experience",
+					"Club", "Province", "Nationality",
 				},
-				{
-					"Test Card", "2026-05-01", 1, "scored",
-					"Jane Smith", "Amelia Clarke",
-					"Elite", "open", "female", "3", "10oz",
-				},
-				{
-					"Test Card", "2026-05-01", 2, "scored",
-					"Mark Jones", "Liam Turner",
-					"Elite", "open", "male", "3", "10oz",
-				},
+				{1, "red", "scored", "3", "10oz", "Jane Smith", 60, "elite", "female", "open", "City Boxing", "Auckland", "NZL"},
+				{1, "blue", "scored", "3", "10oz", "Amelia Clarke", 64, "elite", "female", "open", "North Stars", "Wellington", "NZL"},
+				{2, "red", "scored", "3", "10oz", "Mark Jones", 75, "elite", "male", "open", "City Boxing", "Auckland", "NZL"},
+				{2, "blue", "scored", "3", "10oz", "Liam Turner", 81, "elite", "male", "open", "North Stars", "Wellington", "NZL"},
 			},
 		},
 	}

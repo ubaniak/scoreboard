@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "accessibility-checker",
+  "owner": "armanzeroeight",
+  "repo": "fastagent-plugins",
+  "path": "plugins/frontend-developer/skills/accessibility-checker",
+  "branch": "main",
+  "sha": "16a6c03b85392763889e979dd77b29b967614ce0",
+  "source": "manual"
+}

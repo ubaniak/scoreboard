@@ -13,17 +13,14 @@ import (
 	"github.com/ubaniak/scoreboard/internal/datadir"
 )
 
-// Sheet maps a card name to a Google Sheet ID.
-type Sheet struct {
-	CardName string `json:"cardName"`
-	SheetID  string `json:"sheetId"`
-}
-
-// Config is persisted to ~/.scoreboard/gdrive_config.json.
+// Config is persisted to ~/.scoreboard/gdrive_config.json. Each entry in
+// Sheets is a Google Sheet ID — one card per file, so the sheet's own
+// "Card Info" tab (not this config) is the source of truth for which card
+// it belongs to.
 type Config struct {
 	ClientID     string   `json:"clientId"`
 	ClientSecret string   `json:"clientSecret"`
-	Sheets       []Sheet  `json:"sheets"`
+	Sheets       []string `json:"sheets"`
 	FolderID     string   `json:"folderId"`
 }
 
