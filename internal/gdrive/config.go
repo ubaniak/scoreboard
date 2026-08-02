@@ -13,15 +13,21 @@ import (
 	"github.com/ubaniak/scoreboard/internal/datadir"
 )
 
-// Config is persisted to ~/.scoreboard/gdrive_config.json. Each entry in
-// Sheets is a Google Sheet ID — one card per file, so the sheet's own
-// "Card Info" tab (not this config) is the source of truth for which card
-// it belongs to.
+// SheetEntry maps a display Name onto a Google Sheet ID — one card per
+// file, so the sheet's own "Card Info" tab (not this config) is the source
+// of truth for which card it belongs to. Name is purely for the admin's
+// own reference when picking a sheet to import.
+type SheetEntry struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// Config is persisted to ~/.scoreboard/gdrive_config.json.
 type Config struct {
-	ClientID     string   `json:"clientId"`
-	ClientSecret string   `json:"clientSecret"`
-	Sheets       []string `json:"sheets"`
-	FolderID     string   `json:"folderId"`
+	ClientID     string       `json:"clientId"`
+	ClientSecret string       `json:"clientSecret"`
+	Sheets       []SheetEntry `json:"sheets"`
+	FolderID     string       `json:"folderId"`
 }
 
 // ConfigResponse is what the frontend receives — includes connected state.
@@ -60,7 +66,21 @@ func loadConfig() (Config, error) {
 	}
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return Config{}, err
+		// Older configs stored Sheets as a plain []string. Fall back to that
+		// shape so existing users don't lose their sheet mappings on upgrade.
+		var legacy struct {
+			ClientID     string   `json:"clientId"`
+			ClientSecret string   `json:"clientSecret"`
+			Sheets       []string `json:"sheets"`
+			FolderID     string   `json:"folderId"`
+		}
+		if legacyErr := json.Unmarshal(data, &legacy); legacyErr != nil {
+			return Config{}, err
+		}
+		cfg = Config{ClientID: legacy.ClientID, ClientSecret: legacy.ClientSecret, FolderID: legacy.FolderID}
+		for _, id := range legacy.Sheets {
+			cfg.Sheets = append(cfg.Sheets, SheetEntry{ID: id, Name: id})
+		}
 	}
 	return cfg, nil
 }

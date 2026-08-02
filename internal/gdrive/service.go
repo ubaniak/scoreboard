@@ -239,10 +239,10 @@ func (s *driveService) ImportAll(ctx context.Context) (*ImportResult, error) {
 	}
 
 	totalResult := &ImportResult{}
-	for _, sheetID := range s.cfg.Sheets {
-		result, err := s.Import(ctx, sheetID)
+	for _, sheet := range s.cfg.Sheets {
+		result, err := s.Import(ctx, sheet.ID)
 		if err != nil {
-			return nil, fmt.Errorf("import sheet %q: %w", sheetID, err)
+			return nil, fmt.Errorf("import sheet %q: %w", sheet.ID, err)
 		}
 		totalResult.Clubs += result.Clubs
 		totalResult.Provinces += result.Provinces
