@@ -8,10 +8,11 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { App as AntApp, ConfigProvider, theme } from "antd";
+import { App as AntApp, ConfigProvider, Spin, theme } from "antd";
 import { TimerProvider } from "./providers/timer";
 import { ThemeProvider } from "./providers/theme";
 import { radius, useTheme } from "./theme";
@@ -21,23 +22,26 @@ import { getEmitter, registerEmitter } from "./events/events";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import { AppLayout } from "./layouts/app";
 import { AdminShell } from "./layouts/adminShell";
-import { BoutPage } from "./pages/bout";
-import { CardPage } from "./pages/card";
-import { CardActivityLogPage } from "./pages/card/activityLog";
-import { CardBoutsPage } from "./pages/card/bouts";
-import { CardJudgeConsistencyPage } from "./pages/card/judgeConsistency";
-import { CardReportsPage } from "./pages/card/reports";
 import { HomePage } from "./pages/home";
-import { HomeAffiliationsPage } from "./pages/home/affiliations";
-import { HomeAthletesPage } from "./pages/home/athletes";
-import { HomeOfficialsPage } from "./pages/home/officials";
-import { SettingsDataPage } from "./pages/settings/data";
-import { SettingsGoogleDrivePage } from "./pages/settings/googleDrive";
-import { JudgePage } from "./pages/judge";
-import { LoginPage } from "./pages/login";
-import { ScoreboardPage } from "./pages/scoreboard";
-import { SetupPage } from "./pages/setup";
 import { SettingsPage } from "./pages/settings";
+
+// Route pages are code-split — each is its own chunk, fetched on first
+// navigation rather than bundled into the main entry.
+const BoutPage = lazyRouteComponent(() => import("./pages/bout"), "BoutPage");
+const CardPage = lazyRouteComponent(() => import("./pages/card"), "CardPage");
+const CardActivityLogPage = lazyRouteComponent(() => import("./pages/card/activityLog"), "CardActivityLogPage");
+const CardBoutsPage = lazyRouteComponent(() => import("./pages/card/bouts"), "CardBoutsPage");
+const CardJudgeConsistencyPage = lazyRouteComponent(() => import("./pages/card/judgeConsistency"), "CardJudgeConsistencyPage");
+const CardReportsPage = lazyRouteComponent(() => import("./pages/card/reports"), "CardReportsPage");
+const HomeAffiliationsPage = lazyRouteComponent(() => import("./pages/home/affiliations"), "HomeAffiliationsPage");
+const HomeAthletesPage = lazyRouteComponent(() => import("./pages/home/athletes"), "HomeAthletesPage");
+const HomeOfficialsPage = lazyRouteComponent(() => import("./pages/home/officials"), "HomeOfficialsPage");
+const SettingsDataPage = lazyRouteComponent(() => import("./pages/settings/data"), "SettingsDataPage");
+const SettingsGoogleDrivePage = lazyRouteComponent(() => import("./pages/settings/googleDrive"), "SettingsGoogleDrivePage");
+const JudgePage = lazyRouteComponent(() => import("./pages/judge"), "JudgePage");
+const LoginPage = lazyRouteComponent(() => import("./pages/login"), "LoginPage");
+const ScoreboardPage = lazyRouteComponent(() => import("./pages/scoreboard"), "ScoreboardPage");
+const SetupPage = lazyRouteComponent(() => import("./pages/setup"), "SetupPage");
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -173,7 +177,16 @@ const routeTree = rootRoute.addChildren([
   }),
 ]);
 
-const router = createRouter({ routeTree });
+// A defaultPendingComponent makes the router wrap each route match in a
+// Suspense boundary, which lazyRouteComponent (used above for code-split
+// pages) relies on to show a fallback while its chunk loads.
+const RoutePending = () => (
+  <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+    <Spin size="large" />
+  </div>
+);
+
+const router = createRouter({ routeTree, defaultPendingComponent: RoutePending });
 
 registerEmitter<Error>("errors");
 registerEmitter<ApiError>("apiErrors");
