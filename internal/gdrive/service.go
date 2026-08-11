@@ -51,7 +51,6 @@ type CardFinderCreator interface {
 type ReportBuilder interface {
 	FullReport(cardId uint) (*reportsPackage.ReportData, error)
 	PublicReport(cardId uint) (*reportsPackage.ReportData, error)
-	JudgeConsistencyReport(cardId uint) (*reportsPackage.JudgeConsistencyData, error)
 }
 
 // ImportResult summarises what was upserted.
@@ -477,28 +476,6 @@ func (s *driveService) ExportCard(ctx context.Context, cardId uint) (*ExportCard
 			reportArtifact{
 				name:  fmt.Sprintf("public_report_%s_%s.pdf", pubName, pubRd.CardDate),
 				write: func(w io.Writer) error { return reportsPackage.WritePublicPDF(w, pubRd) },
-			},
-		)
-	}
-
-	if consRd, err := s.reports.JudgeConsistencyReport(cardId); err == nil {
-		consName := sanitiseName(consRd.CardName)
-		artifacts = append(artifacts,
-			reportArtifact{
-				name:  fmt.Sprintf("judge_consistency_short_%s_%s.csv", consName, consRd.CardDate),
-				write: func(w io.Writer) error { return reportsPackage.WriteShortConsistencyCSV(w, consRd) },
-			},
-			reportArtifact{
-				name:  fmt.Sprintf("judge_consistency_short_%s_%s.pdf", consName, consRd.CardDate),
-				write: func(w io.Writer) error { return reportsPackage.WriteShortConsistencyPDF(w, consRd) },
-			},
-			reportArtifact{
-				name:  fmt.Sprintf("judge_consistency_full_%s_%s.csv", consName, consRd.CardDate),
-				write: func(w io.Writer) error { return reportsPackage.WriteFullConsistencyCSV(w, consRd) },
-			},
-			reportArtifact{
-				name:  fmt.Sprintf("judge_consistency_full_%s_%s.pdf", consName, consRd.CardDate),
-				write: func(w io.Writer) error { return reportsPackage.WriteFullConsistencyPDF(w, consRd) },
 			},
 		)
 	}

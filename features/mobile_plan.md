@@ -47,7 +47,6 @@ Files:
 - `components/cards/index.tsx`
 - `components/affiliations/index.tsx`
 - `components/score/scores.tsx`
-- `components/cards/JudgeConsistency.tsx` (2 tables)
 - `components/settings/GoogleDrive.tsx`
 
 ### Horizontal forms → responsive layout
@@ -129,7 +128,6 @@ Examples:
 - `frontend/src/components/cards/index.tsx`
 - `frontend/src/components/affiliations/index.tsx`
 - `frontend/src/components/score/scores.tsx`
-- `frontend/src/components/cards/JudgeConsistency.tsx`
 - `frontend/src/components/settings/GoogleDrive.tsx`
 - `frontend/src/components/login/login.tsx`
 - `frontend/src/components/officials/add.tsx`

@@ -131,7 +131,7 @@ template because:
 ### Export: per-card folder of report files
 `POST /gdrive/export/{cardId}` builds the same report artifacts
 that the local download endpoints produce (full report,
-public-facing report, judge-consistency report) and uploads them
+public-facing report) and uploads them
 to a Drive folder named after the card. The response returns the
 folder link plus per-file links so the admin UI can show clickable
 results.

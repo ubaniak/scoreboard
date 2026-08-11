@@ -74,11 +74,6 @@ export const CardPage = () => {
         items={[
           { key: "bouts", label: "Bouts", to: `/card/${cardId}` },
           {
-            key: "judge-consistency",
-            label: "Judge Consistency",
-            to: `/card/${cardId}/judge-consistency`,
-          },
-          {
             key: "activity-log",
             label: "Activity Log",
             to: `/card/${cardId}/activity-log`,

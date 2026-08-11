@@ -60,42 +60,6 @@ export const CardExports = ({ cardId, token }: Props) => {
         onPdf={() => downloadReport(`${base}/public/pdf`, token, `card-${cardId}-public.pdf`)}
         onJpeg={() => downloadReport(`${base}/public/jpeg`, token, `card-${cardId}-public.jpg`)}
       />
-      <ReportGroup
-        title="Judge Consistency — Short"
-        description="One row per judge: agreement %, average deviation, and consistency score across the card."
-        onCsv={() =>
-          downloadReport(
-            `${base}/consistency/short/csv`,
-            token,
-            `card-${cardId}-consistency-short.csv`,
-          )
-        }
-        onPdf={() =>
-          downloadReport(
-            `${base}/consistency/short/pdf`,
-            token,
-            `card-${cardId}-consistency-short.pdf`,
-          )
-        }
-      />
-      <ReportGroup
-        title="Judge Consistency — Full"
-        description="Per-judge breakdown with every bout they scored, round by round."
-        onCsv={() =>
-          downloadReport(
-            `${base}/consistency/full/csv`,
-            token,
-            `card-${cardId}-consistency-full.csv`,
-          )
-        }
-        onPdf={() =>
-          downloadReport(
-            `${base}/consistency/full/pdf`,
-            token,
-            `card-${cardId}-consistency-full.pdf`,
-          )
-        }
-      />
     </Space>
   );
 };

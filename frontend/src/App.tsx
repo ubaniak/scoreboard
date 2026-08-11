@@ -31,7 +31,6 @@ const BoutPage = lazyRouteComponent(() => import("./pages/bout"), "BoutPage");
 const CardPage = lazyRouteComponent(() => import("./pages/card"), "CardPage");
 const CardActivityLogPage = lazyRouteComponent(() => import("./pages/card/activityLog"), "CardActivityLogPage");
 const CardBoutsPage = lazyRouteComponent(() => import("./pages/card/bouts"), "CardBoutsPage");
-const CardJudgeConsistencyPage = lazyRouteComponent(() => import("./pages/card/judgeConsistency"), "CardJudgeConsistencyPage");
 const CardReportsPage = lazyRouteComponent(() => import("./pages/card/reports"), "CardReportsPage");
 const HomeAffiliationsPage = lazyRouteComponent(() => import("./pages/home/affiliations"), "HomeAffiliationsPage");
 const HomeAthletesPage = lazyRouteComponent(() => import("./pages/home/athletes"), "HomeAthletesPage");
@@ -133,11 +132,6 @@ const routeTree = rootRoute.addChildren([
           getParentRoute: () => cardLayoutRoute,
           path: "/",
           component: CardBoutsPage,
-        }),
-        createRoute({
-          getParentRoute: () => cardLayoutRoute,
-          path: "/judge-consistency",
-          component: CardJudgeConsistencyPage,
         }),
         createRoute({
           getParentRoute: () => cardLayoutRoute,

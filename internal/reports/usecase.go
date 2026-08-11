@@ -38,7 +38,6 @@ type Comment struct {
 type UseCase interface {
 	FullReport(cardId uint) (*ReportData, error)
 	PublicReport(cardId uint) (*ReportData, error)
-	JudgeConsistencyReport(cardId uint) (*JudgeConsistencyData, error)
 }
 
 type useCase struct {
