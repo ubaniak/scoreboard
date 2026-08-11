@@ -46,6 +46,7 @@ import (
 	reportsPackage "github.com/ubaniak/scoreboard/internal/reports"
 	"github.com/ubaniak/scoreboard/internal/round"
 	"github.com/ubaniak/scoreboard/internal/scores"
+	"github.com/ubaniak/scoreboard/internal/seed"
 	"github.com/ubaniak/scoreboard/internal/setup"
 	boutEntities "github.com/ubaniak/scoreboard/internal/bouts/entities"
 )
@@ -260,7 +261,33 @@ func main() {
 
 	srv := startServer(r, allowedOrigins, uploadsDir)
 
-	runApp(srv, deviceUseCase)
+	seedDeps := seed.Deps{
+		Cards:        cardUseCase,
+		Bouts:        boutsUseCase,
+		Athletes:     athleteUseCase,
+		Affiliations: affiliationUseCase,
+		Officials:    officialUsecCase,
+		Scores:       scoreUseCase,
+	}
+	seedDemo := func() error {
+		result, err := seed.Run(seedDeps, seed.Options{
+			CardName:  "Demo Card",
+			Bouts:     20,
+			Judges:    5,
+			Done:      5,
+			Clubs:     5,
+			Officials: 10,
+			Clear:     true,
+			Activate:  true,
+		})
+		if err != nil {
+			return err
+		}
+		log.Println(result.String())
+		return nil
+	}
+
+	runApp(srv, deviceUseCase, seedDemo)
 }
 
 func runAffiliationMigration(db *gorm.DB) error {

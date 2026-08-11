@@ -12,7 +12,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/devices"
 )
 
-func runApp(srv *http.Server, deviceUseCase devices.UseCase) {
+func runApp(srv *http.Server, deviceUseCase devices.UseCase, seedDemo func() error) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan

@@ -14,13 +14,14 @@ import (
 	"github.com/ubaniak/scoreboard/internal/devices"
 )
 
-func runApp(srv *http.Server, deviceUseCase devices.UseCase) {
+func runApp(srv *http.Server, deviceUseCase devices.UseCase, seedDemo func() error) {
 	systray.Run(func() {
 		systray.SetTitle(AppTitle)
 		systray.SetTooltip(AppTooltip)
 
 		mOpen := systray.AddMenuItem("Open UI", "Open the web interface")
 		mAdmin := systray.AddMenuItem("Admin Password", "Set the admin password")
+		mSeedDemo := systray.AddMenuItem("Seed Demo", "Create a demo card with sample bouts, officials, and clubs")
 		mQuit := systray.AddMenuItem("Quit", "Exit the app")
 
 		for {
@@ -32,6 +33,10 @@ func runApp(srv *http.Server, deviceUseCase devices.UseCase) {
 				}
 			case <-mAdmin.ClickedCh:
 				utils.RegisterAdmin(deviceUseCase)
+			case <-mSeedDemo.ClickedCh:
+				if err := seedDemo(); err != nil {
+					log.Printf("Seed Demo failed: %v", err)
+				}
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
