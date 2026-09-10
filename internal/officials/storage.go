@@ -12,6 +12,10 @@ type Storage interface {
 	Get() ([]entities.Official, error)
 	FindByName(name string) (*entities.Official, error)
 	Delete(id uint) error
+
+	AssignToCard(cardId, officialId uint, caps entities.CardOfficial) error
+	RemoveFromCard(cardId, officialId uint) error
+	ListForCard(cardId uint) ([]entities.AssignedOfficial, error)
 }
 
 func NewSqlite(db *gorm.DB) (Storage, error) {

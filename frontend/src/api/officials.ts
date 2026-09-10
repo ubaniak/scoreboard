@@ -30,8 +30,10 @@ export type CreateOfficialProps = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  level?: string;
   provinceAffiliationId?: number;
   nationAffiliationId?: number;
+  clubAffiliationId?: number;
 };
 
 export const useMutateCreateOfficial = (props: TokenBase) => {
@@ -79,8 +81,10 @@ export type UpdateOfficialProps = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  level?: string;
   provinceAffiliationId?: number;
   nationAffiliationId?: number;
+  clubAffiliationId?: number;
 };
 
 export const useMutateUpdateOfficial = (props: TokenBase) => {

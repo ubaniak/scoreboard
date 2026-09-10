@@ -10,6 +10,10 @@ type UseCase interface {
 	Delete(id uint) error
 	GetAffiliations() ([]entities.Official, error)
 	FindOrCreate(name, nationality string, yearOfBirth int, registrationNumber string) error
+
+	AssignToCard(cardId, officialId uint, caps entities.CardOfficial) error
+	RemoveFromCard(cardId, officialId uint) error
+	ListForCard(cardId uint) ([]entities.AssignedOfficial, error)
 }
 
 type useCase struct {
@@ -64,4 +68,16 @@ func (uc *useCase) FindOrCreate(name, nationality string, yearOfBirth int, regis
 		YearOfBirth:        yearOfBirth,
 		RegistrationNumber: registrationNumber,
 	})
+}
+
+func (uc *useCase) AssignToCard(cardId, officialId uint, caps entities.CardOfficial) error {
+	return uc.storage.AssignToCard(cardId, officialId, caps)
+}
+
+func (uc *useCase) RemoveFromCard(cardId, officialId uint) error {
+	return uc.storage.RemoveFromCard(cardId, officialId)
+}
+
+func (uc *useCase) ListForCard(cardId uint) ([]entities.AssignedOfficial, error) {
+	return uc.storage.ListForCard(cardId)
 }

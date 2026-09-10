@@ -19,6 +19,14 @@ export type Card = {
   boutsComplete: number;
 };
 
+export type OfficialLevel =
+  | "club"
+  | "region"
+  | "level_1"
+  | "level_2"
+  | "level_3"
+  | "level_4";
+
 export type Official = {
   id: string;
   name: string;
@@ -26,10 +34,20 @@ export type Official = {
   gender?: string;
   yearOfBirth?: number;
   registrationNumber?: string;
+  level?: OfficialLevel;
   provinceAffiliationId?: number;
   province?: string;
   nationAffiliationId?: number;
   nation?: string;
+  clubAffiliationId?: number;
+  club?: string;
+};
+
+export type AssignedOfficial = Official & {
+  canJudge: boolean;
+  canRef: boolean;
+  canTimekeep: boolean;
+  canSupervise: boolean;
 };
 
 export type AgeCategory =

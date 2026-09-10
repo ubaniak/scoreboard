@@ -204,6 +204,7 @@ func main() {
 
 	cardApp := cards.NewApp(cardUseCase, boutsApp, boutsUseCase, reportsApp, broadcaster)
 	cardApp.WithImport(officialUsecCase, affiliationUseCase, athleteUseCase, &importBoutAdapter{boutsUseCase, cardUseCase})
+	cardApp.WithOfficials(officialApp)
 
 	// -- current
 	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})

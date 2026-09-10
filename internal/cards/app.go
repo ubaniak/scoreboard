@@ -17,6 +17,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/events"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
+	"github.com/ubaniak/scoreboard/internal/officials"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 	"github.com/ubaniak/scoreboard/internal/reports"
@@ -35,6 +36,7 @@ type App struct {
 	boutsApp        *bouts.App
 	boutCounter     BoutCounter
 	reportsApp      *reports.App
+	officialsApp    *officials.App
 	broadcaster     *events.Broadcaster
 	importOfficials ImportOfficialCreator
 	importClubs     ImportClubCreator
@@ -59,6 +61,10 @@ func (h *App) WithImport(officials ImportOfficialCreator, clubs ImportClubCreato
 	h.importBouts = bouts
 }
 
+func (h *App) WithOfficials(officialsApp *officials.App) {
+	h.officialsApp = officialsApp
+}
+
 func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("cards")
 	sr.AddRoute("cards.import", "/import", "POST", h.ImportCSV, rbac.Admin)
@@ -76,6 +82,11 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	if h.reportsApp != nil {
 		reportsSr := sr.AddSubroute("{id}/reports")
 		h.reportsApp.RegisterRoutes(reportsSr)
+	}
+
+	if h.officialsApp != nil {
+		officialsSr := sr.AddSubroute("{id}/officials")
+		h.officialsApp.RegisterCardRoutes(officialsSr)
 	}
 }
 

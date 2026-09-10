@@ -11,8 +11,10 @@ type Official struct {
 	Gender                string
 	YearOfBirth           int
 	RegistrationNumber    string
+	Level                 string
 	ProvinceAffiliationID *uint
 	NationAffiliationID   *uint
+	ClubAffiliationID     *uint
 	// Old columns kept for migration:
 	Province string // deprecated: use ProvinceAffiliationID
 	Nation   string // deprecated: use NationAffiliationID
