@@ -5,15 +5,17 @@ import {
   Segmented,
   Select,
   Space,
+  Typography,
   type FormProps,
 } from "antd";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { RoundDetails } from "../../entities/cards";
 import type { ScoresByRound } from "../../entities/scores";
 import { Scores } from "../score/scores";
 import type { MakeDecisionProps } from "../../api/bouts";
 import { DecisionConfirm } from "./DecisionConfirm";
 import { decisionLabels } from "./decisionLabels";
+import { getAutoDecision } from "./autoDecision";
 
 export type MakeDecisionFormProps = {
   onClose: () => void;
@@ -27,6 +29,10 @@ export type MakeDecisionFormProps = {
 export const MakeDecision = (props: MakeDecisionFormProps) => {
   const [step, setStep] = useState<"form" | "confirm">("form");
   const [submitted, setSubmitted] = useState<MakeDecisionProps | null>(null);
+  const auto = useMemo(
+    () => getAutoDecision(props.scores, props.rounds),
+    [props.scores, props.rounds],
+  );
 
   const onFinish: FormProps<MakeDecisionProps>["onFinish"] = async (values) => {
     props.onMakeDecision(values);
@@ -68,11 +74,18 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
           ageCategory: "",
           gender: "male",
           experience: "novice",
-          winner: "na",
+          winner: auto?.winner ?? "na",
+          decision: auto?.decision,
         }}
         style={{ width: "100%", maxWidth: 600 }}
         onFinish={onFinish}
       >
+        {auto && (
+          <Typography.Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+            Suggested from judges' cards: {auto.winner === "red" ? "Red" : "Blue"} by{" "}
+            {decisionLabels[auto.decision]}. Review and adjust if needed.
+          </Typography.Text>
+        )}
         <Form.Item label="Overall Winner" name="winner" rules={[{ required: true, message: "Winner is required" }]}>
           <Segmented
             size={"large"}
