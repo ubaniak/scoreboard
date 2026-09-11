@@ -131,6 +131,13 @@ export const BoutPage = () => {
     });
   };
 
+  const onSetSupervisor = (name: string) => {
+    updateBout.mutate({
+      toUpdate: { supervisor: name },
+      boutInfo: { boutId: boutId! },
+    });
+  };
+
   const isLoading = isApisLoading({ card, bout });
 
   const nextRoundState = useMutateNextRoundState({
@@ -208,6 +215,7 @@ export const BoutPage = () => {
           },
           onStartBout,
           onSetReferee,
+          onSetSupervisor,
           onMakeDecision: (props: MakeDecisionProps) =>
             makeDecision.mutate(props),
           onCompleteBout: () => completeBout.mutate(),

@@ -78,6 +78,7 @@ export type Bout = {
   rounds: RoundDetails[];
   comments: Comment[];
   referee: string;
+  supervisor: string;
   boutType: BoutType;
   redAthleteId?: number;
   blueAthleteId?: number;

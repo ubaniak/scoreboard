@@ -44,6 +44,7 @@ type CreateRequest struct {
 	Experience    string   `json:"experience"`
 	Gender        string   `json:"gender"`
 	Referee       string   `json:"referee"`
+	Supervisor    string   `json:"supervisor"`
 	BoutType      string   `json:"boutType"`
 	RoundLength   *float64 `json:"roundLength"`
 	GloveSize     *string  `json:"gloveSize"`
@@ -92,6 +93,7 @@ func CreateRequestToEntity(cardId uint, req *CreateRequest) *entities.Bout {
 		Status:         entities.BoutStatusNotStarted,
 		Gender:         gender,
 		Referee:        req.Referee,
+		Supervisor:     req.Supervisor,
 		BoutType:       entities.BoutType(req.BoutType),
 		RedAthleteID:   req.RedAthleteID,
 		BlueAthleteID:  req.BlueAthleteID,
@@ -137,6 +139,7 @@ type GetBoutResponse struct {
 	NumberOfJudges int                `json:"numberOfJudges"`
 	Comments       []CommentResponse  `json:"comments"`
 	Referee        string             `json:"referee"`
+	Supervisor     string             `json:"supervisor"`
 	BoutType       string             `json:"boutType"`
 	RedAthleteID   *uint              `json:"redAthleteId,omitempty"`
 	BlueAthleteID  *uint              `json:"blueAthleteId,omitempty"`
@@ -170,6 +173,7 @@ func EntityToGetBoutResponse(entity *entities.Bout, redName, blueName string, ro
 		NumberOfJudges: entity.NumberOfJudges,
 		Comments:       commentResponses,
 		Referee:        entity.Referee,
+		Supervisor:     entity.Supervisor,
 		BoutType:       string(entity.BoutType),
 		RedAthleteID:   entity.RedAthleteID,
 		BlueAthleteID:  entity.BlueAthleteID,
@@ -187,6 +191,7 @@ type UpdateRequest struct {
 	Experience      *string `json:"experience"`
 	NumberOfJudges  *int    `json:"numberOfJudges"`
 	Referee         *string `json:"referee"`
+	Supervisor      *string `json:"supervisor"`
 	BoutType        *string `json:"boutType"`
 	RedAthleteID    *uint   `json:"redAthleteId"`
 	BlueAthleteID   *uint   `json:"blueAthleteId"`
@@ -248,6 +253,7 @@ func UpdateRequestToEntity(cardId uint, req *UpdateRequest) *entities.UpdateBout
 		Experience:     experience,
 		NumberOfJudges: req.NumberOfJudges,
 		Referee:        req.Referee,
+		Supervisor:     req.Supervisor,
 		BoutType:       boutType,
 	}
 

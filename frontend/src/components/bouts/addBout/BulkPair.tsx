@@ -106,6 +106,7 @@ export const BulkPair = (props: BulkPairProps) => {
           redAthleteId: pair.redId,
           blueAthleteId: pair.blueId,
           referee: "",
+          supervisor: "",
           boutType: format.boutType,
           roundLength: format.roundLength,
           gloveSize: format.gloveSize,

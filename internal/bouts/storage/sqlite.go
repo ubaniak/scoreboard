@@ -48,6 +48,7 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		Decision:       bout.Decision,
 		NumberOfJudges: bout.NumberOfJudges,
 		Referee:        bout.Referee,
+		Supervisor:     bout.Supervisor,
 		BoutType:       string(bout.BoutType),
 		RedAthleteID:   bout.RedAthleteID,
 		BlueAthleteID:  bout.BlueAthleteID,
@@ -71,6 +72,7 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		Winner:         bout.Winner,
 		NumberOfJudges: bout.NumberOfJudges,
 		Referee:        bout.Referee,
+		Supervisor:     bout.Supervisor,
 		BoutType:       entities.BoutType(bout.BoutType),
 		RedAthleteID:   bout.RedAthleteID,
 		BlueAthleteID:  bout.BlueAthleteID,
@@ -217,6 +219,10 @@ func (s *Sqlite) Update(cardId, id uint, toUpdate *entities.UpdateBout) error {
 
 	if toUpdate.Referee != nil {
 		bout.Referee = *toUpdate.Referee
+	}
+
+	if toUpdate.Supervisor != nil {
+		bout.Supervisor = *toUpdate.Supervisor
 	}
 
 	if toUpdate.BoutType != nil {

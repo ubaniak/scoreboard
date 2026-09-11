@@ -113,6 +113,7 @@ type dbBout struct {
 	Winner         string
 	NumberOfJudges int
 	Referee        string
+	Supervisor     string
 	BoutType       string
 	RedAthleteID   *uint
 	BlueAthleteID  *uint

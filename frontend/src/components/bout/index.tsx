@@ -21,6 +21,7 @@ export type Controls = {
   onMakeDecision: (props: MakeDecisionProps) => void;
   onShowDecision: () => void;
   onSetReferee: (name: string) => void;
+  onSetSupervisor: (name: string) => void;
   onCompleteBout: () => void;
 };
 
@@ -55,22 +56,36 @@ export const BoutIndex = (props: BoutIndexProps) => {
         <Card>
           <Flex vertical align="center" justify="center" gap="middle">
             {props.bout?.boutType !== "sparring" && (
-              <Select
-                style={{ width: "100%", maxWidth: 240 }}
-                placeholder="Select referee..."
-                value={props.bout?.referee || undefined}
-                options={(props.officials ?? []).map((o) => ({
-                  value: o.name,
-                  label: o.name,
-                }))}
-                onChange={(name) => props.controls.onSetReferee(name)}
-                allowClear
-              />
+              <>
+                <Select
+                  style={{ width: "100%", maxWidth: 240 }}
+                  placeholder="Select referee..."
+                  value={props.bout?.referee || undefined}
+                  options={(props.officials ?? []).map((o) => ({
+                    value: o.name,
+                    label: o.name,
+                  }))}
+                  onChange={(name) => props.controls.onSetReferee(name)}
+                  allowClear
+                />
+                <Select
+                  style={{ width: "100%", maxWidth: 240 }}
+                  placeholder="Select supervisor..."
+                  value={props.bout?.supervisor || undefined}
+                  options={(props.officials ?? []).map((o) => ({
+                    value: o.name,
+                    label: o.name,
+                  }))}
+                  onChange={(name) => props.controls.onSetSupervisor(name)}
+                  allowClear
+                />
+              </>
             )}
             <Button
               type="primary"
               disabled={
-                props.bout?.boutType !== "sparring" && !props.bout?.referee
+                props.bout?.boutType !== "sparring" &&
+                (!props.bout?.referee || !props.bout?.supervisor)
               }
               onClick={() => props.controls.onStartBout()}
             >

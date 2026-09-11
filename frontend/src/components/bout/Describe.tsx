@@ -44,6 +44,11 @@ const MetaDescriptions = ({ bout }: { bout: Bout }) => (
         {bout.referee}
       </Descriptions.Item>
     )}
+    {bout.supervisor && (
+      <Descriptions.Item label={<Text type="secondary">Supervisor</Text>}>
+        {bout.supervisor}
+      </Descriptions.Item>
+    )}
     <Descriptions.Item label={<Text type="secondary">Gloves</Text>}>
       {bout.gloveSize}
     </Descriptions.Item>

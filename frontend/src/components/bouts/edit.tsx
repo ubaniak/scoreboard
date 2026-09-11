@@ -204,6 +204,9 @@ export const EditBout = (props: EditBoutProps) => {
           <Form.Item<UpdateBoutProps> label="Referee" name="referee" style={{ flex: "1 1 220px", minWidth: 220 }}>
             <Select options={officialOptions} allowClear placeholder="Select referee…" />
           </Form.Item>
+          <Form.Item<UpdateBoutProps> label="Supervisor" name="supervisor" style={{ flex: "1 1 220px", minWidth: 220 }}>
+            <Select options={officialOptions} allowClear placeholder="Select supervisor…" />
+          </Form.Item>
         </div>
       </div>
 

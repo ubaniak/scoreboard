@@ -59,7 +59,7 @@ export const ManualFlow = (props: ManualFlowProps) => {
 
   const onFinish: FormProps<CreateBoutProps>["onFinish"] = (values) => {
     const run = async () => {
-      const created = await props.onSubmit({ ...values, referee: "" });
+      const created = await props.onSubmit({ ...values, referee: "", supervisor: "" });
       for (const text of draftComments) {
         await props.onAddComment(created.id, text);
       }

@@ -72,6 +72,7 @@ type BoutData struct {
 	BlueName     string
 	BlueClub     string
 	Referee      string
+	Supervisor   string
 	Winner       string
 	Decision     string
 	WeightClass  int
@@ -119,6 +120,7 @@ func (uc *useCase) buildReportData(cardId uint) (*ReportData, error) {
 			BoutType:    string(b.BoutType),
 			Status:      string(b.Status),
 			Referee:     b.Referee,
+			Supervisor:  b.Supervisor,
 			Winner:      b.Winner,
 			Decision:    b.Decision,
 			WeightClass: b.WeightClass,

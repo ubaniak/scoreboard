@@ -120,6 +120,7 @@ type Bout struct {
 	Winner         string
 	NumberOfJudges int
 	Referee        string
+	Supervisor     string
 	BoutType       BoutType
 	RedAthleteID   *uint
 	BlueAthleteID  *uint
@@ -138,6 +139,7 @@ type UpdateBout struct {
 	Winner         *string
 	NumberOfJudges *int
 	Referee        *string
+	Supervisor     *string
 	BoutType       *BoutType
 	RedAthleteID   **uint
 	BlueAthleteID  **uint

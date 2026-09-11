@@ -60,6 +60,7 @@ export type CreateBoutProps = {
   gender: string;
   experience: string;
   referee: string;
+  supervisor: string;
   boutType: string;
   roundLength: number;
   gloveSize: string;

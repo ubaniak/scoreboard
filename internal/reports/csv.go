@@ -58,6 +58,7 @@ func WriteFullCSV(w io.Writer, rd *ReportData) error {
 		cw.Write([]string{"Round Length (min)", fmt.Sprintf("%.0f", b.RoundLength)})
 		cw.Write([]string{"Number of Rounds", fmt.Sprintf("%d", b.NumberOfRounds)})
 		cw.Write([]string{"Referee", b.Referee})
+		cw.Write([]string{"Supervisor", b.Supervisor})
 		cw.Write([]string{"Status", b.Status})
 		cw.Write([]string{"Winner", winnerLabel(b.Winner)})
 		cw.Write([]string{"Decision", decisionLabel(b.Decision)})

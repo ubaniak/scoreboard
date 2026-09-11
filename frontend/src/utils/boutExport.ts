@@ -61,6 +61,7 @@ export function downloadFullCsv(card: Card, bout: Bout, scores: ScoresByRound) {
   lines.push(csvRow(["Round Length (min)", bout.roundLength]));
   lines.push(csvRow(["Number of Rounds", bout.rounds?.length ?? ""]));
   lines.push(csvRow(["Referee", bout.referee]));
+  lines.push(csvRow(["Supervisor", bout.supervisor]));
   lines.push(csvRow(["Status", bout.status]));
   lines.push(csvRow(["Winner", winnerLabel(bout.winner)]));
   lines.push(csvRow(["Decision", decisionLabels[bout.decision] ?? bout.decision]));
@@ -210,6 +211,7 @@ function boutHeaderHtml(card: Card, bout: Bout) {
       <span class="label">Glove Size</span><span class="value">${bout.gloveSize}</span>
       <span class="label">Round Length (min)</span><span class="value">${bout.roundLength}</span>
       ${bout.referee ? `<span class="label">Referee</span><span class="value">${bout.referee}</span>` : ""}
+      ${bout.supervisor ? `<span class="label">Supervisor</span><span class="value">${bout.supervisor}</span>` : ""}
     </div>
   </div>`;
 }
@@ -313,6 +315,7 @@ const fullBoutRow = (bout: Bout) =>
     bout.rounds?.length ?? "",
     bout.numberOfJudges,
     bout.referee,
+    bout.supervisor,
     bout.status,
     winnerLabel(bout.winner),
     decisionLabels[bout.decision] ?? bout.decision,
@@ -343,7 +346,7 @@ export function downloadCardFullCsv(card: Card, bouts: Bout[]) {
     csvRow([
       "Bout #", "Red Corner", "Blue Corner", "Age Category", "Gender",
       "Experience", "Weight Class", "Glove Size", "Round Length (min)",
-      "# Rounds", "# Judges", "Referee", "Status", "Winner", "Decision", "Round Ended On", "Comments",
+      "# Rounds", "# Judges", "Referee", "Supervisor", "Status", "Winner", "Decision", "Round Ended On", "Comments",
     ])
   );
   for (const bout of bouts) lines.push(fullBoutRow(bout));

@@ -233,9 +233,15 @@ func (uc *useCase) UpdateStatus(cardId, boutId uint, status entities.BoutStatus)
 				if bout.Referee == "" {
 					return fmt.Errorf("a referee is required to start a developmental bout")
 				}
+				if bout.Supervisor == "" {
+					return fmt.Errorf("a supervisor is required to start a developmental bout")
+				}
 			case entities.BoutTypeScored:
 				if bout.Referee == "" {
 					return fmt.Errorf("a referee is required to start a scored bout")
+				}
+				if bout.Supervisor == "" {
+					return fmt.Errorf("a supervisor is required to start a scored bout")
 				}
 			}
 		}

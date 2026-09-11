@@ -107,6 +107,9 @@ func WriteFullPDF(w io.Writer, rd *ReportData) error {
 		if b.Referee != "" {
 			metaRow(pdf, "Referee", b.Referee)
 		}
+		if b.Supervisor != "" {
+			metaRow(pdf, "Supervisor", b.Supervisor)
+		}
 
 		// Result
 		pdf.Ln(2)
