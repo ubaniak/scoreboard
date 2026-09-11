@@ -5,7 +5,7 @@ import {
 import { Tag, type TagProps } from "antd";
 import type { JudgeDevice } from "../../entities/device";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { JudgeConnections } from "./JudgeConnection";
+import { DeviceConnections } from "./DeviceConnections";
 
 type Props = {
   devices: JudgeDevice[];
@@ -52,7 +52,7 @@ export const JudgeConnectionQuickLook = ({
       content={{
         title: "Connect Judge Devices",
         body: () => (
-          <JudgeConnections devices={devices} onRefreshCode={onRefreshCode} />
+          <DeviceConnections title="Judge" devices={devices} onRefreshCode={onRefreshCode} />
         ),
       }}
     />

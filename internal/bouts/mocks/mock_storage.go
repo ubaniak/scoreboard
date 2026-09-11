@@ -129,6 +129,20 @@ func (mr *MockStorageMockRecorder) Save(cardId, bout any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStorage)(nil).Save), cardId, bout)
 }
 
+// SetAnnouncerRevealed mocks base method.
+func (m *MockStorage) SetAnnouncerRevealed(cardId, id uint, revealed bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAnnouncerRevealed", cardId, id, revealed)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAnnouncerRevealed indicates an expected call of SetAnnouncerRevealed.
+func (mr *MockStorageMockRecorder) SetAnnouncerRevealed(cardId, id, revealed any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAnnouncerRevealed", reflect.TypeOf((*MockStorage)(nil).SetAnnouncerRevealed), cardId, id, revealed)
+}
+
 // SetStatus mocks base method.
 func (m *MockStorage) SetStatus(cardId, id uint, status entities.BoutStatus) error {
 	m.ctrl.T.Helper()

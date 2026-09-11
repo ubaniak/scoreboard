@@ -14,6 +14,7 @@ import (
 
 type UseCase interface {
 	Current() (*entities.Current, error)
+	CurrentForAnnouncer() (*entities.Current, error)
 	List() (*entities.BoutList, error)
 }
 
@@ -48,6 +49,76 @@ func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUs
 }
 
 func (u *usecase) Current() (*entities.Current, error) {
+	return u.buildCurrent(func(b *boutEntities.Bout) bool {
+		return string(b.Status) == "show_decision" || string(b.Status) == "completed"
+	}, true, false)
+}
+
+// CurrentForAnnouncer mirrors Current() but gates winner/decision on a
+// separate, admin-triggered flag instead of the public show_decision status —
+// so an announcer's reveal is independent of the public Scoreboard's reveal.
+// Scores are never included; the announcer page doesn't show live rounds.
+// Neighboring bouts are included so the announcer can see what just finished
+// and what's coming up next.
+func (u *usecase) CurrentForAnnouncer() (*entities.Current, error) {
+	return u.buildCurrent(func(b *boutEntities.Bout) bool {
+		return b.AnnouncerRevealed
+	}, false, true)
+}
+
+// buildNeighborBout builds the lightweight bout-preview shape shown for a
+// bout that isn't the active one (the next-up or just-finished bout) —
+// corner names and basic meta, no scores/decision.
+func (u *usecase) buildNeighborBout(b *boutEntities.Bout, athleteAffiliation string) *entities.CurrentBout {
+	var redName, blueName, redAff, blueAff, redAffImg, blueAffImg string
+	if u.athletes != nil {
+		if b.RedAthleteID != nil {
+			redName = u.athletes.GetAthleteName(*b.RedAthleteID)
+			clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.RedAthleteID)
+			switch athleteAffiliation {
+			case "province":
+				redAff, redAffImg = provinceName, provinceImageUrl
+			case "nation":
+				redAff, redAffImg = nationName, nationImageUrl
+			default:
+				redAff, redAffImg = clubName, clubImageUrl
+			}
+		}
+		if b.BlueAthleteID != nil {
+			blueName = u.athletes.GetAthleteName(*b.BlueAthleteID)
+			clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.BlueAthleteID)
+			switch athleteAffiliation {
+			case "province":
+				blueAff, blueAffImg = provinceName, provinceImageUrl
+			case "nation":
+				blueAff, blueAffImg = nationName, nationImageUrl
+			default:
+				blueAff, blueAffImg = clubName, clubImageUrl
+			}
+		}
+	}
+
+	return &entities.CurrentBout{
+		ID:               b.ID,
+		Number:           b.BoutNumber,
+		BoutType:         string(b.BoutType),
+		RedCorner:        redName,
+		BlueCorner:       blueName,
+		Gender:           string(b.Gender),
+		WeightClass:      b.WeightClass,
+		GloveSize:        string(b.GloveSize),
+		RoundLength:      int(b.RoundLength),
+		AgeCategory:      string(b.AgeCategory),
+		Experience:       string(b.Experience),
+		Status:           string(b.Status),
+		RedClubName:      redAff,
+		BlueClubName:     blueAff,
+		RedClubImageUrl:  redAffImg,
+		BlueClubImageUrl: blueAffImg,
+	}
+}
+
+func (u *usecase) buildCurrent(reveal func(*boutEntities.Bout) bool, includeScores, includeNeighbors bool) (*entities.Current, error) {
 	var current entities.Current
 
 	card, err := u.cards.Current()
@@ -89,52 +160,11 @@ func (u *usecase) Current() (*entities.Current, error) {
 			// No active bout — find the next not_started one
 			all, listErr := u.bouts.List(card.ID)
 			if listErr == nil {
-				for _, b := range all {
+				for i, b := range all {
 					if string(b.Status) == "not_started" {
-						var nextRed, nextBlue, nextRedAff, nextBlueAff, nextRedAffImg, nextBlueAffImg string
-						if u.athletes != nil {
-							if b.RedAthleteID != nil {
-								nextRed = u.athletes.GetAthleteName(*b.RedAthleteID)
-								clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.RedAthleteID)
-								switch athleteAffiliation {
-								case "province":
-									nextRedAff, nextRedAffImg = provinceName, provinceImageUrl
-								case "nation":
-									nextRedAff, nextRedAffImg = nationName, nationImageUrl
-								default:
-									nextRedAff, nextRedAffImg = clubName, clubImageUrl
-								}
-							}
-							if b.BlueAthleteID != nil {
-								nextBlue = u.athletes.GetAthleteName(*b.BlueAthleteID)
-								clubName, _, clubImageUrl, provinceName, provinceImageUrl, nationName, nationImageUrl := u.athletes.GetAthleteInfo(*b.BlueAthleteID)
-								switch athleteAffiliation {
-								case "province":
-									nextBlueAff, nextBlueAffImg = provinceName, provinceImageUrl
-								case "nation":
-									nextBlueAff, nextBlueAffImg = nationName, nationImageUrl
-								default:
-									nextBlueAff, nextBlueAffImg = clubName, clubImageUrl
-								}
-							}
-						}
-						current.NextBout = &entities.CurrentBout{
-							ID:               b.ID,
-							Number:           b.BoutNumber,
-							BoutType:         string(b.BoutType),
-							RedCorner:        nextRed,
-							BlueCorner:       nextBlue,
-							Gender:           string(b.Gender),
-							WeightClass:      b.WeightClass,
-							GloveSize:        string(b.GloveSize),
-							RoundLength:      int(b.RoundLength),
-							AgeCategory:      string(b.AgeCategory),
-							Experience:       string(b.Experience),
-							Status:           string(b.Status),
-							RedClubName:      nextRedAff,
-							BlueClubName:     nextBlueAff,
-							RedClubImageUrl:  nextRedAffImg,
-							BlueClubImageUrl: nextBlueAffImg,
+						current.NextBout = u.buildNeighborBout(b, athleteAffiliation)
+						if includeNeighbors && i > 0 {
+							current.PreviousBout = u.buildNeighborBout(all[i-1], athleteAffiliation)
 						}
 						break
 					}
@@ -175,7 +205,7 @@ func (u *usecase) Current() (*entities.Current, error) {
 		}
 	}
 
-	decisionRevealed := string(bout.Status) == "show_decision" || string(bout.Status) == "completed"
+	decisionRevealed := reveal(bout)
 
 	currentBout := &entities.CurrentBout{
 		ID:                  bout.ID,
@@ -203,6 +233,24 @@ func (u *usecase) Current() (*entities.Current, error) {
 	}
 	current.Bout = currentBout
 
+	if includeNeighbors {
+		all, listErr := u.bouts.List(card.ID)
+		if listErr == nil {
+			for i, b := range all {
+				if b.ID != bout.ID {
+					continue
+				}
+				if i > 0 {
+					current.PreviousBout = u.buildNeighborBout(all[i-1], athleteAffiliation)
+				}
+				if i+1 < len(all) {
+					current.NextBout = u.buildNeighborBout(all[i+1], athleteAffiliation)
+				}
+				break
+			}
+		}
+	}
+
 	boutDecided := current.Bout.Status == "decision_made" || current.Bout.Status == "show_decision" || current.Bout.Status == "completed"
 	scoresAllowed := decisionRevealed
 
@@ -225,40 +273,42 @@ func (u *usecase) Current() (*entities.Current, error) {
 		}
 	}
 
-	scores, err := u.scores.List(card.ID, bout.ID)
-	if err != nil {
-		if errors.Is(err, sberrs.ErrRecordNotFound) {
-			return &current, err
+	if includeScores {
+		scores, err := u.scores.List(card.ID, bout.ID)
+		if err != nil {
+			if errors.Is(err, sberrs.ErrRecordNotFound) {
+				return &current, err
+			}
+			return nil, err
 		}
-		return nil, err
-	}
-	if len(scores) > 0 && (scoresAllowed || ShouldShowScores(round, bout)) {
-		current.Scores = make(map[int][]entities.CurrentScore)
-		for _, s := range scores {
-			current.Scores[s.RoundNumber] = append(current.Scores[s.RoundNumber], entities.CurrentScore{
-				Red:  s.Red,
-				Blue: s.Blue,
-			})
-		}
+		if len(scores) > 0 && (scoresAllowed || ShouldShowScores(round, bout)) {
+			current.Scores = make(map[int][]entities.CurrentScore)
+			for _, s := range scores {
+				current.Scores[s.RoundNumber] = append(current.Scores[s.RoundNumber], entities.CurrentScore{
+					Red:  s.Red,
+					Blue: s.Blue,
+				})
+			}
 
-		// Fetch warning counts for each round that has scores.
-		if u.rounds != nil {
-			current.Warnings = make(map[int]*entities.CurrentWarnings)
-			for roundNum := range current.Scores {
-				rd, err := u.rounds.Get(bout.ID, roundNum)
-				if err == nil && rd != nil {
-					redWarn := len(rd.Red.Warnings)
-					blueWarn := len(rd.Blue.Warnings)
-					if redWarn > 0 || blueWarn > 0 {
-						current.Warnings[roundNum] = &entities.CurrentWarnings{
-							Red:  redWarn,
-							Blue: blueWarn,
+			// Fetch warning counts for each round that has scores.
+			if u.rounds != nil {
+				current.Warnings = make(map[int]*entities.CurrentWarnings)
+				for roundNum := range current.Scores {
+					rd, err := u.rounds.Get(bout.ID, roundNum)
+					if err == nil && rd != nil {
+						redWarn := len(rd.Red.Warnings)
+						blueWarn := len(rd.Blue.Warnings)
+						if redWarn > 0 || blueWarn > 0 {
+							current.Warnings[roundNum] = &entities.CurrentWarnings{
+								Red:  redWarn,
+								Blue: blueWarn,
+							}
 						}
 					}
 				}
-			}
-			if len(current.Warnings) == 0 {
-				current.Warnings = nil
+				if len(current.Warnings) == 0 {
+					current.Warnings = nil
+				}
 			}
 		}
 	}

@@ -15,11 +15,12 @@ type Bout struct {
 	Gender         string
 	Decision       string
 	Winner         string
-	NumberOfJudges int
-	Referee        string
-	Supervisor     string
-	BoutType       string
-	RedAthleteID   *uint
-	BlueAthleteID  *uint
-	RoundEndedOn   *int
+	NumberOfJudges    int
+	Referee           string
+	Supervisor        string
+	AnnouncerRevealed bool
+	BoutType          string
+	RedAthleteID      *uint
+	BlueAthleteID     *uint
+	RoundEndedOn      *int
 }

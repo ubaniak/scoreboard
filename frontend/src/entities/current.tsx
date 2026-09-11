@@ -76,6 +76,7 @@ export type Current = {
   };
   bout?: BoutInfo;
   nextBout?: BoutInfo;
+  previousBout?: BoutInfo;
   round?: {
     roundNumber: number;
     status: string;

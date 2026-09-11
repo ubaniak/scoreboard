@@ -16,6 +16,7 @@ type RoundControlsProps = {
   onNextRoundState: () => void;
   onMakeDecision: (props: MakeDecisionProps) => void;
   onShowDecision: () => void;
+  onRevealAnnouncer: () => void;
   onCompleteBout: () => void;
 };
 
@@ -36,6 +37,7 @@ export const RoundControls = ({
   onNextRoundState,
   onMakeDecision,
   onShowDecision,
+  onRevealAnnouncer,
   onCompleteBout,
 }: RoundControlsProps) => (
   <Card
@@ -67,6 +69,7 @@ export const RoundControls = ({
                 onClose={close}
                 onMakeDecision={onMakeDecision}
                 onShowDecision={onShowDecision}
+                onRevealAnnouncer={onRevealAnnouncer}
                 onComplete={onCompleteBout}
                 scores={scores}
                 rounds={rounds}
@@ -92,6 +95,7 @@ export const RoundControls = ({
               onClose={close}
               onMakeDecision={onMakeDecision}
               onShowDecision={onShowDecision}
+              onRevealAnnouncer={onRevealAnnouncer}
               onComplete={onCompleteBout}
               scores={scores}
               rounds={rounds}

@@ -38,6 +38,7 @@ const HomeOfficialsPage = lazyRouteComponent(() => import("./pages/home/official
 const SettingsDataPage = lazyRouteComponent(() => import("./pages/settings/data"), "SettingsDataPage");
 const SettingsGoogleDrivePage = lazyRouteComponent(() => import("./pages/settings/googleDrive"), "SettingsGoogleDrivePage");
 const JudgePage = lazyRouteComponent(() => import("./pages/judge"), "JudgePage");
+const AnnouncerPage = lazyRouteComponent(() => import("./pages/announcer"), "AnnouncerPage");
 const LoginPage = lazyRouteComponent(() => import("./pages/login"), "LoginPage");
 const ScoreboardPage = lazyRouteComponent(() => import("./pages/scoreboard"), "ScoreboardPage");
 const SetupPage = lazyRouteComponent(() => import("./pages/setup"), "SetupPage");
@@ -108,6 +109,11 @@ const routeTree = rootRoute.addChildren([
       getParentRoute: () => protectedLayoutRoute,
       path: "/judge",
       component: JudgePage,
+    }),
+    createRoute({
+      getParentRoute: () => protectedLayoutRoute,
+      path: "/announcer",
+      component: AnnouncerPage,
     }),
     adminShellRoute.addChildren([
       homeLayoutRoute.addChildren([

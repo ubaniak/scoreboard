@@ -3,17 +3,23 @@ package rbac
 import "slices"
 
 const (
-	Admin  = "admin"
-	Judge  = "judge"
-	Judge1 = "judge1"
-	Judge2 = "judge2"
-	Judge3 = "judge3"
-	Judge4 = "judge4"
-	Judge5 = "judge5"
+	Admin      = "admin"
+	Judge      = "judge"
+	Judge1     = "judge1"
+	Judge2     = "judge2"
+	Judge3     = "judge3"
+	Judge4     = "judge4"
+	Judge5     = "judge5"
+	Announcer1 = "announcer1"
+	Announcer2 = "announcer2"
 )
 
 var JudgeList = []string{
 	Judge1, Judge2, Judge3, Judge4, Judge5,
+}
+
+var AnnouncerList = []string{
+	Announcer1, Announcer2,
 }
 
 type Role struct {

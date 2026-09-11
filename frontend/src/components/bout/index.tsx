@@ -22,6 +22,7 @@ export type Controls = {
   onShowDecision: () => void;
   onSetReferee: (name: string) => void;
   onSetSupervisor: (name: string) => void;
+  onRevealAnnouncer: () => void;
   onCompleteBout: () => void;
 };
 

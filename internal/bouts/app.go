@@ -83,6 +83,7 @@ func (a *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("bouts.delete", "/{cardId}/bouts/{id}", "DELETE", a.Delete, rbac.Admin)
 	rb.AddRoute("bouts.make_decision", "/{cardId}/bouts/{id}/decision/make", "POST", a.MakeDecision, rbac.Admin)
 	rb.AddRoute("bouts.show_decision", "/{cardId}/bouts/{id}/decision/show", "POST", a.ShowDecision, rbac.Admin)
+	rb.AddRoute("bouts.reveal_announcer", "/{cardId}/bouts/{id}/decision/reveal-announcer", "POST", a.RevealToAnnouncer, rbac.Admin)
 	rb.AddRoute("bouts.complete", "/{cardId}/bouts/{id}/complete", "POST", a.Complete, rbac.Admin)
 
 	rb.AddRoute("bouts.status", "/{cardId}/bouts/{id}/status", "POST", a.UpdateStatus, rbac.Admin)
@@ -666,6 +667,28 @@ func (h *App) ShowDecision(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.ShowDecision(cardId, id)
+	if err == nil {
+		h.broadcaster.Notify()
+	}
+	presenter.WithError(err).WithStatusCode(http.StatusOK).Present()
+}
+
+func (h *App) RevealToAnnouncer(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
+	vars := mux.Vars(r)
+
+	cardId, err := muxutils.ParseVars[uint](vars, "cardId")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+	id, err := muxutils.ParseVars[uint](vars, "id")
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
+	}
+
+	err = h.useCase.RevealToAnnouncer(cardId, id)
 	if err == nil {
 		h.broadcaster.Notify()
 	}

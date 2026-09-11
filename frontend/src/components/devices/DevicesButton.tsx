@@ -1,4 +1,4 @@
-import { useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../../api/devices";
+import { useAnnouncerDevices, useGetBaseUrl, useJudgeDevices, useMutationGenerateCode } from "../../api/devices";
 import { useProfile } from "../../providers/login";
 import { DeviceQuickLook } from "./DeviceQuickLook";
 
@@ -13,6 +13,7 @@ type AdminProps = {
 
 const AdminDevicesButton = ({ token, requiredJudges }: AdminProps) => {
   const judgeDevices = useJudgeDevices({ token });
+  const announcerDevices = useAnnouncerDevices({ token });
   const generateCode = useMutationGenerateCode({ token });
   const { data: baseUrl } = useGetBaseUrl({ token });
 
@@ -20,6 +21,7 @@ const AdminDevicesButton = ({ token, requiredJudges }: AdminProps) => {
     <DeviceQuickLook
       requiredJudges={requiredJudges}
       devices={judgeDevices.data || []}
+      announcerDevices={announcerDevices.data || []}
       baseUrl={baseUrl}
       onRefreshCode={(values) => generateCode.mutate(values)}
     />

@@ -1,5 +1,5 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
-import { Button, Space, Typography } from "antd";
+import { Button, Space, Tooltip, Typography } from "antd";
 import { useState } from "react";
 import type { MakeDecisionProps } from "../../api/bouts";
 import type { RoundDetails } from "../../entities/cards";
@@ -14,12 +14,14 @@ type DecisionConfirmProps = {
   scores?: ScoresByRound;
   rounds?: RoundDetails[];
   onShowDecision: () => void;
+  onRevealAnnouncer: () => void;
   onComplete: () => void;
   onClose: () => void;
 };
 
-export const DecisionConfirm = ({ submitted, scores, rounds, onShowDecision, onComplete, onClose }: DecisionConfirmProps) => {
+export const DecisionConfirm = ({ submitted, scores, rounds, onShowDecision, onRevealAnnouncer, onComplete, onClose }: DecisionConfirmProps) => {
   const [shown, setShown] = useState(false);
+  const [announcerRevealed, setAnnouncerRevealed] = useState(false);
 
   const winnerLabel =
     submitted.winner === "red" ? "Red Corner" : submitted.winner === "blue" ? "Blue Corner" : "No Winner";
@@ -66,12 +68,25 @@ export const DecisionConfirm = ({ submitted, scores, rounds, onShowDecision, onC
       <Space>
         <Button
           size="large"
-          type={shown ? "default" : "primary"}
-          icon={shown ? <CheckCircleOutlined /> : undefined}
-          onClick={(e) => { setShown(true); onShowDecision(); e.stopPropagation(); }}
+          type={announcerRevealed ? "default" : "primary"}
+          icon={announcerRevealed ? <CheckCircleOutlined /> : undefined}
+          onClick={(e) => { setAnnouncerRevealed(true); onRevealAnnouncer(); e.stopPropagation(); }}
         >
-          {shown ? "Showing on Scoreboard" : "Show Decision on Scoreboard"}
+          {announcerRevealed ? "Revealed to Announcer" : "Reveal to Announcer"}
         </Button>
+        <Tooltip title={announcerRevealed ? undefined : "Reveal to the announcer first"}>
+          <span>
+            <Button
+              size="large"
+              type={shown ? "default" : "primary"}
+              icon={shown ? <CheckCircleOutlined /> : undefined}
+              disabled={!announcerRevealed}
+              onClick={(e) => { setShown(true); onShowDecision(); e.stopPropagation(); }}
+            >
+              {shown ? "Showing on Scoreboard" : "Show Decision on Scoreboard"}
+            </Button>
+          </span>
+        </Tooltip>
         <Button
           size="large"
           danger

@@ -270,6 +270,32 @@ export const useMutateShowDecision = (
   });
 };
 
+export const useMutateRevealToAnnouncer = (
+  props: TokenBase & CardRequestType & BoutRequestType,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      return fetchClient(
+        `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/decision/reveal-announcer`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.token}`,
+          },
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boutsQueryKeys.list(props.token, props.cardId) });
+      queryClient.invalidateQueries({
+        queryKey: boutsQueryKeys.get(props.token, props.boutId),
+      });
+    },
+  });
+};
+
 export const useMutateUpdateBoutStatus = (
   props: TokenBase & CardRequestType & BoutRequestType,
 ) => {

@@ -21,6 +21,7 @@ export type MakeDecisionFormProps = {
   onClose: () => void;
   onMakeDecision: (values: MakeDecisionProps) => void;
   onShowDecision: () => void;
+  onRevealAnnouncer: () => void;
   onComplete: () => void;
   scores?: ScoresByRound;
   rounds?: RoundDetails[];
@@ -47,6 +48,7 @@ export const MakeDecision = (props: MakeDecisionFormProps) => {
         scores={props.scores}
         rounds={props.rounds}
         onShowDecision={props.onShowDecision}
+        onRevealAnnouncer={props.onRevealAnnouncer}
         onComplete={props.onComplete}
         onClose={props.onClose}
       />

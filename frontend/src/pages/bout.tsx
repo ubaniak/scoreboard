@@ -13,6 +13,7 @@ import {
   useMutateMakeDecision,
   useMutateNextRoundState,
   useMutateShowDecision,
+  useMutateRevealToAnnouncer,
   useMutateUpdateBout,
   useMutateUpdateBoutStatus,
   type MakeDecisionProps,
@@ -105,6 +106,12 @@ export const BoutPage = () => {
   });
 
   const showDecision = useMutateShowDecision({
+    token,
+    boutId,
+    cardId,
+  });
+
+  const revealToAnnouncer = useMutateRevealToAnnouncer({
     token,
     boutId,
     cardId,
@@ -220,6 +227,7 @@ export const BoutPage = () => {
             makeDecision.mutate(props),
           onCompleteBout: () => completeBout.mutate(),
           onShowDecision: () => showDecision.mutate(),
+          onRevealAnnouncer: () => revealToAnnouncer.mutate(),
         }}
       />
     </PageLayout>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ubaniak/scoreboard/internal/devices/entities"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -22,8 +23,10 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	sr := rb.AddSubroute("devices")
 	sr.AddRoute("baseUrl", "/baseurl", http.MethodGet, h.BaseUrl, rbac.Admin)
 	sr.AddRoute("judges", "/judges", http.MethodGet, h.Judges, rbac.Admin)
+	sr.AddRoute("announcers", "/announcers", http.MethodGet, h.Announcers, rbac.Admin)
 	sr.AddRoute("code", "/code", http.MethodPost, h.Code, rbac.Admin)
-	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, rbac.JudgeList...)
+	healthCheckRoles := append(append([]string{}, rbac.JudgeList...), rbac.AnnouncerList...)
+	sr.AddRoute("healthCheck", "/healthcheck", http.MethodGet, h.JudgeHealthCheck, healthCheckRoles...)
 }
 func (h *App) BaseUrl(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[string](r, w)
@@ -45,16 +48,30 @@ func (h *App) Judges(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response = make([]JudgesResponse, len(judges))
-	for i, judge := range judges {
-		response[i] = JudgesResponse{
-			Role:   judge.Role,
-			Code:   judge.Code,
-			Status: string(judge.Status),
-		}
+	presenter.WithData(toJudgesResponse(judges)).Present()
+}
+
+func (h *App) Announcers(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[[]JudgesResponse](r, w)
+	announcers, err := h.useCase.Announcers()
+	if err != nil {
+		presenter.WithError(err).Present()
+		return
 	}
 
-	presenter.WithData(response).Present()
+	presenter.WithData(toJudgesResponse(announcers)).Present()
+}
+
+func toJudgesResponse(profiles []entities.JudgeProfile) []JudgesResponse {
+	response := make([]JudgesResponse, len(profiles))
+	for i, profile := range profiles {
+		response[i] = JudgesResponse{
+			Role:   profile.Role,
+			Code:   profile.Code,
+			Status: string(profile.Status),
+		}
+	}
+	return response
 }
 
 type RegisterRequest struct {

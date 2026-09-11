@@ -27,6 +27,7 @@ export type RoundIndexProps = {
     onNextRoundState: () => void;
     onMakeDecision: (props: MakeDecisionProps) => void;
     onShowDecision: () => void;
+    onRevealAnnouncer: () => void;
     onCompleteBout: () => void;
   };
 };
@@ -59,6 +60,7 @@ export const RoundIndex = (props: RoundIndexProps) => {
         onNextRoundState={props.controls.onNextRoundState}
         onMakeDecision={props.controls.onMakeDecision}
         onShowDecision={props.controls.onShowDecision}
+        onRevealAnnouncer={props.controls.onRevealAnnouncer}
         onCompleteBout={props.controls.onCompleteBout}
       />
 

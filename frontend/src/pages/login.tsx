@@ -28,6 +28,9 @@ export const LoginPage = () => {
       if (values.role?.startsWith("judge")) {
         navigate({ to: "/judge" });
       }
+      if (values.role?.startsWith("announcer")) {
+        navigate({ to: "/announcer" });
+      }
     } catch {
       message.error("Invalid code — please try again");
     }

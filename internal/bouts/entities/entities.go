@@ -118,13 +118,14 @@ type Bout struct {
 	Status         BoutStatus
 	Decision       string
 	Winner         string
-	NumberOfJudges int
-	Referee        string
-	Supervisor     string
-	BoutType       BoutType
-	RedAthleteID   *uint
-	BlueAthleteID  *uint
-	RoundEndedOn   *int
+	NumberOfJudges    int
+	Referee           string
+	Supervisor        string
+	AnnouncerRevealed bool
+	BoutType          BoutType
+	RedAthleteID      *uint
+	BlueAthleteID     *uint
+	RoundEndedOn      *int
 }
 
 type UpdateBout struct {

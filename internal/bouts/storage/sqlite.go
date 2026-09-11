@@ -46,13 +46,14 @@ func (*Sqlite) ToGormModel(cardId uint, bout *entities.Bout) *Bout {
 		Status:         string(bout.Status),
 		Gender:         string(bout.Gender),
 		Decision:       bout.Decision,
-		NumberOfJudges: bout.NumberOfJudges,
-		Referee:        bout.Referee,
-		Supervisor:     bout.Supervisor,
-		BoutType:       string(bout.BoutType),
-		RedAthleteID:   bout.RedAthleteID,
-		BlueAthleteID:  bout.BlueAthleteID,
-		RoundEndedOn:   bout.RoundEndedOn,
+		NumberOfJudges:    bout.NumberOfJudges,
+		Referee:           bout.Referee,
+		Supervisor:        bout.Supervisor,
+		AnnouncerRevealed: bout.AnnouncerRevealed,
+		BoutType:          string(bout.BoutType),
+		RedAthleteID:      bout.RedAthleteID,
+		BlueAthleteID:     bout.BlueAthleteID,
+		RoundEndedOn:      bout.RoundEndedOn,
 	}
 }
 
@@ -70,10 +71,11 @@ func (*Sqlite) ToEntity(bout Bout) *entities.Bout {
 		Status:         entities.BoutStatus(bout.Status),
 		Decision:       bout.Decision,
 		Winner:         bout.Winner,
-		NumberOfJudges: bout.NumberOfJudges,
-		Referee:        bout.Referee,
-		Supervisor:     bout.Supervisor,
-		BoutType:       entities.BoutType(bout.BoutType),
+		NumberOfJudges:    bout.NumberOfJudges,
+		Referee:           bout.Referee,
+		Supervisor:        bout.Supervisor,
+		AnnouncerRevealed: bout.AnnouncerRevealed,
+		BoutType:          entities.BoutType(bout.BoutType),
 		RedAthleteID:   bout.RedAthleteID,
 		BlueAthleteID:  bout.BlueAthleteID,
 		RoundEndedOn:   bout.RoundEndedOn,
@@ -255,6 +257,19 @@ func (s *Sqlite) SetStatus(cardId, id uint, status entities.BoutStatus) error {
 	}
 
 	bout.Status = string(status)
+	if err := s.db.Save(bout).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Sqlite) SetAnnouncerRevealed(cardId, id uint, revealed bool) error {
+	var bout Bout
+	if err := s.db.Where("card_id = ? AND id = ?", cardId, id).First(&bout).Error; err != nil {
+		return err
+	}
+
+	bout.AnnouncerRevealed = revealed
 	if err := s.db.Save(bout).Error; err != nil {
 		return err
 	}

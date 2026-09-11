@@ -55,12 +55,13 @@ type CurrentRoundResponse struct {
 }
 
 type CurrentResponse struct {
-	Card     *CurrentCardResponse              `json:"card,omitempty"`
-	Bout     *CurrentBoutResponse              `json:"bout,omitempty"`
-	NextBout *CurrentBoutResponse              `json:"nextBout,omitempty"`
-	Round    *CurrentRoundResponse             `json:"round,omitempty"`
-	Scores   map[int][]CurrentScoreResponse    `json:"scores,omitempty"`
-	Warnings map[int]*CurrentWarningsResponse  `json:"warnings,omitempty"`
+	Card         *CurrentCardResponse             `json:"card,omitempty"`
+	Bout         *CurrentBoutResponse             `json:"bout,omitempty"`
+	NextBout     *CurrentBoutResponse             `json:"nextBout,omitempty"`
+	PreviousBout *CurrentBoutResponse             `json:"previousBout,omitempty"`
+	Round        *CurrentRoundResponse            `json:"round,omitempty"`
+	Scores       map[int][]CurrentScoreResponse   `json:"scores,omitempty"`
+	Warnings     map[int]*CurrentWarningsResponse `json:"warnings,omitempty"`
 }
 
 type BoutListItemResponse struct {
@@ -172,10 +173,11 @@ type CurrentRound struct {
 }
 
 type Current struct {
-	Card     *CurrentCard
-	Bout     *CurrentBout
-	NextBout *CurrentBout
-	Round    *CurrentRound
-	Scores   map[int][]CurrentScore
-	Warnings map[int]*CurrentWarnings
+	Card         *CurrentCard
+	Bout         *CurrentBout
+	NextBout     *CurrentBout
+	PreviousBout *CurrentBout
+	Round        *CurrentRound
+	Scores       map[int][]CurrentScore
+	Warnings     map[int]*CurrentWarnings
 }

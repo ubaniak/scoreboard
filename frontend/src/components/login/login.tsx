@@ -32,6 +32,8 @@ export const LoginPageForm = (props: LoginPageFormProps) => {
             { value: "judge3", label: "Judge 3" },
             { value: "judge4", label: "Judge 4" },
             { value: "judge5", label: "Judge 5" },
+            { value: "announcer1", label: "Announcer 1" },
+            { value: "announcer2", label: "Announcer 2" },
           ]}
         />
       </Form.Item>

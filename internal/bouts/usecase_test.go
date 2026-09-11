@@ -35,6 +35,9 @@ var _ = Describe("UseCase", func() {
 				storage.EXPECT().
 					SetStatus(entry.cardId, entry.boutId, entities.BoutStatusDecisionMade).
 					Return(nil)
+				storage.EXPECT().
+					SetAnnouncerRevealed(entry.cardId, entry.boutId, false).
+					Return(nil)
 				if entry.comment != "" {
 					comments.EXPECT().
 						Add("bout", entry.boutId, entry.comment).

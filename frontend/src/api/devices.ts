@@ -7,6 +7,7 @@ import type { JudgeDevice } from "../entities/device";
 const keys = {
   all: (token: string) => ["devices", token] as const,
   status: (token: string) => [...keys.all(token), "status"] as const,
+  announcerStatus: (token: string) => [...keys.all(token), "announcerStatus"] as const,
   healthcheck: (token: string) => [...keys.all(token), "healthcheck"] as const,
 };
 
@@ -39,6 +40,7 @@ export const useMutationGenerateCode = (props: TokenBase) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.status(props.token) });
+      queryClient.invalidateQueries({ queryKey: keys.announcerStatus(props.token) });
     },
   });
 };
@@ -64,6 +66,21 @@ export const useJudgeDevices = (props: TokenBase) => {
     queryKey: keys.status(props.token),
     queryFn: () => {
       return fetchClient<JudgeDevice[]>(`${baseUrl}/api/devices/judges`, {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      });
+    },
+    refetchInterval: 5000,
+  });
+};
+
+export const useAnnouncerDevices = (props: TokenBase) => {
+  return useQuery({
+    queryKey: keys.announcerStatus(props.token),
+    queryFn: () => {
+      return fetchClient<JudgeDevice[]>(`${baseUrl}/api/devices/announcers`, {
         headers: {
           "Content-type": "application/json",
           Authorization: `Bearer ${props.token}`,

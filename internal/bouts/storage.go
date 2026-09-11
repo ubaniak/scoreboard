@@ -14,6 +14,7 @@ type Storage interface {
 	Delete(cardId, id uint) error
 	Update(cardId, id uint, bout *entities.UpdateBout) error
 	SetStatus(cardId, id uint, status entities.BoutStatus) error
+	SetAnnouncerRevealed(cardId, id uint, revealed bool) error
 	Current(cardId uint) (*entities.Bout, error)
 	CountsByCard(cardIds []uint) (map[uint]entities.BoutCounts, error)
 }

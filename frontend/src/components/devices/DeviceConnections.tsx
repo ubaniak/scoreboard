@@ -6,13 +6,14 @@ import { DeviceStatusTag } from "../status/deviceStatusTag";
 
 const { Text } = Typography;
 
-export type JudgeConnectionProps = {
+export type DeviceConnectionsProps = {
+  title: string;
   onRefreshCode: (props: { role: string }) => void;
   devices: JudgeDevice[];
   baseUrl?: string;
 };
 
-export const JudgeConnections = (props: JudgeConnectionProps) => {
+export const DeviceConnections = (props: DeviceConnectionsProps) => {
   const { notification } = App.useApp();
   const url = props.baseUrl ? `http://${props.baseUrl}:8080` : "";
 
@@ -31,15 +32,15 @@ export const JudgeConnections = (props: JudgeConnectionProps) => {
         <Space size={32}>
           <QRCode value={url || "http://localhost:8080"} size={140} />
           <div>
-            <Text type="secondary">Judge App</Text>
+            <Text type="secondary">{props.title} App</Text>
             <div style={{ fontSize: 18, fontWeight: 500 }}>
-              Scan to open judge interface
+              Scan to open {props.title.toLowerCase()} interface
             </div>
             <Text type="secondary">{url}</Text>
           </div>
         </Space>
       </Card>
-      <Card title="Judge Devices">
+      <Card title={`${props.title} Devices`}>
         <List
           size="small"
           bordered

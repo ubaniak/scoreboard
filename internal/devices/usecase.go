@@ -14,6 +14,7 @@ import (
 type UseCase interface {
 	GenerateCode(role Role, number int) (string, error)
 	Judges() ([]entities.JudgeProfile, error)
+	Announcers() ([]entities.JudgeProfile, error)
 	RegisterAdmin() (string, error)
 	LocalIp() string
 	HealthCheck(role string) error
@@ -36,8 +37,16 @@ func (uc *useCase) GenerateCode(role Role, limit int) (string, error) {
 }
 
 func (uc *useCase) Judges() ([]entities.JudgeProfile, error) {
-	statusProfiles := make([]entities.JudgeProfile, len(JudgeRoles))
-	for i, role := range JudgeRoles {
+	return uc.statusProfiles(JudgeRoles)
+}
+
+func (uc *useCase) Announcers() ([]entities.JudgeProfile, error) {
+	return uc.statusProfiles(AnnouncerRoles)
+}
+
+func (uc *useCase) statusProfiles(roles []Role) ([]entities.JudgeProfile, error) {
+	statusProfiles := make([]entities.JudgeProfile, len(roles))
+	for i, role := range roles {
 		status := entities.DeviceStatusConnected
 		var profile *authEntities.Profile
 		profile, err := uc.authUseCase.Get(string(role))

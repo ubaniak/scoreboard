@@ -5,12 +5,13 @@ import {
 import { Button, QRCode, Space, Tabs, Typography } from "antd";
 import type { JudgeDevice } from "../../entities/device";
 import { ActionMenu } from "../actionMenu/actionMenu";
-import { JudgeConnections } from "./JudgeConnection";
+import { DeviceConnections } from "./DeviceConnections";
 
 const { Text } = Typography;
 
 type Props = {
   devices: JudgeDevice[];
+  announcerDevices: JudgeDevice[];
   requiredJudges: number;
   baseUrl?: string;
   onRefreshCode: (props: { role: string }) => void;
@@ -41,6 +42,7 @@ const ScorePanelTab = ({ baseUrl }: ScorePanelTabProps) => {
 
 export const DeviceQuickLook = ({
   devices,
+  announcerDevices,
   requiredJudges,
   baseUrl,
   onRefreshCode,
@@ -56,8 +58,21 @@ export const DeviceQuickLook = ({
       key: "judges",
       label: "Judges",
       children: (
-        <JudgeConnections
+        <DeviceConnections
+          title="Judge"
           devices={devices}
+          baseUrl={baseUrl}
+          onRefreshCode={onRefreshCode}
+        />
+      ),
+    },
+    {
+      key: "announcers",
+      label: "Announcers",
+      children: (
+        <DeviceConnections
+          title="Announcer"
+          devices={announcerDevices}
           baseUrl={baseUrl}
           onRefreshCode={onRefreshCode}
         />

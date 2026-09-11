@@ -21,6 +21,7 @@ type UseCase interface {
 	MakeDecision(cardId, boutId uint, winner, decision, comment string) error
 	Complete(cardId, boutId uint) error
 	ShowDecision(cardId, boutId uint) error
+	RevealToAnnouncer(cardId, boutId uint) error
 	UpdateStatus(cardId, boutId uint, status entities.BoutStatus) error
 
 	AddComment(cardId, boutId uint, text string) (uint, error)
@@ -152,11 +153,20 @@ func (uc *useCase) MakeDecision(cardId, boutId uint, winner, decision, comment s
 	if err != nil {
 		return err
 	}
+	// A fresh decision means any earlier announcer reveal is stale — reset it
+	// so the announcer button doesn't show a decision that's since changed.
+	if err := uc.storage.SetAnnouncerRevealed(cardId, boutId, false); err != nil {
+		return err
+	}
 	if comment != "" {
 		_, err := uc.comments.Add("bout", boutId, comment)
 		return err
 	}
 	return nil
+}
+
+func (uc *useCase) RevealToAnnouncer(cardId, boutId uint) error {
+	return uc.storage.SetAnnouncerRevealed(cardId, boutId, true)
 }
 
 func (uc *useCase) ShowDecision(cardId, boutId uint) error {

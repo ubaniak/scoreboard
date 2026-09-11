@@ -1,3 +1,6 @@
+import { decisionLabels } from "../bouts/decisionLabels";
+import { useTheme } from "../../theme";
+
 type DecisionBannerProps = {
   winner: string;
   redCorner: string;
@@ -6,12 +9,12 @@ type DecisionBannerProps = {
 };
 
 export const DecisionBanner = ({ winner, redCorner, blueCorner, decision }: DecisionBannerProps) => {
+  const { colors } = useTheme();
+  const decisionLabel = decision ? (decisionLabels[decision] ?? decision) : undefined;
   const winnerName =
     winner === "red" ? redCorner : winner === "blue" ? blueCorner : "Draw";
-  const winnerColor =
-    winner === "red" ? "#fca5a5" : winner === "blue" ? "#93c5fd" : "white";
-  const winnerGlow =
-    winner === "red" ? "rgba(252,165,165,0.35)" : winner === "blue" ? "rgba(147,197,253,0.35)" : "rgba(255,255,255,0.35)";
+  const boxColor =
+    winner === "red" ? colors.cornerRed : winner === "blue" ? colors.cornerBlue : "rgba(255,255,255,0.12)";
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -29,29 +32,37 @@ export const DecisionBanner = ({ winner, redCorner, blueCorner, decision }: Deci
       </div>
       <div
         style={{
-          fontSize: 56,
-          fontWeight: 900,
-          color: winnerColor,
-          lineHeight: 1.1,
-          textShadow: `0 2px 20px ${winnerGlow}`,
+          background: boxColor,
+          borderRadius: 16,
+          padding: "20px 48px",
+          boxShadow: `0 8px 32px ${boxColor}66`,
         }}
       >
-        {winnerName}
-      </div>
-      {decision && (
         <div
           style={{
-            fontSize: 14,
-            letterSpacing: 3,
-            opacity: 0.6,
-            textTransform: "uppercase",
+            fontSize: 56,
+            fontWeight: 900,
             color: "white",
-            marginTop: 8,
+            lineHeight: 1.1,
           }}
         >
-          {decision}
+          {winnerName}
         </div>
-      )}
+        {decisionLabel && (
+          <div
+            style={{
+              fontSize: 14,
+              letterSpacing: 3,
+              opacity: 0.85,
+              textTransform: "uppercase",
+              color: "white",
+              marginTop: 8,
+            }}
+          >
+            {decisionLabel}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

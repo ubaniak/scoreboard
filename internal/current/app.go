@@ -23,6 +23,8 @@ func (h *App) RegisterRoutes(rb *rbac.RouteBuilder) {
 	rb.AddRoute("current", "/current", http.MethodGet, h.Current)
 	rb.AddRoute("current.schedule", "/current/schedule", http.MethodGet, h.Schedule)
 	rb.AddRoute("current.events", "/current/events", http.MethodGet, h.Events)
+	rb.AddRoute("current.announcer", "/current/announcer", http.MethodGet, h.CurrentAnnouncer,
+		append([]string{rbac.Admin}, rbac.AnnouncerList...)...)
 }
 
 func (h *App) Current(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +38,55 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	presenter.WithData(h.buildCurrentResponse(current)).Present()
+}
+
+// CurrentAnnouncer is the announcer-facing twin of Current — same shape,
+// but winner/decision reveal independently of the public show_decision flow
+// (see current.UseCase.CurrentForAnnouncer), and scores are never included.
+func (h *App) CurrentAnnouncer(w http.ResponseWriter, r *http.Request) {
+	presenter := presenters.NewHTTPPresenter[entities.CurrentResponse](r, w)
+	current, err := h.useCase.CurrentForAnnouncer()
+
+	if err != nil {
+		if current == nil {
+			presenter.WithStatusCode(http.StatusNotFound).WithError(err).Present()
+			return
+		}
+	}
+
+	presenter.WithData(h.buildCurrentResponse(current)).Present()
+}
+
+func boutResponseFromCurrentBout(b *entities.CurrentBout) *entities.CurrentBoutResponse {
+	if b == nil {
+		return nil
+	}
+	return &entities.CurrentBoutResponse{
+		ID:                  b.ID,
+		BoutNumber:          b.Number,
+		BoutType:            b.BoutType,
+		RedCorner:           b.RedCorner,
+		BlueCorner:          b.BlueCorner,
+		Gender:              b.Gender,
+		WeightClass:         b.WeightClass,
+		GloveSize:           b.GloveSize,
+		RoundLength:         b.RoundLength,
+		AgeCategory:         b.AgeCategory,
+		Experience:          b.Experience,
+		Status:              b.Status,
+		Decision:            b.Decision,
+		Winner:              b.Winner,
+		RedClubName:         b.RedClubName,
+		BlueClubName:        b.BlueClubName,
+		RedAthleteImageUrl:  b.RedAthleteImageUrl,
+		BlueAthleteImageUrl: b.BlueAthleteImageUrl,
+		RedClubImageUrl:     b.RedClubImageUrl,
+		BlueClubImageUrl:    b.BlueClubImageUrl,
+	}
+}
+
+func (h *App) buildCurrentResponse(current *entities.Current) entities.CurrentResponse {
 	response := entities.CurrentResponse{}
 	if current.Card != nil {
 		cardResp := &entities.CurrentCardResponse{
@@ -56,47 +107,9 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 		response.Card = cardResp
 	}
 
-	if current.Bout != nil {
-		response.Bout = &entities.CurrentBoutResponse{
-			ID:                  current.Bout.ID,
-			BoutNumber:          current.Bout.Number,
-			BoutType:            current.Bout.BoutType,
-			RedCorner:           current.Bout.RedCorner,
-			BlueCorner:          current.Bout.BlueCorner,
-			Gender:              current.Bout.Gender,
-			WeightClass:         current.Bout.WeightClass,
-			GloveSize:           current.Bout.GloveSize,
-			RoundLength:         current.Bout.RoundLength,
-			AgeCategory:         current.Bout.AgeCategory,
-			Experience:          current.Bout.Experience,
-			Status:              current.Bout.Status,
-			Decision:            current.Bout.Decision,
-			Winner:              current.Bout.Winner,
-			RedClubName:         current.Bout.RedClubName,
-			BlueClubName:        current.Bout.BlueClubName,
-			RedAthleteImageUrl:  current.Bout.RedAthleteImageUrl,
-			BlueAthleteImageUrl: current.Bout.BlueAthleteImageUrl,
-			RedClubImageUrl:     current.Bout.RedClubImageUrl,
-			BlueClubImageUrl:    current.Bout.BlueClubImageUrl,
-		}
-	}
-
-	if current.NextBout != nil {
-		response.NextBout = &entities.CurrentBoutResponse{
-			ID:          current.NextBout.ID,
-			BoutNumber:  current.NextBout.Number,
-			BoutType:    current.NextBout.BoutType,
-			RedCorner:   current.NextBout.RedCorner,
-			BlueCorner:  current.NextBout.BlueCorner,
-			Gender:      current.NextBout.Gender,
-			WeightClass: current.NextBout.WeightClass,
-			GloveSize:   current.NextBout.GloveSize,
-			RoundLength: current.NextBout.RoundLength,
-			AgeCategory: current.NextBout.AgeCategory,
-			Experience:  current.NextBout.Experience,
-			Status:      current.NextBout.Status,
-		}
-	}
+	response.Bout = boutResponseFromCurrentBout(current.Bout)
+	response.NextBout = boutResponseFromCurrentBout(current.NextBout)
+	response.PreviousBout = boutResponseFromCurrentBout(current.PreviousBout)
 
 	if current.Round != nil {
 		response.Round = &entities.CurrentRoundResponse{
@@ -123,7 +136,7 @@ func (h *App) Current(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	presenter.WithData(response).Present()
+	return response
 }
 
 func (h *App) Schedule(w http.ResponseWriter, r *http.Request) {

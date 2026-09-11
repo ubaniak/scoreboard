@@ -104,7 +104,11 @@ func main() {
 	for _, judge := range rbac.JudgeList {
 		roles.AddRole(judge)
 	}
+	for _, announcer := range rbac.AnnouncerList {
+		roles.AddRole(announcer)
+	}
 	roles.Inherits(rbac.Admin, rbac.JudgeList...)
+	roles.Inherits(rbac.Admin, rbac.AnnouncerList...)
 
 	rbacMw := rbac.NewMiddleware(roles, authUseCase)
 
