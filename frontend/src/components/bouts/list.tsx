@@ -11,6 +11,7 @@ import type { BoutRequestType } from "../../api/entities";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { RowList, type RowListColumn } from "../list/RowList";
 import { getMismatches } from "./matchCompatibility";
+import { useTheme } from "../../theme";
 
 export type ListBoutsProps = {
   token: string;
@@ -27,6 +28,7 @@ export type ListBoutsProps = {
 };
 export const ListBouts = (props: ListBoutsProps) => {
   const navigate = useNavigate();
+  const { colors } = useTheme();
   const [search, setSearch] = useState("");
 
   const filtered = (props.bouts || []).filter((b) => {
@@ -88,8 +90,17 @@ export const ListBouts = (props: ListBoutsProps) => {
       width: "110px",
       render: (b) => <span style={{ textTransform: "capitalize" }}>{b.boutType || "scored"}</span>,
     },
-    { key: "redCorner", title: "Red Corner", width: "1.2fr", render: (b) => b.redCorner },
-    { key: "blueCorner", title: "Blue Corner", width: "1.2fr", render: (b) => b.blueCorner },
+    {
+      key: "matchup",
+      title: "Matchup",
+      width: "1.6fr",
+      render: (b) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, lineHeight: 1.3 }}>
+          <span style={{ color: colors.cornerRed, fontWeight: 600 }}>{b.redCorner}</span>
+          <span style={{ color: colors.cornerBlue, fontWeight: 600 }}>{b.blueCorner}</span>
+        </div>
+      ),
+    },
     { key: "ageCategory", title: "Age Category", width: "110px", render: (b) => b.ageCategory },
     { key: "experience", title: "Experience", width: "110px", render: (b) => b.experience },
     {
