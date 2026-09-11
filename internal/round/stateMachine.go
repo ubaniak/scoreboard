@@ -17,6 +17,16 @@ func nextState(rounds []*entities.RoundDetails) int {
 
 	if currActiveRoundIndex >= 0 {
 		rounds[currActiveRoundIndex].Next()
+
+		// Finishing a round (not the last one) skips the "complete" stop —
+		// go straight into the next round instead of waiting for another click.
+		justCompleted := rounds[currActiveRoundIndex].Status == entities.RoundStatusComplete
+		nextIndex := currActiveRoundIndex + 1
+		if justCompleted && nextIndex < len(rounds) && rounds[nextIndex].Status == entities.RoundStatusNotStarted {
+			rounds[nextIndex].Status = entities.RoundStatusInProgress
+			return nextIndex
+		}
+
 		return currActiveRoundIndex
 	}
 
