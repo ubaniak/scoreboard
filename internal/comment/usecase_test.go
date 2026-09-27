@@ -2,7 +2,7 @@ package comment_test
 
 import (
 	"github.com/ubaniak/scoreboard/internal/comment"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	. "github.com/onsi/ginkgo/v2"

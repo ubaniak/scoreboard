@@ -5,13 +5,29 @@ import (
 	"path/filepath"
 )
 
-// Dir returns the path to ~/.scoreboard, creating it if it does not exist.
+// baseDirOverride, when set via SetBaseDir, is used in place of
+// ~/.scoreboard. Platforms with no conventional home directory (iOS,
+// Android) have no other way to point this package at their sandboxed
+// storage location.
+var baseDirOverride string
+
+// SetBaseDir overrides where Dir looks for the scoreboard data directory.
+// Call once at startup before any other function in this package is used.
+func SetBaseDir(path string) {
+	baseDirOverride = path
+}
+
+// Dir returns the path to the scoreboard data directory (~/.scoreboard
+// unless overridden via SetBaseDir), creating it if it does not exist.
 func Dir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	dir := baseDirOverride
+	if dir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dir = filepath.Join(home, ".scoreboard")
 	}
-	dir := filepath.Join(home, ".scoreboard")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}

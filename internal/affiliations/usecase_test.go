@@ -3,7 +3,7 @@ package affiliations_test
 import (
 	"github.com/ubaniak/scoreboard/internal/affiliations"
 	"github.com/ubaniak/scoreboard/internal/affiliations/entities"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	. "github.com/onsi/ginkgo/v2"
