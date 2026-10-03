@@ -7,16 +7,12 @@ import { AddOfficial } from "./add";
 import { OfficialFields } from "./OfficialFields";
 
 const TEMPLATE = [
-  "name,nationality,gender,yearOfBirth,registrationNumber,province,nation",
-  "Jane Smith,CAN,female,1985,REG001,Ontario,Canada",
-  "John Doe,USA,male,1979,REG002,New York,USA",
+  "name,nationality,gender,yearOfBirth,registrationNumber",
+  "Jane Smith,CAN,female,1985,REG001",
+  "John Doe,USA,male,1979,REG002",
 ].join("\n");
 
-type Option = { value: number; label: string };
-
 export type AddOfficialShellProps = {
-  provinces: Option[];
-  nations: Option[];
   onClose: (promise?: Promise<unknown>) => void;
   onSubmit: (values: CreateOfficialProps) => Promise<unknown>;
   onImport: (file: File) => Promise<unknown>;
@@ -41,7 +37,7 @@ export const AddOfficialShell = (props: AddOfficialShellProps) => {
       />
 
       {mode === "single" && (
-        <AddOfficial provinces={props.provinces} nations={props.nations} onClose={props.onClose} onSubmit={props.onSubmit} />
+        <AddOfficial onClose={props.onClose} onSubmit={props.onSubmit} />
       )}
 
       {mode === "bulk" && (
@@ -52,7 +48,7 @@ export const AddOfficialShell = (props: AddOfficialShellProps) => {
               await props.onSubmit(item);
             }
           }}
-          renderFields={() => <OfficialFields provinces={props.provinces} nations={props.nations} />}
+          renderFields={() => <OfficialFields />}
           renderQueueItem={(item) => item.name}
         />
       )}

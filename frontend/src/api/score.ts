@@ -19,7 +19,8 @@ export const useGetScores = (
   props: Partial<TokenBase> & CardRequestType & BoutRequestType,
 ) => {
   return useQuery({
-    queryKey: keys.all(props.token),
+    queryKey: keys.bout(props.token ?? "", props.cardId, props.boutId),
+    enabled: !!props.cardId && !!props.boutId,
     queryFn: async () => {
       return fetchClient<ScoresByRound>(
         `${baseUrl}/api/cards/${props.cardId}/bouts/${props.boutId}/scores`,

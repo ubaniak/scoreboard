@@ -1,42 +1,35 @@
 package entities
 
-type OfficialAffiliationResponse struct {
-	Province string `json:"province,omitempty"`
-	Nation   string `json:"nation,omitempty"`
-}
-
 type CurrentCardResponse struct {
-	ID                      uint                          `json:"id"`
-	Name                    string                        `json:"name"`
-	ImageUrl                string                        `json:"imageUrl,omitempty"`
-	ShowCardImage           bool                          `json:"showCardImage"`
-	ShowAthleteImages       bool                          `json:"showAthleteImages"`
-	ShowClubImages          bool                          `json:"showClubImages"`
-	ShowOfficialAffiliation string                        `json:"showOfficialAffiliation"`
-	Officials               []OfficialAffiliationResponse `json:"officials,omitempty"`
+	ID                uint   `json:"id"`
+	Name              string `json:"name"`
+	ImageUrl          string `json:"imageUrl,omitempty"`
+	ShowCardImage     bool   `json:"showCardImage"`
+	ShowAthleteImages bool   `json:"showAthleteImages"`
+	ShowClubImages    bool   `json:"showClubImages"`
 }
 
 type CurrentBoutResponse struct {
-	ID                   uint   `json:"id"`
-	BoutNumber           int    `json:"boutNumber"`
-	BoutType             string `json:"boutType"`
-	RedCorner            string `json:"redCorner"`
-	BlueCorner           string `json:"blueCorner"`
-	Gender               string `json:"gender"`
-	WeightClass          int    `json:"weightClass"`
-	GloveSize            string `json:"gloveSize"`
-	RoundLength          int    `json:"roundLength"`
-	AgeCategory          string `json:"ageCategory"`
-	Experience           string `json:"experience"`
-	Status               string `json:"status"`
-	Decision             string `json:"decision,omitempty"`
-	Winner               string `json:"winner,omitempty"`
-	RedClubName          string `json:"redClubName,omitempty"`
-	BlueClubName         string `json:"blueClubName,omitempty"`
-	RedAthleteImageUrl   string `json:"redAthleteImageUrl,omitempty"`
-	BlueAthleteImageUrl  string `json:"blueAthleteImageUrl,omitempty"`
-	RedClubImageUrl      string `json:"redClubImageUrl,omitempty"`
-	BlueClubImageUrl     string `json:"blueClubImageUrl,omitempty"`
+	ID                  uint   `json:"id"`
+	BoutNumber          int    `json:"boutNumber"`
+	BoutType            string `json:"boutType"`
+	RedCorner           string `json:"redCorner"`
+	BlueCorner          string `json:"blueCorner"`
+	Gender              string `json:"gender"`
+	WeightClass         int    `json:"weightClass"`
+	GloveSize           string `json:"gloveSize"`
+	RoundLength         int    `json:"roundLength"`
+	AgeCategory         string `json:"ageCategory"`
+	Experience          string `json:"experience"`
+	Status              string `json:"status"`
+	Decision            string `json:"decision,omitempty"`
+	Winner              string `json:"winner,omitempty"`
+	RedClubName         string `json:"redClubName,omitempty"`
+	BlueClubName        string `json:"blueClubName,omitempty"`
+	RedAthleteImageUrl  string `json:"redAthleteImageUrl,omitempty"`
+	BlueAthleteImageUrl string `json:"blueAthleteImageUrl,omitempty"`
+	RedClubImageUrl     string `json:"redClubImageUrl,omitempty"`
+	BlueClubImageUrl    string `json:"blueClubImageUrl,omitempty"`
 }
 
 type CurrentScoreResponse struct {
@@ -87,7 +80,7 @@ type BoutListItemResponse struct {
 }
 
 type BoutListResponse struct {
-	Card  *CurrentCardResponse  `json:"card,omitempty"`
+	Card  *CurrentCardResponse   `json:"card,omitempty"`
 	Bouts []BoutListItemResponse `json:"bouts"`
 }
 
@@ -118,20 +111,13 @@ type BoutList struct {
 	Bouts []BoutListItem
 }
 
-type OfficialAffiliation struct {
-	Province string
-	Nation   string
-}
-
 type CurrentCard struct {
-	ID                      uint
-	Name                    string
-	ImageUrl                string
-	ShowCardImage           bool
-	ShowAthleteImages       bool
-	ShowClubImages          bool
-	ShowOfficialAffiliation string
-	Officials               []OfficialAffiliation
+	ID                uint
+	Name              string
+	ImageUrl          string
+	ShowCardImage     bool
+	ShowAthleteImages bool
+	ShowClubImages    bool
 }
 
 type CurrentBout struct {

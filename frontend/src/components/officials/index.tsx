@@ -8,13 +8,9 @@ import { ActionMenu } from "../actionMenu/actionMenu";
 import { AddOfficialShell } from "./AddOfficialShell";
 import { ListOfficials } from "./list";
 
-type Option = { value: number; label: string };
-
 export type OfficialIndexProps = {
   officials?: Official[];
   loading?: boolean;
-  provinces: Option[];
-  nations: Option[];
   onEditOfficial: (vals: {
     toUpdate: UpdateOfficialProps;
     officialId: string;
@@ -34,8 +30,6 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
             title: "Add Official",
             body: (close) => (
               <AddOfficialShell
-                provinces={props.provinces}
-                nations={props.nations}
                 onClose={close}
                 onSubmit={(values: CreateOfficialProps) => props.onCreateOfficial(values)}
                 onImport={props.onImport}
@@ -49,8 +43,6 @@ export const OfficialIndex = (props: OfficialIndexProps) => {
       <ListOfficials
         officials={props.officials}
         loading={props.loading}
-        provinces={props.provinces}
-        nations={props.nations}
         onEditOfficial={(vals) => props.onEditOfficial(vals)}
         onDeleteOfficial={props.onDeleteOfficial}
       />

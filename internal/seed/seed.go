@@ -45,6 +45,17 @@ var clubNames = []string{
 	"Phoenix Boxing", "Apex Athletics", "Lighthouse BC", "Summit Boxing",
 }
 
+// regions are the nations athletes can come from. A nation with provinces
+// gives its athletes a province too; the United States has none here.
+var regions = []struct {
+	nation    string
+	provinces []string
+}{
+	{"Canada", []string{"Ontario", "Quebec", "Alberta", "British Columbia"}},
+	{"Ireland", []string{"Leinster", "Munster", "Ulster", "Connacht"}},
+	{"United States", nil},
+}
+
 var nationalities = []string{
 	"USA", "GBR", "IRL", "CAN", "AUS", "GER", "FRA", "ESP", "ITA", "POL",
 }
@@ -57,14 +68,15 @@ type Options struct {
 	CardName   string
 	Date       string // YYYY-MM-DD, defaults to today if empty
 	Bouts      int
-	Judges     int    // 1..5
-	Done       int    // number of bouts (in order) to fully score + complete
-	Clubs      int    // number of clubs, drawn from the built-in pool (1..MaxClubs)
-	Officials  int    // number of officials to register
-	Clear      bool   // delete existing bouts on the card before seeding
-	Activate   bool   // set card status to in_progress
-	NoAthletes bool   // skip creating athletes, leaves bout corners empty
-	RNGSeed    int64  // 0 = time-based
+	Judges     int   // 1..5
+	Done       int   // number of bouts (in order) to fully score + complete
+	Clubs      int   // number of clubs, drawn from the built-in pool (1..MaxClubs)
+	Officials  int   // number of officials to register
+	Clear      bool  // delete existing bouts on the card before seeding
+	Activate   bool  // set card status to in_progress
+	NoAthletes bool  // skip creating athletes, leaves bout corners empty
+	Images     bool  // generate SVG logos, photos and a card background
+	RNGSeed    int64 // 0 = time-based
 }
 
 // Deps are the domain usecases seeding writes through.
@@ -99,6 +111,18 @@ func randomClub(rng *rand.Rand, pool []uint) uint {
 	return pool[rng.Intn(len(pool))]
 }
 
+// pickRegion chooses a nation for an athlete, and one of its provinces when
+// the nation has any. The province is nil otherwise.
+func pickRegion(rng *rand.Rand, nationIDs, provinceIDs map[string]uint) (uint, *uint) {
+	r := regions[rng.Intn(len(regions))]
+	nat := nationIDs[r.nation]
+	if len(r.provinces) == 0 {
+		return nat, nil
+	}
+	prov := provinceIDs[r.provinces[rng.Intn(len(r.provinces))]]
+	return nat, &prov
+}
+
 // Run creates (or reuses) a card and populates it per opts. It is safe to
 // call repeatedly with -Clear to reset a demo card's bouts.
 func Run(deps Deps, opts Options) (Result, error) {
@@ -125,6 +149,33 @@ func Run(deps Deps, opts Options) (Result, error) {
 	}
 	rng := rand.New(rand.NewSource(rngSeed))
 
+	nationIDs := map[string]uint{}
+	provinceIDs := map[string]uint{}
+	for _, r := range regions {
+		natID, err := deps.Affiliations.FindOrCreateNation(r.nation)
+		if err != nil {
+			return Result{}, fmt.Errorf("create nation affiliation %q: %w", r.nation, err)
+		}
+		nationIDs[r.nation] = natID
+		if opts.Images {
+			if err := setImage("affiliations", natID, badgeSVG(r.nation, true), deps.Affiliations.SetImageUrl); err != nil {
+				return Result{}, fmt.Errorf("nation logo %q: %w", r.nation, err)
+			}
+		}
+		for _, p := range r.provinces {
+			provID, err := deps.Affiliations.FindOrCreateProvince(p)
+			if err != nil {
+				return Result{}, fmt.Errorf("create province affiliation %q: %w", p, err)
+			}
+			provinceIDs[p] = provID
+			if opts.Images {
+				if err := setImage("affiliations", provID, badgeSVG(p, true), deps.Affiliations.SetImageUrl); err != nil {
+					return Result{}, fmt.Errorf("province logo %q: %w", p, err)
+				}
+			}
+		}
+	}
+
 	clubPool := clubNames[:opts.Clubs]
 	clubIDs := make([]uint, len(clubPool))
 	for i, name := range clubPool {
@@ -133,11 +184,21 @@ func Run(deps Deps, opts Options) (Result, error) {
 			return Result{}, fmt.Errorf("create club affiliation %q: %w", name, err)
 		}
 		clubIDs[i] = id
+		if opts.Images {
+			if err := setImage("affiliations", id, badgeSVG(name, true), deps.Affiliations.SetImageUrl); err != nil {
+				return Result{}, fmt.Errorf("club logo %q: %w", name, err)
+			}
+		}
 	}
 
 	cardID, err := deps.Cards.FindOrCreateByName(opts.CardName, date)
 	if err != nil {
 		return Result{}, fmt.Errorf("find/create card: %w", err)
+	}
+	if opts.Images {
+		if err := setImage("cards", cardID, cardBackgroundSVG(opts.CardName), deps.Cards.SetImageUrl); err != nil {
+			return Result{}, fmt.Errorf("card background: %w", err)
+		}
 	}
 
 	cardUpdate := &cardEntities.UpdateCard{NumberOfJudges: &opts.Judges}
@@ -177,14 +238,26 @@ func Run(deps Deps, opts Options) (Result, error) {
 		}
 		if !opts.NoAthletes {
 			redClub := randomClub(rng, clubIDs)
-			redID, err := deps.Athletes.FindOrCreateByNameAndClub(randomName(rng), &redClub)
+			redName := randomName(rng)
+			redNat, redProv := pickRegion(rng, nationIDs, provinceIDs)
+			redID, err := deps.Athletes.FindOrCreateFull(redName, string(boutEntities.Elite), string(boutEntities.Male), string(boutEntities.Open), &redClub, redProv, &redNat, nil)
 			if err != nil {
 				return Result{}, fmt.Errorf("create red athlete for bout %d: %w", i, err)
 			}
 			blueClub := randomClub(rng, clubIDs)
-			blueID, err := deps.Athletes.FindOrCreateByNameAndClub(randomName(rng), &blueClub)
+			blueName := randomName(rng)
+			blueNat, blueProv := pickRegion(rng, nationIDs, provinceIDs)
+			blueID, err := deps.Athletes.FindOrCreateFull(blueName, string(boutEntities.Elite), string(boutEntities.Male), string(boutEntities.Open), &blueClub, blueProv, &blueNat, nil)
 			if err != nil {
 				return Result{}, fmt.Errorf("create blue athlete for bout %d: %w", i, err)
+			}
+			if opts.Images {
+				if err := setImage("athletes", redID, badgeSVG(redName, false), deps.Athletes.SetImageUrl); err != nil {
+					return Result{}, fmt.Errorf("red athlete photo: %w", err)
+				}
+				if err := setImage("athletes", blueID, badgeSVG(blueName, false), deps.Athletes.SetImageUrl); err != nil {
+					return Result{}, fmt.Errorf("blue athlete photo: %w", err)
+				}
 			}
 			b.RedAthleteID = &redID
 			b.BlueAthleteID = &blueID

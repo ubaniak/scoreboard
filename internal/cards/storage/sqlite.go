@@ -53,17 +53,16 @@ func (s *Sqlite) List() ([]entities.Card, error) {
 			numJudges = 5
 		}
 		result = append(result, entities.Card{
-			ID:                      c.ID,
-			Name:                    c.Name,
-			Date:                    c.Date,
-			Status:                  entities.CardStatus(c.Status),
-			NumberOfJudges:          numJudges,
-			ImageUrl:                c.ImageUrl,
-			ShowCardImage:           c.ShowCardImage,
-			ShowAthleteImages:       c.ShowAthleteImages,
-			ShowClubImages:          c.ShowClubImages,
-			ShowOfficialAffiliation: c.ShowOfficialAffiliation,
-			ShowAthleteAffiliation:  c.ShowAthleteAffiliation,
+			ID:                     c.ID,
+			Name:                   c.Name,
+			Date:                   c.Date,
+			Status:                 entities.CardStatus(c.Status),
+			NumberOfJudges:         numJudges,
+			ImageUrl:               c.ImageUrl,
+			ShowCardImage:          c.ShowCardImage,
+			ShowAthleteImages:      c.ShowAthleteImages,
+			ShowClubImages:         c.ShowClubImages,
+			ShowAthleteAffiliation: c.ShowAthleteAffiliation,
 		})
 	}
 	return result, nil
@@ -105,17 +104,16 @@ func (s *Sqlite) Current() (*entities.Card, error) {
 		numJudges = 5
 	}
 	var result = &entities.Card{
-		ID:                      card.ID,
-		Name:                    card.Name,
-		Date:                    card.Date,
-		Status:                  entities.CardStatus(card.Status),
-		NumberOfJudges:          numJudges,
-		ImageUrl:                card.ImageUrl,
-		ShowCardImage:           card.ShowCardImage,
-		ShowAthleteImages:       card.ShowAthleteImages,
-		ShowClubImages:          card.ShowClubImages,
-		ShowOfficialAffiliation: card.ShowOfficialAffiliation,
-		ShowAthleteAffiliation:  card.ShowAthleteAffiliation,
+		ID:                     card.ID,
+		Name:                   card.Name,
+		Date:                   card.Date,
+		Status:                 entities.CardStatus(card.Status),
+		NumberOfJudges:         numJudges,
+		ImageUrl:               card.ImageUrl,
+		ShowCardImage:          card.ShowCardImage,
+		ShowAthleteImages:      card.ShowAthleteImages,
+		ShowClubImages:         card.ShowClubImages,
+		ShowAthleteAffiliation: card.ShowAthleteAffiliation,
 	}
 	return result, nil
 }
@@ -130,17 +128,16 @@ func (s *Sqlite) Get(id uint) (*entities.Card, error) {
 		numJudges = 5
 	}
 	var result = &entities.Card{
-		ID:                      card.ID,
-		Name:                    card.Name,
-		Date:                    card.Date,
-		Status:                  entities.CardStatus(card.Status),
-		NumberOfJudges:          numJudges,
-		ImageUrl:                card.ImageUrl,
-		ShowCardImage:           card.ShowCardImage,
-		ShowAthleteImages:       card.ShowAthleteImages,
-		ShowClubImages:          card.ShowClubImages,
-		ShowOfficialAffiliation: card.ShowOfficialAffiliation,
-		ShowAthleteAffiliation:  card.ShowAthleteAffiliation,
+		ID:                     card.ID,
+		Name:                   card.Name,
+		Date:                   card.Date,
+		Status:                 entities.CardStatus(card.Status),
+		NumberOfJudges:         numJudges,
+		ImageUrl:               card.ImageUrl,
+		ShowCardImage:          card.ShowCardImage,
+		ShowAthleteImages:      card.ShowAthleteImages,
+		ShowClubImages:         card.ShowClubImages,
+		ShowAthleteAffiliation: card.ShowAthleteAffiliation,
 	}
 	return result, nil
 }
@@ -183,9 +180,6 @@ func (s *Sqlite) Update(id uint, toUpdate *entities.UpdateCard) error {
 		card.ShowClubImages = *toUpdate.ShowClubImages
 	}
 
-	if toUpdate.ShowOfficialAffiliation != nil {
-		card.ShowOfficialAffiliation = *toUpdate.ShowOfficialAffiliation
-	}
 	if toUpdate.ShowAthleteAffiliation != nil {
 		card.ShowAthleteAffiliation = *toUpdate.ShowAthleteAffiliation
 	}

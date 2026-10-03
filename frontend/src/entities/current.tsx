@@ -58,11 +58,6 @@ export type Schedule = {
   bouts: ScheduleItem[];
 };
 
-export type OfficialAffiliation = {
-  province?: string;
-  nation?: string;
-};
-
 export type Current = {
   card?: {
     id: string;
@@ -71,8 +66,6 @@ export type Current = {
     showCardImage?: boolean;
     showAthleteImages?: boolean;
     showClubImages?: boolean;
-    showOfficialAffiliation?: "none" | "province" | "nation";
-    officials?: OfficialAffiliation[];
   };
   bout?: BoutInfo;
   nextBout?: BoutInfo;

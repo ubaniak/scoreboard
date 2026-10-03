@@ -109,19 +109,18 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetCardResponse struct {
-	Id                      uint   `json:"id"`
-	Name                    string `json:"name"`
-	Date                    string `json:"date"`
-	Status                  string `json:"status"`
-	NumberOfJudges          int    `json:"numberOfJudges"`
-	ImageUrl                string `json:"imageUrl,omitempty"`
-	ShowCardImage           bool   `json:"showCardImage"`
-	ShowAthleteImages       bool   `json:"showAthleteImages"`
-	ShowClubImages          bool   `json:"showClubImages"`
-	ShowOfficialAffiliation string `json:"showOfficialAffiliation"`
-	ShowAthleteAffiliation  string `json:"showAthleteAffiliation"`
-	BoutsTotal              int    `json:"boutsTotal"`
-	BoutsComplete           int    `json:"boutsComplete"`
+	Id                     uint   `json:"id"`
+	Name                   string `json:"name"`
+	Date                   string `json:"date"`
+	Status                 string `json:"status"`
+	NumberOfJudges         int    `json:"numberOfJudges"`
+	ImageUrl               string `json:"imageUrl,omitempty"`
+	ShowCardImage          bool   `json:"showCardImage"`
+	ShowAthleteImages      bool   `json:"showAthleteImages"`
+	ShowClubImages         bool   `json:"showClubImages"`
+	ShowAthleteAffiliation string `json:"showAthleteAffiliation"`
+	BoutsTotal             int    `json:"boutsTotal"`
+	BoutsComplete          int    `json:"boutsComplete"`
 }
 
 func mapCardToResponse(card entities.Card) *GetCardResponse {
@@ -129,26 +128,21 @@ func mapCardToResponse(card entities.Card) *GetCardResponse {
 	if numJudges == 0 {
 		numJudges = 5
 	}
-	affiliation := card.ShowOfficialAffiliation
-	if affiliation == "" {
-		affiliation = "none"
-	}
 	athleteAffiliation := card.ShowAthleteAffiliation
 	if athleteAffiliation == "" {
 		athleteAffiliation = "club"
 	}
 	return &GetCardResponse{
-		Id:                      card.ID,
-		Name:                    card.Name,
-		Date:                    card.Date,
-		Status:                  string(card.Status),
-		NumberOfJudges:          numJudges,
-		ImageUrl:                card.ImageUrl,
-		ShowCardImage:           card.ShowCardImage,
-		ShowAthleteImages:       card.ShowAthleteImages,
-		ShowClubImages:          card.ShowClubImages,
-		ShowOfficialAffiliation: affiliation,
-		ShowAthleteAffiliation:  athleteAffiliation,
+		Id:                     card.ID,
+		Name:                   card.Name,
+		Date:                   card.Date,
+		Status:                 string(card.Status),
+		NumberOfJudges:         numJudges,
+		ImageUrl:               card.ImageUrl,
+		ShowCardImage:          card.ShowCardImage,
+		ShowAthleteImages:      card.ShowAthleteImages,
+		ShowClubImages:         card.ShowClubImages,
+		ShowAthleteAffiliation: athleteAffiliation,
 	}
 }
 

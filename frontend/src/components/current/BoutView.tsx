@@ -89,8 +89,6 @@ export const BoutView = ({ current }: BoutViewProps) => {
           <ScoreTable
             scores={scores!}
             warnings={warnings}
-            showOfficialAffiliation={card?.showOfficialAffiliation}
-            officials={card?.officials}
           />
         )}
       </div>

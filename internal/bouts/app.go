@@ -37,7 +37,7 @@ type AthleteNameQuerier interface {
 
 // AthleteFinderCreator looks up or creates an athlete by name and optional club name.
 type AthleteFinderCreator interface {
-	FindOrCreateByName(name, clubName string) (uint, error)
+	FindOrCreateByName(name, clubName, ageCategory string) (uint, error)
 }
 
 type App struct {
@@ -1264,7 +1264,7 @@ func (h *App) MasterImportCSV(w http.ResponseWriter, r *http.Request) {
 			redName := col(row, "red")
 			blueName := col(row, "blue")
 			if redName != "" {
-				id, findErr := h.athleteFinderCreator.FindOrCreateByName(redName, col(row, "redclub"))
+				id, findErr := h.athleteFinderCreator.FindOrCreateByName(redName, col(row, "redclub"), string(ageCategory))
 				if findErr != nil {
 					presenter.WithError(fmt.Errorf("row %d: athlete %q: %w", rowNum, redName, findErr)).Present()
 					return
@@ -1272,7 +1272,7 @@ func (h *App) MasterImportCSV(w http.ResponseWriter, r *http.Request) {
 				bout.RedAthleteID = &id
 			}
 			if blueName != "" {
-				id, findErr := h.athleteFinderCreator.FindOrCreateByName(blueName, col(row, "blueclub"))
+				id, findErr := h.athleteFinderCreator.FindOrCreateByName(blueName, col(row, "blueclub"), string(ageCategory))
 				if findErr != nil {
 					presenter.WithError(fmt.Errorf("row %d: athlete %q: %w", rowNum, blueName, findErr)).Present()
 					return

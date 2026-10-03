@@ -1,24 +1,12 @@
 import { Fragment } from "react";
 import { type, tracking, useTheme } from "../../theme";
 
-type OfficialAffiliation = {
-  province?: string;
-  nation?: string;
-};
-
 type ScoreTableProps = {
   scores: Record<number, { red: number; blue: number }[]>;
   warnings?: Record<number, { red: number; blue: number }>;
-  showOfficialAffiliation?: "none" | "province" | "nation";
-  officials?: OfficialAffiliation[];
 };
 
-export const ScoreTable = ({
-  scores,
-  warnings,
-  showOfficialAffiliation = "none",
-  officials = [],
-}: ScoreTableProps) => {
+export const ScoreTable = ({ scores, warnings }: ScoreTableProps) => {
   const { colors } = useTheme();
   const roundNumbers = Object.keys(scores)
     .map(Number)
@@ -28,16 +16,7 @@ export const ScoreTable = ({
   );
   const judgeIndices = Array.from({ length: judgeCount }, (_, i) => i);
 
-  const judgeLabel = (i: number): string => {
-    if (showOfficialAffiliation === "province") {
-      const val = officials[i]?.province;
-      if (val) return val;
-    } else if (showOfficialAffiliation === "nation") {
-      const val = officials[i]?.nation;
-      if (val) return val;
-    }
-    return `Judge ${i + 1}`;
-  };
+  const judgeLabel = (i: number): string => `Judge ${i + 1}`;
 
   const sep = `2px solid ${colors.border}`;
   const subSep = `1px solid ${colors.borderSubtle}`;

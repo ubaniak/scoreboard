@@ -13,7 +13,6 @@ export type Card = {
   showCardImage: boolean;
   showAthleteImages: boolean;
   showClubImages: boolean;
-  showOfficialAffiliation: "none" | "province" | "nation";
   showAthleteAffiliation: "club" | "province" | "nation";
   boutsTotal: number;
   boutsComplete: number;
@@ -35,12 +34,6 @@ export type Official = {
   yearOfBirth?: number;
   registrationNumber?: string;
   level?: OfficialLevel;
-  provinceAffiliationId?: number;
-  province?: string;
-  nationAffiliationId?: number;
-  nation?: string;
-  clubAffiliationId?: number;
-  club?: string;
 };
 
 export type AssignedOfficial = Official & {

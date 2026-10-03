@@ -59,12 +59,13 @@ export const EditBout = (props: EditBoutProps) => {
   const handleRedAthleteChange = (value: number) => {
     const athlete = (props.athletes ?? []).find((a) => a.id === value);
     if (athlete) {
-      form.setFieldsValue({
-        ageCategory: athlete.ageCategory,
-        gender: athlete.gender,
-        experience: athlete.experience,
-        weightClass: athlete.weightClass,
-      } as Partial<Bout>);
+      // Keep the bout's current value for any field the athlete has no data for.
+      const updates: Partial<Bout> = {};
+      if (athlete.ageCategory) updates.ageCategory = athlete.ageCategory as Bout["ageCategory"];
+      if (athlete.gender) updates.gender = athlete.gender as Bout["gender"];
+      if (athlete.experience) updates.experience = athlete.experience as Bout["experience"];
+      if (athlete.weightClass != null) updates.weightClass = athlete.weightClass;
+      form.setFieldsValue(updates);
     }
   };
 

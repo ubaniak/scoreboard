@@ -40,7 +40,6 @@ import (
 	"github.com/ubaniak/scoreboard/internal/cards"
 	"github.com/ubaniak/scoreboard/internal/comment"
 	"github.com/ubaniak/scoreboard/internal/current"
-	currentEntities "github.com/ubaniak/scoreboard/internal/current/entities"
 	"github.com/ubaniak/scoreboard/internal/datadir"
 	"github.com/ubaniak/scoreboard/internal/devices"
 	"github.com/ubaniak/scoreboard/internal/dump"
@@ -237,7 +236,7 @@ func Start(cfg Config) (*Server, error) {
 	cardApp.WithOfficials(officialApp)
 
 	// -- current
-	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase, &officialAffiliationQuerier{officialUsecCase})
+	currentUseCase := current.NewUseCase(cardUseCase, boutsUseCase, scoreUseCase, athleteQuerier, roundUseCase)
 	currentApp := current.NewApp(currentUseCase, broadcaster)
 
 	apiRegister.Add(currentApp)
@@ -336,7 +335,7 @@ func runAffiliationMigration(db *gorm.DB) error {
 
 	// Migrate clubs to affiliations
 	type Club struct {
-		ID        uint   `gorm:"primaryKey"`
+		ID        uint `gorm:"primaryKey"`
 		Name      string
 		Location  string
 		ImageUrl  string
@@ -366,7 +365,7 @@ func runAffiliationMigration(db *gorm.DB) error {
 
 	// Migrate athlete province/nation to affiliations
 	type Athlete struct {
-		ID               uint   `gorm:"primaryKey"`
+		ID               uint `gorm:"primaryKey"`
 		ProvinceName     string
 		ProvinceImageUrl string
 		NationName       string
@@ -417,59 +416,6 @@ func runAffiliationMigration(db *gorm.DB) error {
 				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", athlete.NationName, "nation").Limit(1).Scan(&nationAffID)
 				if nationAffID > 0 {
 					db.Table("athletes").Where("id = ?", athlete.ID).Update("nation_affiliation_id", nationAffID)
-				}
-			}
-		}
-	}
-
-	// Migrate official province/nation to affiliations
-	type Official struct {
-		ID        uint   `gorm:"primaryKey"`
-		Province  string
-		Nation    string
-		DeletedAt *time.Time
-	}
-
-	var officialsList []Official
-	if err := db.Where("deleted_at IS NULL").Find(&officialsList).Error; err == nil {
-		for _, official := range officialsList {
-			// Create province affiliation if needed
-			if official.Province != "" {
-				var existing struct{ ID uint }
-				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Province, "province").Limit(1).Scan(&existing).RowsAffected == 0 {
-					prov := map[string]interface{}{
-						"name":       official.Province,
-						"type":       "province",
-						"created_at": time.Now(),
-						"updated_at": time.Now(),
-					}
-					db.Table("affiliations").Create(prov)
-				}
-				// Link official to province affiliation
-				var provAffID uint
-				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Province, "province").Limit(1).Scan(&provAffID)
-				if provAffID > 0 {
-					db.Table("officials").Where("id = ?", official.ID).Update("province_affiliation_id", provAffID)
-				}
-			}
-
-			// Create nation affiliation if needed
-			if official.Nation != "" {
-				var existing struct{ ID uint }
-				if db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Nation, "nation").Limit(1).Scan(&existing).RowsAffected == 0 {
-					nation := map[string]interface{}{
-						"name":       official.Nation,
-						"type":       "nation",
-						"created_at": time.Now(),
-						"updated_at": time.Now(),
-					}
-					db.Table("affiliations").Create(nation)
-				}
-				// Link official to nation affiliation
-				var nationAffID uint
-				db.Table("affiliations").Select("id").Where("name = ? AND type = ?", official.Nation, "nation").Limit(1).Scan(&nationAffID)
-				if nationAffID > 0 {
-					db.Table("officials").Where("id = ?", official.ID).Update("nation_affiliation_id", nationAffID)
 				}
 			}
 		}
@@ -609,25 +555,6 @@ func (q *athleteClubQuerier) GetAthleteName(athleteID uint) string {
 		return ""
 	}
 	return a.Name
-}
-
-type officialAffiliationQuerier struct {
-	uc officials.UseCase
-}
-
-func (q *officialAffiliationQuerier) GetAffiliations() ([]currentEntities.OfficialAffiliation, error) {
-	list, err := q.uc.GetAffiliations()
-	if err != nil {
-		return nil, err
-	}
-	result := make([]currentEntities.OfficialAffiliation, len(list))
-	for i, o := range list {
-		result[i] = currentEntities.OfficialAffiliation{
-			Province: o.Province,
-			Nation:   o.Nation,
-		}
-	}
-	return result, nil
 }
 
 type commentQuerier struct {

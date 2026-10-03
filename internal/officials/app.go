@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ubaniak/scoreboard/internal/officials/entities"
 	muxutils "github.com/ubaniak/scoreboard/internal/muxUtils"
+	"github.com/ubaniak/scoreboard/internal/officials/entities"
 	"github.com/ubaniak/scoreboard/internal/presenters"
 	"github.com/ubaniak/scoreboard/internal/rbac"
 )
@@ -42,15 +42,12 @@ func (a *App) RegisterCardRoutes(rb *rbac.RouteBuilder) {
 }
 
 type CreateOfficialRequest struct {
-	Name                  string `json:"name"`
-	Nationality           string `json:"nationality"`
-	Gender                string `json:"gender"`
-	YearOfBirth           int    `json:"yearOfBirth"`
-	RegistrationNumber    string `json:"registrationNumber"`
-	Level                 string `json:"level"`
-	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId"`
-	ClubAffiliationID     *uint  `json:"clubAffiliationId"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality"`
+	Gender             string `json:"gender"`
+	YearOfBirth        int    `json:"yearOfBirth"`
+	RegistrationNumber string `json:"registrationNumber"`
+	Level              string `json:"level"`
 }
 
 func (h *App) Create(w http.ResponseWriter, r *http.Request) {
@@ -64,33 +61,24 @@ func (h *App) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.Create(&entities.Official{
-		Name:                  createReq.Name,
-		Nationality:           createReq.Nationality,
-		Gender:                createReq.Gender,
-		YearOfBirth:           createReq.YearOfBirth,
-		RegistrationNumber:    createReq.RegistrationNumber,
-		Level:                 entities.OfficialLevel(createReq.Level),
-		ProvinceAffiliationID: createReq.ProvinceAffiliationID,
-		NationAffiliationID:   createReq.NationAffiliationID,
-		ClubAffiliationID:     createReq.ClubAffiliationID,
+		Name:               createReq.Name,
+		Nationality:        createReq.Nationality,
+		Gender:             createReq.Gender,
+		YearOfBirth:        createReq.YearOfBirth,
+		RegistrationNumber: createReq.RegistrationNumber,
+		Level:              entities.OfficialLevel(createReq.Level),
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
 
 type ListOfficialResponse struct {
-	ID                    uint   `json:"id"`
-	Name                  string `json:"name"`
-	Nationality           string `json:"nationality,omitempty"`
-	Gender                string `json:"gender,omitempty"`
-	YearOfBirth           int    `json:"yearOfBirth,omitempty"`
-	RegistrationNumber    string `json:"registrationNumber,omitempty"`
-	Level                 string `json:"level,omitempty"`
-	ProvinceAffiliationID *uint  `json:"provinceAffiliationId,omitempty"`
-	Province              string `json:"province,omitempty"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId,omitempty"`
-	Nation                string `json:"nation,omitempty"`
-	ClubAffiliationID     *uint  `json:"clubAffiliationId,omitempty"`
-	Club                  string `json:"club,omitempty"`
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality,omitempty"`
+	Gender             string `json:"gender,omitempty"`
+	YearOfBirth        int    `json:"yearOfBirth,omitempty"`
+	RegistrationNumber string `json:"registrationNumber,omitempty"`
+	Level              string `json:"level,omitempty"`
 }
 
 func (h *App) List(w http.ResponseWriter, r *http.Request) {
@@ -104,19 +92,13 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 	response := make([]ListOfficialResponse, len(officials))
 	for i, o := range officials {
 		response[i] = ListOfficialResponse{
-			ID:                    o.ID,
-			Name:                  o.Name,
-			Nationality:           o.Nationality,
-			Gender:                o.Gender,
-			YearOfBirth:           o.YearOfBirth,
-			RegistrationNumber:    o.RegistrationNumber,
-			Level:                 string(o.Level),
-			ProvinceAffiliationID: o.ProvinceAffiliationID,
-			Province:              o.Province,
-			NationAffiliationID:   o.NationAffiliationID,
-			Nation:                o.Nation,
-			ClubAffiliationID:     o.ClubAffiliationID,
-			Club:                  o.Club,
+			ID:                 o.ID,
+			Name:               o.Name,
+			Nationality:        o.Nationality,
+			Gender:             o.Gender,
+			YearOfBirth:        o.YearOfBirth,
+			RegistrationNumber: o.RegistrationNumber,
+			Level:              string(o.Level),
 		}
 	}
 
@@ -124,15 +106,12 @@ func (h *App) List(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateOfficialRequest struct {
-	Name                  string `json:"name"`
-	Nationality           string `json:"nationality"`
-	Gender                string `json:"gender"`
-	YearOfBirth           int    `json:"yearOfBirth"`
-	RegistrationNumber    string `json:"registrationNumber"`
-	Level                 string `json:"level"`
-	ProvinceAffiliationID *uint  `json:"provinceAffiliationId"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId"`
-	ClubAffiliationID     *uint  `json:"clubAffiliationId"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality"`
+	Gender             string `json:"gender"`
+	YearOfBirth        int    `json:"yearOfBirth"`
+	RegistrationNumber string `json:"registrationNumber"`
+	Level              string `json:"level"`
 }
 
 func (h *App) Update(w http.ResponseWriter, r *http.Request) {
@@ -153,15 +132,12 @@ func (h *App) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.useCase.Update(id, &entities.Official{
-		Name:                  req.Name,
-		Nationality:           req.Nationality,
-		Gender:                req.Gender,
-		YearOfBirth:           req.YearOfBirth,
-		RegistrationNumber:    req.RegistrationNumber,
-		Level:                 entities.OfficialLevel(req.Level),
-		ProvinceAffiliationID: req.ProvinceAffiliationID,
-		NationAffiliationID:   req.NationAffiliationID,
-		ClubAffiliationID:     req.ClubAffiliationID,
+		Name:               req.Name,
+		Nationality:        req.Nationality,
+		Gender:             req.Gender,
+		YearOfBirth:        req.YearOfBirth,
+		RegistrationNumber: req.RegistrationNumber,
+		Level:              entities.OfficialLevel(req.Level),
 	})
 	presenter.WithError(err).WithStatusCode(http.StatusCreated).Present()
 }
@@ -181,7 +157,7 @@ func (h *App) Delete(w http.ResponseWriter, r *http.Request) {
 
 // ImportCSV accepts a multipart form upload with a "file" field containing a CSV.
 // Required columns: name. Optional: nationality, gender, yearOfBirth,
-// registrationNumber, level, provinceAffiliationId, nationAffiliationId, clubAffiliationId
+// registrationNumber, level
 func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	presenter := presenters.NewHTTPPresenter[struct{}](r, w)
 
@@ -240,24 +216,6 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		if i, ok := colIndex["level"]; ok && i < len(row) {
 			o.Level = entities.OfficialLevel(row[i])
 		}
-		if i, ok := colIndex["provinceAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
-				id := uint(v)
-				o.ProvinceAffiliationID = &id
-			}
-		}
-		if i, ok := colIndex["nationAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
-				id := uint(v)
-				o.NationAffiliationID = &id
-			}
-		}
-		if i, ok := colIndex["clubAffiliationId"]; ok && i < len(row) && row[i] != "" {
-			if v, parseErr := strconv.ParseUint(row[i], 10, 64); parseErr == nil {
-				id := uint(v)
-				o.ClubAffiliationID = &id
-			}
-		}
 		officials = append(officials, o)
 	}
 
@@ -270,23 +228,17 @@ func (a *App) cardId(r *http.Request) (uint, error) {
 }
 
 type AssignedOfficialResponse struct {
-	ID                    uint   `json:"id"`
-	Name                  string `json:"name"`
-	Nationality           string `json:"nationality,omitempty"`
-	Gender                string `json:"gender,omitempty"`
-	YearOfBirth           int    `json:"yearOfBirth,omitempty"`
-	RegistrationNumber    string `json:"registrationNumber,omitempty"`
-	Level                 string `json:"level,omitempty"`
-	ProvinceAffiliationID *uint  `json:"provinceAffiliationId,omitempty"`
-	Province              string `json:"province,omitempty"`
-	NationAffiliationID   *uint  `json:"nationAffiliationId,omitempty"`
-	Nation                string `json:"nation,omitempty"`
-	ClubAffiliationID     *uint  `json:"clubAffiliationId,omitempty"`
-	Club                  string `json:"club,omitempty"`
-	CanJudge              bool   `json:"canJudge"`
-	CanRef                bool   `json:"canRef"`
-	CanTimekeep           bool   `json:"canTimekeep"`
-	CanSupervise          bool   `json:"canSupervise"`
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	Nationality        string `json:"nationality,omitempty"`
+	Gender             string `json:"gender,omitempty"`
+	YearOfBirth        int    `json:"yearOfBirth,omitempty"`
+	RegistrationNumber string `json:"registrationNumber,omitempty"`
+	Level              string `json:"level,omitempty"`
+	CanJudge           bool   `json:"canJudge"`
+	CanRef             bool   `json:"canRef"`
+	CanTimekeep        bool   `json:"canTimekeep"`
+	CanSupervise       bool   `json:"canSupervise"`
 }
 
 func (a *App) ListCardOfficials(w http.ResponseWriter, r *http.Request) {
@@ -307,23 +259,17 @@ func (a *App) ListCardOfficials(w http.ResponseWriter, r *http.Request) {
 	response := make([]AssignedOfficialResponse, len(assigned))
 	for i, o := range assigned {
 		response[i] = AssignedOfficialResponse{
-			ID:                    o.ID,
-			Name:                  o.Name,
-			Nationality:           o.Nationality,
-			Gender:                o.Gender,
-			YearOfBirth:           o.YearOfBirth,
-			RegistrationNumber:    o.RegistrationNumber,
-			Level:                 string(o.Level),
-			ProvinceAffiliationID: o.ProvinceAffiliationID,
-			Province:              o.Province,
-			NationAffiliationID:   o.NationAffiliationID,
-			Nation:                o.Nation,
-			ClubAffiliationID:     o.ClubAffiliationID,
-			Club:                  o.Club,
-			CanJudge:              o.CanJudge,
-			CanRef:                o.CanRef,
-			CanTimekeep:           o.CanTimekeep,
-			CanSupervise:          o.CanSupervise,
+			ID:                 o.ID,
+			Name:               o.Name,
+			Nationality:        o.Nationality,
+			Gender:             o.Gender,
+			YearOfBirth:        o.YearOfBirth,
+			RegistrationNumber: o.RegistrationNumber,
+			Level:              string(o.Level),
+			CanJudge:           o.CanJudge,
+			CanRef:             o.CanRef,
+			CanTimekeep:        o.CanTimekeep,
+			CanSupervise:       o.CanSupervise,
 		}
 	}
 

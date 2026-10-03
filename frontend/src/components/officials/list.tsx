@@ -7,13 +7,9 @@ import type { UpdateOfficialProps } from "../../api/officials";
 import { ActionMenu } from "../actionMenu/actionMenu";
 import { RowList, type RowListColumn } from "../list/RowList";
 
-type Option = { value: number; label: string };
-
 export type ListOfficialsProps = {
   officials?: Official[];
   loading?: boolean;
-  provinces: Option[];
-  nations: Option[];
   onEditOfficial: (vals: {
     toUpdate: UpdateOfficialProps;
     officialId: string;
@@ -44,8 +40,6 @@ export const ListOfficials = (props: ListOfficialsProps) => {
     },
     { key: "yearOfBirth", title: "Year of Birth", width: "110px", render: (o) => o.yearOfBirth || null },
     { key: "registrationNumber", title: "Reg. Number", width: "130px", render: (o) => o.registrationNumber },
-    { key: "province", title: "Province", width: "1fr", render: (o) => o.province },
-    { key: "nation", title: "Nation", width: "1fr", render: (o) => o.nation },
     {
       key: "action",
       width: "auto",
@@ -60,8 +54,6 @@ export const ListOfficials = (props: ListOfficialsProps) => {
                   onClose={close}
                   onSubmit={(vals) => props.onEditOfficial(vals)}
                   official={record}
-                  provinces={props.provinces}
-                  nations={props.nations}
                 />
               ),
             }}

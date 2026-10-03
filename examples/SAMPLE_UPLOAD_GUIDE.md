@@ -115,10 +115,8 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/officials | jq 
 {
   "id": 1,
   "name": "James Brown",
-  "provinceAffiliationId": 4,
-  "province": "Ontario",
-  "nationAffiliationId": 7,
-  "nation": "Canada"
+  "nationality": "Canadian",
+  "registrationNumber": "OFF001"
 }
 ```
 

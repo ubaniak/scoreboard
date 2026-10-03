@@ -1,5 +1,14 @@
 import type { Dayjs } from "dayjs";
 
+export const AGE_CATEGORY_OPTIONS = [
+  { value: "u13", label: "U13" },
+  { value: "u15", label: "U15" },
+  { value: "u17", label: "U17" },
+  { value: "u19", label: "U19" },
+  { value: "elite", label: "Elite" },
+  { value: "masters", label: "Masters" },
+];
+
 // Rules from features/age_cat_rules.md:
 // U13=11-12, U15=13-14, U17=15-16, U19=17-18, Elite=19-39, Masters=40+
 export function ageCategoryFromDOB(dob: Dayjs): string {

@@ -72,7 +72,6 @@ export type UpdateCardsProps = {
   showCardImage?: boolean;
   showAthleteImages?: boolean;
   showClubImages?: boolean;
-  showOfficialAffiliation?: "none" | "province" | "nation";
   showAthleteAffiliation?: "club" | "province" | "nation";
 };
 

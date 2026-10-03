@@ -66,34 +66,28 @@ func (dbAthlete) TableName() string { return "athletes" }
 
 type dbOfficial struct {
 	gorm.Model
-	CardID                uint
-	Name                  string
-	Nationality           string
-	Gender                string
-	YearOfBirth           int
-	RegistrationNumber    string
-	ProvinceAffiliationID *uint
-	NationAffiliationID   *uint
-	// Old columns kept for migration:
-	Province string
-	Nation   string
+	CardID             uint
+	Name               string
+	Nationality        string
+	Gender             string
+	YearOfBirth        int
+	RegistrationNumber string
 }
 
 func (dbOfficial) TableName() string { return "officials" }
 
 type dbCard struct {
 	gorm.Model
-	Name                    string
-	Description             string
-	Date                    string
-	Status                  string
-	NumberOfJudges          int
-	ImageUrl                string
-	ShowCardImage           bool
-	ShowAthleteImages       bool
-	ShowClubImages          bool
-	ShowOfficialAffiliation string
-	ShowAthleteAffiliation  string
+	Name                   string
+	Description            string
+	Date                   string
+	Status                 string
+	NumberOfJudges         int
+	ImageUrl               string
+	ShowCardImage          bool
+	ShowAthleteImages      bool
+	ShowClubImages         bool
+	ShowAthleteAffiliation string
 }
 
 func (dbCard) TableName() string { return "cards" }

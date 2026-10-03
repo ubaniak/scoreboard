@@ -49,6 +49,7 @@ func main() {
 		seedRNG   = flag.Int64("seed", 0, "RNG seed (0 = time-based)")
 		activate  = flag.Bool("activate", true, "set the card status to in_progress")
 		noNames   = flag.Bool("no-athletes", false, "skip creating athletes — leaves bout corners empty")
+		images    = flag.Bool("images", true, "generate demo logos, athlete photos and a card background")
 	)
 	flag.Parse()
 
@@ -87,6 +88,7 @@ func main() {
 		Clear:      *clear,
 		Activate:   *activate,
 		NoAthletes: *noNames,
+		Images:     *images,
 		RNGSeed:    *seedRNG,
 	})
 	if err != nil {

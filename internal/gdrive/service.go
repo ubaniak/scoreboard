@@ -30,8 +30,8 @@ type ClubCreator interface {
 }
 
 type AthleteCreator interface {
-	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
-	FindOrCreateByNameClubProvince(name string, clubID, provinceID *uint) (uint, error)
+	FindOrCreateByNameAndClub(name, ageCategory string, clubID *uint) (uint, error)
+	FindOrCreateByNameClubProvince(name, ageCategory string, clubID, provinceID *uint) (uint, error)
 	FindOrCreateFull(name, ageCategory, gender, experience string, clubID, provinceID, nationID *uint, weightClass *float64) (uint, error)
 }
 

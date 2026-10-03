@@ -82,22 +82,6 @@ export const CardControls = ({ card, onSetJudges, onPatch }: Props) => {
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>
-            Official Affiliation
-          </Text>
-          <Segmented
-            size="large"
-            shape="round"
-            value={card.showOfficialAffiliation}
-            options={[
-              { value: "none", label: "None" },
-              { value: "province", label: "Province" },
-              { value: "nation", label: "Nation" },
-            ]}
-            onChange={(value) => onPatch({ showOfficialAffiliation: value as "none" | "province" | "nation" })}
-          />
-        </div>
       </div>
           ),
         },

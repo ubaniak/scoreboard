@@ -8,7 +8,6 @@ type UseCase interface {
 	Update(id uint, o *entities.Official) error
 	Get() ([]entities.Official, error)
 	Delete(id uint) error
-	GetAffiliations() ([]entities.Official, error)
 	FindOrCreate(name, nationality string, yearOfBirth int, registrationNumber string) error
 
 	AssignToCard(cardId, officialId uint, caps entities.CardOfficial) error
@@ -48,10 +47,6 @@ func (uc *useCase) Get() ([]entities.Official, error) {
 
 func (uc *useCase) Delete(id uint) error {
 	return uc.storage.Delete(id)
-}
-
-func (uc *useCase) GetAffiliations() ([]entities.Official, error) {
-	return uc.storage.Get()
 }
 
 func (uc *useCase) FindOrCreate(name, nationality string, yearOfBirth int, registrationNumber string) error {

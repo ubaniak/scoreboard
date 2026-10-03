@@ -20,19 +20,13 @@ func (l OfficialLevel) IsValid() bool {
 }
 
 type Official struct {
-	ID                    uint
-	Name                  string
-	Nationality           string
-	Gender                string
-	YearOfBirth           int
-	RegistrationNumber    string
-	Level                 OfficialLevel
-	ProvinceAffiliationID *uint
-	NationAffiliationID   *uint
-	ClubAffiliationID     *uint
-	Province              string // populated on read, not stored
-	Nation                string // populated on read, not stored
-	Club                  string // populated on read, not stored
+	ID                 uint
+	Name               string
+	Nationality        string
+	Gender             string
+	YearOfBirth        int
+	RegistrationNumber string
+	Level              OfficialLevel
 }
 
 // CardOfficial is a card↔official roster assignment: which capabilities this

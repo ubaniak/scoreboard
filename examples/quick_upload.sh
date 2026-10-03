@@ -51,9 +51,9 @@ echo "✓ Done"
 # Step 5: Create officials.csv with real IDs
 echo "5. Creating officials.csv with real IDs..."
 cat > /tmp/officials_import.csv << EOF
-name,nationality,gender,yearOfBirth,registrationNumber,provinceAffiliationId,nationAffiliationId
-James Brown,Canadian,M,1980,OFF001,$PROV_1,$NAT_1
-Patricia Davis,Canadian,F,1985,OFF002,$PROV_1,$NAT_1
+name,nationality,gender,yearOfBirth,registrationNumber
+James Brown,Canadian,M,1980,OFF001
+Patricia Davis,Canadian,F,1985,OFF002
 EOF
 
 # Step 6: Upload officials
@@ -77,7 +77,7 @@ echo ""
 
 # Verify officials
 echo "Officials:"
-curl -s -H "$HEADER" "$BASE/officials" | jq '.[0] | {name, provinceAffiliationId, province, nationAffiliationId, nation}'
+curl -s -H "$HEADER" "$BASE/officials" | jq '.[0] | {name, nationality, registrationNumber}'
 echo ""
 
 echo "✓ All uploads complete!"

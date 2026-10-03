@@ -1,16 +1,33 @@
 package athletes
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/ubaniak/scoreboard/internal/athletes/entities"
 )
 
+// ErrInvalidAgeCategory is returned when an athlete would be saved without a
+// valid age category. Every athlete needs one: bouts are built from it.
+var ErrInvalidAgeCategory = errors.New("invalid ageCategory")
+
+var validAgeCategories = map[string]bool{
+	"u13": true, "u15": true, "u17": true, "u19": true, "elite": true, "masters": true,
+}
+
+func checkAgeCategory(ageCategory string) error {
+	if !validAgeCategories[ageCategory] {
+		return fmt.Errorf("%w %q", ErrInvalidAgeCategory, ageCategory)
+	}
+	return nil
+}
+
 type UseCase interface {
 	Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error)
-	FindOrCreateByName(name, clubName string) (uint, error)
-	FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error)
-	FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
+	FindOrCreateByName(name, clubName, ageCategory string) (uint, error)
+	FindOrCreateByNameAndClub(name, ageCategory string, clubAffiliationID *uint) (uint, error)
+	FindOrCreateByNameClubProvince(name, ageCategory string, clubAffiliationID, provinceAffiliationID *uint) (uint, error)
 	FindOrCreateFull(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error)
 	List() ([]entities.Athlete, error)
 	Get(id uint) (*entities.Athlete, error)
@@ -27,7 +44,7 @@ func NewUseCase(storage Storage) UseCase {
 	return &useCase{storage: storage}
 }
 
-func (uc *useCase) FindOrCreateByNameAndClub(name string, clubAffiliationID *uint) (uint, error) {
+func (uc *useCase) FindOrCreateByNameAndClub(name, ageCategory string, clubAffiliationID *uint) (uint, error) {
 	matches, err := uc.storage.FindByName(name)
 	if err != nil {
 		return 0, err
@@ -35,10 +52,13 @@ func (uc *useCase) FindOrCreateByNameAndClub(name string, clubAffiliationID *uin
 	if len(matches) > 0 {
 		return matches[0].ID, nil
 	}
-	return uc.storage.Create(&entities.Athlete{Name: name, ClubAffiliationID: clubAffiliationID})
+	if err := checkAgeCategory(ageCategory); err != nil {
+		return 0, err
+	}
+	return uc.storage.Create(&entities.Athlete{Name: name, AgeCategory: ageCategory, ClubAffiliationID: clubAffiliationID})
 }
 
-func (uc *useCase) FindOrCreateByNameClubProvince(name string, clubAffiliationID, provinceAffiliationID *uint) (uint, error) {
+func (uc *useCase) FindOrCreateByNameClubProvince(name, ageCategory string, clubAffiliationID, provinceAffiliationID *uint) (uint, error) {
 	matches, err := uc.storage.FindByName(name)
 	if err != nil {
 		return 0, err
@@ -110,6 +130,9 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 		}
 		return existing.ID, nil
 	}
+	if err := checkAgeCategory(ageCategory); err != nil {
+		return 0, err
+	}
 	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		AgeCategory:           ageCategory,
@@ -122,7 +145,7 @@ func (uc *useCase) FindOrCreateFull(name, ageCategory, gender, experience string
 	})
 }
 
-func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
+func (uc *useCase) FindOrCreateByName(name, clubName, ageCategory string) (uint, error) {
 	matches, err := uc.storage.FindByName(name)
 	if err != nil {
 		return 0, err
@@ -138,11 +161,17 @@ func (uc *useCase) FindOrCreateByName(name, clubName string) (uint, error) {
 	if len(matches) > 0 {
 		return matches[0].ID, nil
 	}
-	// Not found — create a new athlete with just the name.
-	return uc.storage.Create(&entities.Athlete{Name: name})
+	// Not found — create a new athlete with the name and the bout's age category.
+	if err := checkAgeCategory(ageCategory); err != nil {
+		return 0, err
+	}
+	return uc.storage.Create(&entities.Athlete{Name: name, AgeCategory: ageCategory})
 }
 
 func (uc *useCase) Create(name, ageCategory, gender, experience string, clubAffiliationID, provinceAffiliationID, nationAffiliationID *uint, weightClass *float64) (uint, error) {
+	if err := checkAgeCategory(ageCategory); err != nil {
+		return 0, err
+	}
 	return uc.storage.Create(&entities.Athlete{
 		Name:                  name,
 		AgeCategory:           ageCategory,
@@ -164,6 +193,11 @@ func (uc *useCase) Get(id uint) (*entities.Athlete, error) {
 }
 
 func (uc *useCase) Update(id uint, toUpdate *entities.UpdateAthlete) error {
+	if toUpdate.AgeCategory != nil {
+		if err := checkAgeCategory(*toUpdate.AgeCategory); err != nil {
+			return err
+		}
+	}
 	return uc.storage.Update(id, toUpdate)
 }
 

@@ -24,7 +24,7 @@ type ImportClubCreator interface {
 }
 
 type ImportAthleteCreator interface {
-	FindOrCreateByNameAndClub(name string, clubID *uint) (uint, error)
+	FindOrCreateByNameAndClub(name, ageCategory string, clubID *uint) (uint, error)
 }
 
 type ImportBoutCreator interface {
@@ -274,7 +274,7 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 					}
 					clubID = &id
 				}
-				id, err := h.importAthletes.FindOrCreateByNameAndClub(redName, clubID)
+				id, err := h.importAthletes.FindOrCreateByNameAndClub(redName, string(ageCategory), clubID)
 				if err != nil {
 					presenter.WithError(fmt.Errorf("bouts row %d: red athlete: %w", rowNum, err)).Present()
 					return
@@ -292,7 +292,7 @@ func (h *App) ImportCSV(w http.ResponseWriter, r *http.Request) {
 					}
 					clubID = &id
 				}
-				id, err := h.importAthletes.FindOrCreateByNameAndClub(blueName, clubID)
+				id, err := h.importAthletes.FindOrCreateByNameAndClub(blueName, string(ageCategory), clubID)
 				if err != nil {
 					presenter.WithError(fmt.Errorf("bouts row %d: blue athlete: %w", rowNum, err)).Present()
 					return

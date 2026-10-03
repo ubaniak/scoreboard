@@ -1,10 +1,11 @@
-import { App, Button, Form, Input, InputNumber, Segmented, Space, type FormProps } from "antd";
+import { App, Button, Form, Input, InputNumber, Segmented, Select, Space, type FormProps } from "antd";
 import { useState } from "react";
 import type { CreateBoutProps } from "../../../api/bouts";
 import type { Athlete } from "../../../api/athletes";
 import type { Bout } from "../../../entities/cards";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useTheme } from "../../../theme";
+import { AGE_CATEGORY_OPTIONS } from "../../../utils/ageCategory";
 import { DraftCommentsList } from "../commentsUI";
 import { getMismatches } from "../matchCompatibility";
 import { CornerCard, MismatchRow, VsBadge, type AthleteOption } from "../matchupUI";
@@ -50,7 +51,8 @@ export const ManualFlow = (props: ManualFlowProps) => {
     // to the form's initial defaults (e.g. gender/experience) when the
     // athlete record is missing a value, rather than clobbering a valid
     // default with an empty one (the bout record requires all four fields).
-    const updates: Partial<CreateBoutProps> = { ageCategory: athlete.ageCategory };
+    const updates: Partial<CreateBoutProps> = {};
+    if (athlete.ageCategory) updates.ageCategory = athlete.ageCategory;
     if (athlete.gender) updates.gender = athlete.gender;
     if (athlete.experience) updates.experience = athlete.experience;
     if (athlete.weightClass != null) updates.weightClass = athlete.weightClass;
@@ -95,9 +97,6 @@ export const ManualFlow = (props: ManualFlowProps) => {
           the form — otherwise antd only includes fields with a rendered
           Form.Item in onFinish's values, and these only get a visible control
           when Stage 1 surfaces a mismatch to resolve. */}
-      <Form.Item name="ageCategory" hidden>
-        <Input />
-      </Form.Item>
       <Form.Item name="gender" hidden>
         <Input />
       </Form.Item>
@@ -132,14 +131,26 @@ export const ManualFlow = (props: ManualFlowProps) => {
       </div>
 
       <div style={{ display: stage === 1 ? "block" : "none" }}>
-        <Form.Item<CreateBoutProps>
-          label="Bout #"
-          name="boutNumber"
-          rules={[{ required: true, message: "Bout number is required" }]}
-          style={{ width: 100 }}
-        >
-          <InputNumber style={{ width: "100%" }} />
-        </Form.Item>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 4 }}>
+          <Form.Item<CreateBoutProps>
+            label="Bout #"
+            name="boutNumber"
+            rules={[{ required: true, message: "Bout number is required" }]}
+            style={{ width: 100 }}
+          >
+            <InputNumber style={{ width: "100%" }} />
+          </Form.Item>
+          {/* Shown here, not hidden: an athlete with no age category on record
+              leaves this empty, and the bout can't be saved until it's chosen. */}
+          <Form.Item<CreateBoutProps>
+            label="Age Category"
+            name="ageCategory"
+            rules={[{ required: true, message: "Age category is required" }]}
+            style={{ width: 200 }}
+          >
+            <Select options={AGE_CATEGORY_OPTIONS} placeholder="Select age category..." />
+          </Form.Item>
+        </div>
 
         <div style={{ display: "flex", flexDirection: stackCorners ? "column" : "row", alignItems: stackCorners ? "stretch" : "center", gap: 4, marginBottom: 16 }}>
           <CornerCard corner="red" fieldName="redAthleteId" athleteOptions={athleteOptions} athlete={redAthlete} onChange={handleRedAthleteChange} />

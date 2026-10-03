@@ -1,17 +1,9 @@
 import { DatePicker, Divider, Form, Input, InputNumber, Segmented, Select, Typography, type FormInstance } from "antd";
 import type { Dayjs } from "dayjs";
-import { ageCategoryFromDOB } from "../../utils/ageCategory";
+import { AGE_CATEGORY_OPTIONS, ageCategoryFromDOB } from "../../utils/ageCategory";
 
 type Option = { value: number; label: string };
 
-const AGE_CATEGORY_OPTIONS = [
-  { value: "u13", label: "U13" },
-  { value: "u15", label: "U15" },
-  { value: "u17", label: "U17" },
-  { value: "u19", label: "U19" },
-  { value: "elite", label: "Elite" },
-  { value: "masters", label: "Masters" },
-];
 
 export type AthleteFieldsProps = {
   form: FormInstance;

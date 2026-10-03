@@ -30,22 +30,16 @@ type RoundDetailsQuerier interface {
 	Get(boutId uint, roundNumber int) (*roundEntities.RoundDetails, error)
 }
 
-// OfficialQuerier fetches official affiliation info for the scoreboard.
-type OfficialQuerier interface {
-	GetAffiliations() ([]entities.OfficialAffiliation, error)
-}
-
 type usecase struct {
-	cards     cards.UseCase
-	bouts     bouts.UseCase
-	scores    scores.UseCase
-	athletes  AthleteQuerier
-	rounds    RoundDetailsQuerier
-	officials OfficialQuerier
+	cards    cards.UseCase
+	bouts    bouts.UseCase
+	scores   scores.UseCase
+	athletes AthleteQuerier
+	rounds   RoundDetailsQuerier
 }
 
-func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier, roundQuerier RoundDetailsQuerier, officialQuerier OfficialQuerier) UseCase {
-	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier, rounds: roundQuerier, officials: officialQuerier}
+func NewUseCase(cardsUseCase cards.UseCase, boutsUseCase bouts.UseCase, scoresUseCase scores.UseCase, athleteQuerier AthleteQuerier, roundQuerier RoundDetailsQuerier) UseCase {
+	return &usecase{cards: cardsUseCase, bouts: boutsUseCase, scores: scoresUseCase, athletes: athleteQuerier, rounds: roundQuerier}
 }
 
 func (u *usecase) Current() (*entities.Current, error) {
@@ -129,28 +123,17 @@ func (u *usecase) buildCurrent(reveal func(*boutEntities.Bout) bool, includeScor
 		return nil, err
 	}
 
-	affiliation := card.ShowOfficialAffiliation
-	if affiliation == "" {
-		affiliation = "none"
-	}
 	athleteAffiliation := card.ShowAthleteAffiliation
 	if athleteAffiliation == "" {
 		athleteAffiliation = "club"
 	}
 	currentCard := &entities.CurrentCard{
-		ID:                      card.ID,
-		Name:                    card.Name,
-		ImageUrl:                card.ImageUrl,
-		ShowCardImage:           card.ShowCardImage,
-		ShowAthleteImages:       card.ShowAthleteImages,
-		ShowClubImages:          card.ShowClubImages,
-		ShowOfficialAffiliation: affiliation,
-	}
-	if u.officials != nil {
-		officials, err := u.officials.GetAffiliations()
-		if err == nil {
-			currentCard.Officials = officials
-		}
+		ID:                card.ID,
+		Name:              card.Name,
+		ImageUrl:          card.ImageUrl,
+		ShowCardImage:     card.ShowCardImage,
+		ShowAthleteImages: card.ShowAthleteImages,
+		ShowClubImages:    card.ShowClubImages,
 	}
 	current.Card = currentCard
 
@@ -325,23 +308,18 @@ func (u *usecase) List() (*entities.BoutList, error) {
 		return nil, err
 	}
 
-	listAffiliation := card.ShowOfficialAffiliation
-	if listAffiliation == "" {
-		listAffiliation = "none"
-	}
 	athleteAffiliation := card.ShowAthleteAffiliation
 	if athleteAffiliation == "" {
 		athleteAffiliation = "club"
 	}
 	result := &entities.BoutList{
 		Card: &entities.CurrentCard{
-			ID:                      card.ID,
-			Name:                    card.Name,
-			ImageUrl:                card.ImageUrl,
-			ShowCardImage:           card.ShowCardImage,
-			ShowAthleteImages:       card.ShowAthleteImages,
-			ShowClubImages:          card.ShowClubImages,
-			ShowOfficialAffiliation: listAffiliation,
+			ID:                card.ID,
+			Name:              card.Name,
+			ImageUrl:          card.ImageUrl,
+			ShowCardImage:     card.ShowCardImage,
+			ShowAthleteImages: card.ShowAthleteImages,
+			ShowClubImages:    card.ShowClubImages,
 		},
 	}
 
