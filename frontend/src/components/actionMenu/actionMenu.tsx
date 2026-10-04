@@ -1,6 +1,6 @@
 import { Button, Modal } from "antd";
 import type { ButtonShape } from "antd/es/button";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export type ActionButtonProps = {
   shape?: ButtonShape;
@@ -26,11 +26,15 @@ export const ActionMenu = (props: ActionMenuProps) => {
   const [open, setOpen] = useState(props.menuOpen ?? false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  // Open the modal when menuOpen flips to true. Adjusting state during
+  // render avoids the extra render pass a useEffect would cost.
+  const [prevMenuOpen, setPrevMenuOpen] = useState(props.menuOpen);
+  if (props.menuOpen !== prevMenuOpen) {
+    setPrevMenuOpen(props.menuOpen);
     if (props.menuOpen) {
       setOpen(true);
     }
-  }, [props.menuOpen]);
+  }
 
   const close: CloseAction = (promise?: Promise<unknown>) => {
     const isThenable =
