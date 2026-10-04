@@ -8,6 +8,7 @@ import (
 	"github.com/ubaniak/scoreboard/internal/bouts"
 	"github.com/ubaniak/scoreboard/internal/bouts/entities"
 	"github.com/ubaniak/scoreboard/internal/bouts/mocks"
+	roundEntities "github.com/ubaniak/scoreboard/internal/round/entities"
 )
 
 var _ = Describe("UseCase", func() {
@@ -18,6 +19,7 @@ var _ = Describe("UseCase", func() {
 			winner   string
 			decision string
 			comment  string
+			round    int
 		}
 
 		DescribeTable("happy path",
@@ -29,9 +31,16 @@ var _ = Describe("UseCase", func() {
 				roundUC := mocks.NewMockRoundUseCase(ctrl)
 				scoresUC := mocks.NewMockScoresUseCase(ctrl)
 
+				roundUC.EXPECT().
+					Current(entry.boutId).
+					Return(&roundEntities.Round{RoundNumber: entry.round}, nil)
 				storage.EXPECT().
 					Update(entry.cardId, entry.boutId, gomock.Any()).
-					Return(nil)
+					DoAndReturn(func(_, _ uint, update *entities.UpdateBout) error {
+						Expect(update.RoundEndedOn).ToNot(BeNil())
+						Expect(*update.RoundEndedOn).To(Equal(entry.round))
+						return nil
+					})
 				storage.EXPECT().
 					SetStatus(entry.cardId, entry.boutId, entities.BoutStatusDecisionMade).
 					Return(nil)
@@ -50,16 +59,16 @@ var _ = Describe("UseCase", func() {
 				Expect(err).ToNot(HaveOccurred())
 			},
 			Entry("red wins by unanimous decision",
-				makeDecisionEntry{cardId: 1, boutId: 1, winner: "red", decision: "ud", comment: ""},
+				makeDecisionEntry{cardId: 1, boutId: 1, winner: "red", decision: "ud", comment: "", round: 3},
 			),
 			Entry("blue wins by split decision with a comment",
-				makeDecisionEntry{cardId: 1, boutId: 2, winner: "blue", decision: "sd", comment: "great fight"},
+				makeDecisionEntry{cardId: 1, boutId: 2, winner: "blue", decision: "sd", comment: "great fight", round: 3},
 			),
 			Entry("bout cancelled with no winner",
-				makeDecisionEntry{cardId: 2, boutId: 3, winner: "na", decision: "c", comment: ""},
+				makeDecisionEntry{cardId: 2, boutId: 3, winner: "na", decision: "c", comment: "", round: 1},
 			),
 			Entry("referee stop contest with comment",
-				makeDecisionEntry{cardId: 3, boutId: 4, winner: "red", decision: "rsc", comment: "corner stopped the bout"},
+				makeDecisionEntry{cardId: 3, boutId: 4, winner: "red", decision: "rsc", comment: "corner stopped the bout", round: 2},
 			),
 		)
 	})
