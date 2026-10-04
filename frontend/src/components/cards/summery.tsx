@@ -6,6 +6,9 @@ const { Text } = Typography;
 
 export type CardSummaryProps = {
   card?: Card;
+  // Overrides the card's status in the tag, e.g. the bout page shows the
+  // current bout's status so the header matches the bout below it.
+  status?: string;
 };
 export const CardSummary = (props: CardSummaryProps) => {
   return (
@@ -13,7 +16,7 @@ export const CardSummary = (props: CardSummaryProps) => {
       <Text type="secondary">
         {props.card?.name} • {props.card?.date}
       </Text>
-      {props.card && <StatusTag text={props.card?.status} />}
+      {props.card && <StatusTag text={props.status ?? props.card.status} />}
     </Space>
   );
 };

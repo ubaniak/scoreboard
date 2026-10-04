@@ -195,7 +195,7 @@ export const BoutPage = () => {
           : "Bout details"
       }
       subTitle={
-        <CardSummary card={card.data!} />
+        <CardSummary card={card.data!} status={bout.data?.status} />
       }
       requiredJudges={bout.data?.numberOfJudges ?? 5}
       breadCrumbs={[
