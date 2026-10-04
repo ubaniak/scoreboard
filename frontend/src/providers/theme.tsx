@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ThemeContext, palettes, type ThemeMode } from "../theme";
 
 const STORAGE_KEY = "scoreboard:themeMode";
@@ -14,16 +14,19 @@ const readInitialMode = (): ThemeMode => {
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [mode, setModeState] = useState<ThemeMode>(readInitialMode);
 
-  const setMode = (next: ThemeMode) => {
+  const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // ignore quota / privacy-mode failures
     }
-  };
+  }, []);
 
-  const toggle = () => setMode(mode === "dark" ? "light" : "dark");
+  const toggle = useCallback(
+    () => setMode(mode === "dark" ? "light" : "dark"),
+    [mode, setMode],
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = mode;
@@ -32,7 +35,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => ({ mode, colors: palettes[mode], setMode, toggle }),
-    [mode], // eslint-disable-line react-hooks/exhaustive-deps
+    [mode, setMode, toggle],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
