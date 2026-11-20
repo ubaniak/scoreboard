@@ -286,7 +286,7 @@ func Start(cfg Config) (*Server, error) {
 		allowedOrigins = strings.Split(origins, ",")
 	}
 
-	httpServer := startServer(r, allowedOrigins, uploadsDir, cfg.Assets, addr)
+	httpServer := startServer(r, allowedOrigins, uploadsDir, cfg.Assets, addr, tlsConfigFromEnv())
 
 	seedDeps := seed.Deps{
 		Cards:        cardUseCase,
@@ -424,7 +424,7 @@ func runAffiliationMigration(db *gorm.DB) error {
 	return nil
 }
 
-func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string, assets fs.FS, addr string) *http.Server {
+func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string, assets fs.FS, addr string, tlsCfg tlsSettings) *http.Server {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -450,6 +450,7 @@ func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string, asse
 
 		// Set content type explicitly for safety
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", cacheControlFor("index.html"))
 		http.ServeContent(w, r, "index.html", fi.ModTime(), index.(io.ReadSeeker))
 	}
 
@@ -485,6 +486,9 @@ func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string, asse
 		}
 
 		// Serve the file normally if it's a file
+		if cc := cacheControlFor(cleanPath); cc != "" {
+			w.Header().Set("Cache-Control", cc)
+		}
 		http.FileServer(http.FS(staticFS)).ServeHTTP(w, r)
 	}
 
@@ -520,6 +524,10 @@ func startServer(r *mux.Router, allowedOrigins []string, uploadsDir string, asse
 		log.Printf("Network access (from other machines): http://%s%s", localIP, addr)
 	} else {
 		log.Printf("Could not detect local IP; ensure firewall allows the listen port")
+	}
+
+	if tlsCfg.enabled() {
+		startTLSListener(srv, tlsCfg, localIP)
 	}
 
 	return srv

@@ -87,6 +87,55 @@ go test ./internal/bouts/...
 go run github.com/onsi/ginkgo/v2/ginkgo ./internal/bouts/...
 ```
 
+## Install as an app (phones, tablets, Chrome)
+
+Scoreboard is an installable web app (PWA). The server still runs on one
+machine at the venue; judges, admins and the public screen install the app from
+that server and it then opens full screen from their home screen, dock or
+Start menu like any other app. There is nothing to download from an app store.
+
+**On the server machine (Chrome or Edge):** open `http://localhost:8080` and
+click the install icon in the address bar, or the download button in the app
+header. This works out of the box.
+
+**On phones and other devices on the LAN:** browsers only allow installing
+(and only run the offline service worker) over **HTTPS**, so turn on the
+built-in HTTPS listener with a certificate those devices trust.
+[mkcert](https://github.com/FiloSottile/mkcert) is the easiest way:
+
+```bash
+mkcert -install                                   # creates a local CA
+mkcert -cert-file scoreboard.pem -key-file scoreboard-key.pem \
+  192.168.1.50 localhost                          # use the server's LAN IP
+```
+
+Then start Scoreboard with (or put in `.env`):
+
+```bash
+SCOREBOARD_TLS_CERT=/path/to/scoreboard.pem
+SCOREBOARD_TLS_KEY=/path/to/scoreboard-key.pem
+# SCOREBOARD_TLS_ADDR=:8443   # optional, default :8443
+```
+
+The log prints the address to use, e.g. `Install on phones from:
+https://192.168.1.50:8443`. Plain HTTP on `:8080` keeps working alongside it.
+
+Each phone has to trust the mkcert CA once. Copy `rootCA.pem` from
+`mkcert -CAROOT` to the device, then:
+
+- **Android:** Settings → Security → Encryption & credentials → Install a
+  certificate → CA certificate. Open the HTTPS address in Chrome and tap
+  **Install app** (or the download button in the app header).
+- **iPhone/iPad:** open the file to install the profile, then enable it under
+  Settings → General → About → Certificate Trust Settings. Open the HTTPS
+  address in Safari and tap Share → **Add to Home Screen**.
+
+Live scores always come from the server (API calls are never cached), so the
+server must be reachable while scoring. The app shell, icons, sounds and
+athlete images are cached, so the app opens instantly and survives brief Wi-Fi
+drops. Installed apps update themselves the next time they load after the
+server is upgraded.
+
 ## Installers
 
 ### Building installers
