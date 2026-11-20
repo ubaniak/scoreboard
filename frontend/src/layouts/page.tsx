@@ -5,6 +5,7 @@ import { Content, Header } from "antd/es/layout/layout";
 import { useState } from "react";
 import { DevicesButton } from "../components/devices/DevicesButton";
 import { SettingsButton } from "../components/settings/SettingsButton";
+import { InstallAppButton } from "../components/shared/InstallAppButton";
 import { ThemeToggle } from "../components/shared/ThemeToggle";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { useTheme } from "../theme";
@@ -34,6 +35,7 @@ export const PageLayout = (props: PageLayoutProps) => {
           <SettingsButton />
         </>
       )}
+      <InstallAppButton />
       <ThemeToggle />
     </>
   );
