@@ -69,6 +69,9 @@ jobs:
         with:
           name: frontend-dist
           path: frontend/dist
+      - name: Install NSIS (Windows setup .exe)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq nsis
       - name: Compute package version
         id: ver
         shell: bash
@@ -88,7 +91,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp build/*.dmg build/*.zip build/*.deb dist/ 2>/dev/null || true
+          cp build/*.dmg build/*.zip build/*_setup.exe build/*.deb dist/ 2>/dev/null || true
           # Plain Linux binaries for non-Debian distros
           for a in amd64 arm64 arm; do
             [ -f "build/linux_${a}/scoreboard" ] && tar -C "build/linux_${a}" -czf "dist/scoreboard_linux_${a}.tar.gz" scoreboard
