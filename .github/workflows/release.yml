@@ -3,11 +3,18 @@ name: Release
 # Builds installers for every supported platform and publishes them as a
 # GitHub release. Runs when a tag like v1.2.3 or beta0.0.0 is pushed, or
 # manually with a tag name (the tag is created on the selected ref).
+# Tags starting with "beta" (or containing "-") are marked as pre-releases.
 on:
   push:
     tags:
       - "v*"
       - "beta*"
+  # Dry run on PRs that touch the packaging: builds everything, publishes nothing.
+  pull_request:
+    paths:
+      - build.sh
+      - installers/**
+      - .github/workflows/release.yml
   workflow_dispatch:
     inputs:
       tag:
@@ -93,6 +100,7 @@ jobs:
 
   release:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
