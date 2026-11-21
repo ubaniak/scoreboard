@@ -25,14 +25,15 @@ permissions:
   contents: write
 
 env:
-  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  # Pull-request dry runs have no tag; use a placeholder so packaging still works.
+  TAG: ${{ github.event.inputs.tag || (github.event_name == 'pull_request' && 'v0.0.0-dev') || github.ref_name }}
 
 jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -41,7 +42,7 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: frontend-dist
           path: frontend/dist
@@ -60,11 +61,11 @@ jobs:
             targets: "darwin/arm64 darwin/amd64"
     runs-on: ${{ matrix.runs-on }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: frontend/dist
@@ -93,7 +94,7 @@ jobs:
             [ -f "build/linux_${a}/scoreboard" ] && tar -C "build/linux_${a}" -czf "dist/scoreboard_linux_${a}.tar.gz" scoreboard
           done
           ls -la dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: installers-${{ matrix.name }}
           path: dist/*
@@ -103,7 +104,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: installers-*
           path: dist
