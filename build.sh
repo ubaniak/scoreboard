@@ -142,6 +142,21 @@ create_windows_installer() {
   cp installers/windows/install.ps1 "build/${OUT_DIR}/install.ps1"
   (cd build && zip -q -j "${ZIP_NAME}" "${OUT_DIR}/scoreboard.exe" "${OUT_DIR}/install.ps1")
   echo "  build/${ZIP_NAME}"
+
+  # Setup .exe (requires NSIS's makensis; available on Linux, macOS and Windows)
+  if command -v makensis &> /dev/null; then
+    local SETUP_NAME="scoreboard_${OS}_${ARCH}_setup.exe"
+    echo "Creating ${SETUP_NAME}..."
+    makensis -V2 \
+      -DVERSION="${PKG_VERSION}" \
+      -DARCH="${ARCH}" \
+      -DSRC="$(pwd)/build/${OUT_DIR}" \
+      -DOUTFILE="$(pwd)/build/${SETUP_NAME}" \
+      installers/windows/scoreboard.nsi
+    echo "  build/${SETUP_NAME}"
+  else
+    echo "  Skipping Windows setup .exe (makensis not found — install NSIS)"
+  fi
 }
 
 # Linux: create .deb package (requires dpkg-deb, only works on Linux)
