@@ -1,8 +1,16 @@
 #!/bin/bash
 set -e
 
+# Optional environment overrides (used by CI):
+#   TARGETS        space-separated os/arch list (default: all platforms below)
+#   PKG_VERSION    version stamped into the .deb and macOS bundle (default 1.0.0)
+#   SKIP_FRONTEND  set to 1 to reuse an existing frontend/dist
+PKG_VERSION="${PKG_VERSION:-1.0.0}"
+
 # Build frontend
-cd frontend && rm -rf dist && npm run build && cd ..
+if [ "${SKIP_FRONTEND:-0}" != "1" ]; then
+  (cd frontend && rm -rf dist && npm run build)
+fi
 rm -rf cmd/frontend/dist
 mkdir -p cmd/frontend
 cp -r frontend/dist cmd/frontend/dist
@@ -16,14 +24,24 @@ else
   DARWIN_ARCH="amd64"
 fi
 
-TARGETS=(
-  "darwin/${DARWIN_ARCH}"
-  "linux/amd64"
-  "linux/arm64"
-  "linux/arm"
-  "windows/amd64"
-  "windows/arm64"
-)
+if [ -n "${TARGETS:-}" ]; then
+  read -r -a TARGETS <<< "$TARGETS"
+else
+  TARGETS=(
+    "darwin/${DARWIN_ARCH}"
+    "linux/amd64"
+    "linux/arm64"
+    "linux/arm"
+    "windows/amd64"
+    "windows/arm64"
+  )
+fi
+
+has_target() {
+  local t
+  for t in "${TARGETS[@]}"; do [ "$t" = "$1" ] && return 0; done
+  return 1
+}
 
 rm -rf build
 mkdir -p build
@@ -72,7 +90,7 @@ create_mac_installer() {
   cp "${OUT_DIR}/scoreboard" "${APP_DIR}/Contents/MacOS/scoreboard"
   chmod +x "${APP_DIR}/Contents/MacOS/scoreboard"
 
-  cat > "${APP_DIR}/Contents/Info.plist" << 'PLIST'
+  cat > "${APP_DIR}/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -88,9 +106,9 @@ create_mac_installer() {
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0</string>
+  <string>${PKG_VERSION}</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>${PKG_VERSION}</string>
   <key>LSMinimumSystemVersion</key>
   <string>10.15</string>
   <key>NSHighResolutionCapable</key>
@@ -149,7 +167,7 @@ create_linux_deb() {
 
   cat > "${PKG_DIR}/DEBIAN/control" << EOF
 Package: scoreboard
-Version: 1.0.0
+Version: ${PKG_VERSION}
 Architecture: ${DEB_ARCH}
 Maintainer: Ubaniak <maintainer@ubaniak.com>
 Description: Boxing tournament scoreboard
@@ -166,19 +184,24 @@ EOF
 echo ""
 echo "Creating installers:"
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  create_mac_installer darwin "${DARWIN_ARCH}"
-else
-  echo "  Skipping macOS DMG (requires macOS build host)"
-fi
+for ARCH in amd64 arm64; do
+  has_target "darwin/${ARCH}" || continue
+  if [[ "$(uname)" == "Darwin" ]]; then
+    create_mac_installer darwin "${ARCH}"
+  else
+    echo "  Skipping macOS DMG (requires macOS build host)"
+  fi
+done
 
-create_windows_installer windows amd64
-create_windows_installer windows arm64
+for ARCH in amd64 arm64; do
+  has_target "windows/${ARCH}" && create_windows_installer windows "${ARCH}"
+done
 
-if command -v dpkg-deb &> /dev/null; then
-  create_linux_deb amd64
-  create_linux_deb arm64
-  create_linux_deb arm
-else
-  echo "  Skipping Linux .deb (dpkg-deb not found — run on a Linux host)"
-fi
+for ARCH in amd64 arm64 arm; do
+  has_target "linux/${ARCH}" || continue
+  if command -v dpkg-deb &> /dev/null; then
+    create_linux_deb "${ARCH}"
+  else
+    echo "  Skipping Linux .deb (dpkg-deb not found — run on a Linux host)"
+  fi
+done
